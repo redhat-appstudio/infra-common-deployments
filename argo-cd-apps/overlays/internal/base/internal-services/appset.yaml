@@ -1,0 +1,34 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: internal-services
+spec:
+  generators:
+    - clusters:
+        values:
+          sourceRoot: components/internal-services
+          environment: base
+          clusterName: ""
+  template:
+    metadata:
+      name: internal-services-{{values.clusterName}}
+    spec:
+      project: default
+      source:
+        path: '{{values.sourceRoot}}/{{values.environment}}'
+        repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
+        targetRevision: main
+      destination:
+        namespace: internal-services
+        server: '{{server}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: 50
+          backoff:
+            duration: 15s
