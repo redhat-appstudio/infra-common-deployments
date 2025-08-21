@@ -1,4 +1,0 @@
----
-- op: replace
-  path: /spec/generators/0/clusters/values/clusterName
-  value: kflux-c-prd-i01
