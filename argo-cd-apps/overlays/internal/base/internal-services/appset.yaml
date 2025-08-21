@@ -20,7 +20,7 @@ spec:
         targetRevision: main
       destination:
         namespace: internal-services
-        server: in-cluster
+        name: in-cluster
       syncPolicy:
         automated:
           prune: true
