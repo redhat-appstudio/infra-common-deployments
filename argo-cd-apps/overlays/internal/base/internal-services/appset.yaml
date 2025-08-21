@@ -8,11 +8,10 @@ spec:
     - clusters:
         values:
           sourceRoot: components/internal-services
-          environment: base
-          clusterName: ""
+          environment: "staging"
   template:
     metadata:
-      name: internal-services-{{values.clusterName}}
+      name: internal-services
     spec:
       project: default
       source:
@@ -21,7 +20,7 @@ spec:
         targetRevision: main
       destination:
         namespace: internal-services
-        server: '{{server}}'
+        server: in-cluster
       syncPolicy:
         automated:
           prune: true
