@@ -11,7 +11,10 @@ This repository provides reusable infrastructure components and ArgoCD applicati
 ```
 infra-common-clusters/
 ├── argo-cd-apps/              # ArgoCD Application definitions
-│   ├── app-of-app-sets/       # App-of-Apps pattern for ApplicationSets
+│   ├── base/
+│   │   ├── all-clusters/      # ApplicationSet deployed to both internal and external clusters
+│   │   ├── external/          # ApplicationSet deployed to external clusters
+│   │   ├── internal/          # ApplicationSet deployed to internal clusters
 │   └── overlays/              # Environment-specific app configurations
 ├── components/                # Reusable Kustomize components
 └── README.md
@@ -28,10 +31,10 @@ infra-common-clusters/
 
 | Environment | Purpose | Cluster Short Name |
 |-------------|---------|----------------|
-| **int-stage** | Internal Red Hat staging resources | `kflux-c-stg-i01` |
-| **ext-stage** | External/public staging resources | `kflux-c-stg-e01` |
-| **int-prod** | Internal Red Hat production resources | `kflux-c-prd-i01` |
-| **ext-prod** | External/public production resources | `kflux-c-prd-e01` |
+| **internal-staging** | Internal Red Hat staging resources | `kflux-c-stg-i01` |
+| **internal-production** | Internal Red Hat production resources | `kflux-c-prd-i01` |
+| **external-staging** | External/public staging resources | `kflux-c-stg-e01` |
+| **external-production** | External/public production resources | `kflux-c-prd-e01` |
 
 ## Architecture
 
@@ -92,7 +95,7 @@ This repository uses the **App-of-Apps pattern** where:
 
 ```bash
 # Deploy the App-of-Apps for a cluster to let ArgoCD manage everything
-kubectl apply -k argo-cd-apps/overlays/int-prod/
+kubectl apply -k argo-cd-apps/overlays/internal-production/
 ```
 
 #### 2. Verify Deployment
@@ -112,16 +115,16 @@ Each environment has its own overlay configuration:
 
 ```bash
 # Staging Internal
-kubectl apply -k argo-cd-apps/overlays/internal/staging/
+kubectl apply -k argo-cd-apps/overlays/internal-staging/
 
 # Staging External  
-kubectl apply -k argo-cd-apps/overlays/external/staging/
+kubectl apply -k argo-cd-apps/overlays/external-staging/
 
 # Production Internal
-kubectl apply -k argo-cd-apps/overlays/internal/production/
+kubectl apply -k argo-cd-apps/overlays/internal-production/
 
 # Production External
-kubectl apply -k argo-cd-apps/overlays/external/production/
+kubectl apply -k argo-cd-apps/overlays/external-production/
 ```
 
 ## Component Development
@@ -151,13 +154,13 @@ kubectl apply -k argo-cd-apps/overlays/external/production/
 
 3. **Add environment overlay(s)**:
    ```bash
-   mkdir components/my-component/int-stage
-   mkdir components/my-component/int-prod
+   mkdir components/my-component/internal-staging
+   mkdir components/my-component/internal-production
    ```
 
 4. **Create overlay kustomization(s)**:
    ```yaml
-   # components/my-component/int-stage/kustomization.yaml
+   # components/my-component/internal-staging/kustomization.yaml
    apiVersion: kustomize.config.k8s.io/v1beta1
    kind: Kustomization
    
@@ -172,10 +175,10 @@ kubectl apply -k argo-cd-apps/overlays/external/production/
 
 5. **Create a base ApplicationSet overlay**:
 
-   *Note: If your component is only on either internal or external clusters, put the ApplicationSet in the environments base folder.*
+   *Note: If your component is only on either internal or external clusters, put the ApplicationSet in the proper folder.*
 
    ```yaml
-   # argo-cd-apps/overlays/internal/base/my-component/appset.yaml
+   # argo-cd-apps/base/internal/base/my-component/appset.yaml
    apiVersion: argoproj.io/v1alpha1
    kind: ApplicationSet
    metadata:
@@ -214,7 +217,7 @@ kubectl apply -k argo-cd-apps/overlays/external/production/
    ```
 
    ```yaml
-   # arcgo-cd-apps/overlays/internal/base/my-component/kustomization.yaml
+   # argo-cd-apps/base/internal/base/my-component/kustomization.yaml
    apiVersion: kustomize.config.k8s.io/v1beta1
    kind: Kustomization
    resources:
@@ -226,7 +229,7 @@ kubectl apply -k argo-cd-apps/overlays/external/production/
    *Note: If your component is only on either internal or external clusters, add the component to the environment's base overlay*
 
    ```yaml
-   # argo-cd-apps/overlays/internal/base/kustomization.yaml
+   # argo-cd-apps/base/internal/base/kustomization.yaml
    apiVersion: kustomize.config.k8s.io/v1beta1
    kind: Kustomization
    resources:
@@ -236,17 +239,12 @@ kubectl apply -k argo-cd-apps/overlays/external/production/
 
 7. **Update other environment overlays if need be**:
    ```yaml
-   # argo-cd-apps/overlays/internal/staging/kustomization.yaml
+   # argo-cd-apps/overlays/internal-staging/kustomization.yaml
    apiVersion: kustomize.config.k8s.io/v1beta1
    kind: Kustomization
    resources:
    - ../base
    patches:
-   - path: cluster-name-patch.yaml 
-      target:
-         group: argoproj.io
-         version: v1alpha1
-         kind: Application
    - path: environment-patch.yaml 
       target:
          group: argoproj.io
