@@ -1,0 +1,10 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: mtls-ca-validators
+spec:
+  dataFrom:
+    - extract:
+        key: production/group-sync/mtls-ca-validators
+        conversionStrategy: Default
+        decodingStrategy: None

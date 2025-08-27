@@ -1,0 +1,396 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: konflux-admins
+rules:
+  - apiGroups:
+      - jvmbuildservice.io
+    resources:
+      - artifactbuilds
+      - dependencybuilds
+      - rebuiltartifacts
+      - systemconfigs
+      - tektonwrappers
+      - jbsconfigs
+    verbs:
+      - '*'
+  - apiGroups:
+      - pipelinesascode.tekton.dev
+    resources:
+      - repositories
+    verbs:
+      - '*'
+  - apiGroups:
+      - ''
+    resources:
+      - clusterpolicybindings
+      - images
+      - netnamespaces
+      - nodes
+      - persistentvolumes
+      - securitycontextconstraints
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apiserver.openshift.io
+    resources:
+      - apirequestcounts
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - machineconfiguration.openshift.io
+    resources:
+      - machineconfigs
+      - machineconfigpools
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - machine.openshift.io
+    resources:
+      - machinesets
+      - machines
+    verbs:
+      - delete
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - network.openshift.io
+    resources:
+      - clusternetworks
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ''
+    resources:
+      - buildconfigs/webhooks
+      - buildlogs
+      - configmaps
+      - deploymentconfigs
+      - deploymentconfigs/scale
+      - egressnetworkpolicies
+      - endpoints
+      - imagestreamimages
+      - imagestreammappings
+      - imagestreams
+      - imagetags
+      - limitranges
+      - namespaces
+      - nodes
+      - persistentvolumeclaims
+      - pods
+      - pods/attach
+      - pods/exec
+      - pods/port-forward
+      - processedtemplates
+      - replicationcontrollers
+      - replicationcontrollers/scale
+      - resourcequotas
+      - roles
+      - routes
+      - serviceaccounts
+      - services
+      - templateconfigs
+      - templateinstances
+      - templates
+    verbs:
+      - '*'
+  - apiGroups:
+      - 'apps'
+    resources:
+      - daemonsets
+      - deployments
+      - deployments/scale
+      - replicasets
+      - replicasets/scale
+      - statefulsets
+      - statefulsets/scale
+    verbs:
+      - '*'
+  - apiGroups:
+      - 'batch'
+    resources:
+      - cronjobs
+      - jobs
+    verbs:
+      - '*'
+  - apiGroups:
+      - extensions
+    resources:
+      - daemonsets
+      - deployments
+      - deployements/rollback
+      - deployments/scale
+      - ingresses
+      - networkpolicies
+      - replicasets
+      - replicasets/scale
+      - replicationcontrollers/scale
+    verbs:
+      - '*'
+  - apiGroups:
+      - apps.openshift.io
+    resources:
+      - deploymentconfigs
+      - deploymentconfigs/scale
+    verbs:
+      - '*'
+  - apiGroups:
+      - authorization.openshift.io
+    resources:
+      - roles
+    verbs:
+      - '*'
+  - apiGroups:
+      - build.openshift.io
+    resources:
+      - builds
+      - buildconfigs
+      - buildconfigs/webhooks
+      - buildlogs
+    verbs:
+      - '*'
+  - apiGroups:
+      - config.openshift.io
+    resources:
+      - '*'
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - image.openshift.io
+    resources:
+      - imagestreams
+      - imagestreamimages
+      - imagestreammappings
+      - imagetags
+    verbs:
+      - '*'
+  - apiGroups:
+      - operators.coreos.com
+    resources:
+      - '*'
+    verbs:
+      - '*'
+  - apiGroups:
+      - route.openshift.io
+    resources:
+      - routes
+    verbs:
+      - '*'
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - roles
+      - clusterroles
+    verbs:
+      - '*'
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - clusterrolebindings
+    verbs:
+      - get
+      - list
+      - watch
+      - delete
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - rolebindings
+    verbs:
+      - create
+      - update
+      - delete
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - autoscaling
+    resources:
+      - horizontalpodautoscalers
+    verbs:
+      - '*'
+  - apiGroups:
+      - monitoring.coreos.com
+    resources:
+      - alertmanagers
+      - prometheuses
+      - prometheusrules
+      - servicemonitors
+      - podmonitors
+      - thanosrulers
+    verbs:
+      - '*'
+  - apiGroups:
+      - oadp.openshift.io
+    resources:
+      - dataprotectionapplications
+      - cloudstorages
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+  - apiGroups:
+      - quota.openshift.io
+    resources:
+      - appliedclusterresourcequotas
+      - clusterresourcequotas
+    verbs:
+      - '*'
+  - apiGroups:
+      - tekton.dev
+    resources:
+      - pipelines
+      - pipelineruns
+      - stepactions
+      - tasks
+      - taskruns
+    verbs:
+      - '*'
+  - apiGroups:
+    - user.openshift.io
+    resources:
+      - groups
+      - identities
+      - useridentitymappings
+      - users
+    verbs:
+      - '*'
+  - apiGroups:
+      - velero.io
+    resources:
+      - backups
+      - restores
+      - schedules
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+  - apiGroups:
+      - hypershift.openshift.io
+    resources:
+      - awsendpointservices
+      - certificatesigningrequestapprovals
+      - hostedclusters
+      - hostedcontrolplanes
+      - nodepools
+    verbs:
+      - '*'
+  - apiGroups:
+      - clustertemplate.openshift.io
+    resources:
+      - clustertemplates
+      - clustertemplateinstances
+      - clustertemplatequotas
+      - clustertemplatesetups
+      - configs
+    verbs:
+      - '*'
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - patch
+      - update
+      - delete
+  - apiGroups:
+      - kyverno.io
+    resources:
+      - cleanuppolicies
+      - clustercleanuppolicies
+      - clusterpolicies
+      - globalcontextentries
+      - policies
+      - policyexceptions
+      - updaterequests
+    verbs:
+      - '*'
+  - apiGroups:
+      - reports.kyverno.io
+    resources:
+      - ephemeralreports
+      - clusterephemeralreports
+    verbs:
+      - '*'
+  - apiGroups:
+      - kubearchive.kubearchive.org
+      - kubearchive.org
+    resources:
+      - '*'
+    verbs:
+      - '*'
+  - apiGroups:
+      - kueue.x-k8s.io
+    resources:
+      - '*'
+    verbs:
+      - '*'
+  - apiGroups:
+      - flowcontrol.apiserver.k8s.io
+    resources:
+      - flowschemas
+      - prioritylevelconfigurations
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - project.openshift.io
+    resources:
+      - '*'
+    verbs:
+      - '*'
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - validatingwebhookconfigurations
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - patch
+      - update
+      - delete
+  - apiGroups:
+      - operator.tekton.dev
+    resources:
+      - tektoninstallersets
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - patch
+      - update
+      - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: konflux-admins
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: konflux-admins
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: konflux-admins
