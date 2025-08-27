@@ -1,0 +1,10 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: konflux-ldap-sa
+spec:
+  dataFrom:
+    - extract:
+        key: production/group-sync/konflux-ldap-sa
+        conversionStrategy: Default
+        decodingStrategy: None
