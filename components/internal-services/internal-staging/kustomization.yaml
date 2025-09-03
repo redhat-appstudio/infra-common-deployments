@@ -1,18 +1,16 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: stonesoup-int-srvc
-
 resources:
   # Base resources
   - ../base
-  
+
   # Manager deployments for staging
   - manager/manager-staging-p01.yaml
-  
+
   # Network Policy
   - networkpolicy/network_policy.yaml
-  
+
   # Configuration
   - config/internal-services-config.yaml
 
@@ -22,7 +20,7 @@ resources:
   # Signing configurations
   - signing/hacbs-signing-pipeline-config-openshifthosted.yaml
   - signing/hacbs-signing-pipeline-config-redhatbeta2.yaml
-  - signing/hacbs-signing-pipeline-config-redhatrelease2.yaml 
+  - signing/hacbs-signing-pipeline-config-redhatrelease2.yaml
   - signing/hacbs-signing-pipeline-config-staging-openshifthosted.yaml
   - signing/hacbs-signing-pipeline-config-staging-redhatbeta2.yaml
   - signing/hacbs-signing-pipeline-config-staging-redhatrelease2.yaml
