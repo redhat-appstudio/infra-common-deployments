@@ -1,0 +1,35 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: konflux-devlake
+spec:
+  generators:
+    - clusters:
+        values:
+          sourceRoot: components/konflux-devlake
+          environment: "staging"
+  template:
+    metadata:
+      name: konflux-devlake
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/flacatus/infra-common-deployments.git
+        targetRevision: devlake
+        path: '{{values.sourceRoot}}/{{values.environment}}'
+      destination:
+        namespace: konflux-devlake
+        server: '{{server}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: -1
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 3m

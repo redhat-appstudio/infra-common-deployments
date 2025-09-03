@@ -1,0 +1,26 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: konflux-devlake
+
+resources:
+- ../base
+
+helmCharts:
+- name: devlake
+  repo: https://apache.github.io/incubator-devlake-helm-chart
+  version: 1.0.2
+  releaseName: konflux-devlake
+  valuesFile: helm-values.yaml
+  includeCRDs: true
+
+# Patches to remove init containers (backup approach)
+patches:
+- path: remove-waiting-database-patch.yaml
+  target:
+    kind: Deployment
+    name: konflux-devlake-lake
+
+commonAnnotations:
+  argocd.argoproj.io/sync-wave: "-1"
