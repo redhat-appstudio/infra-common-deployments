@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager-staging-p01
+  labels:
+    control-plane: controller-manager
+    app.kubernetes.io/name: deployment
+    app.kubernetes.io/instance: controller-manager-staging-p01
+    app.kubernetes.io/component: manager
+    app.kubernetes.io/created-by: internal-services
+    app.kubernetes.io/part-of: internal-services
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+      labels:
+        control-plane: controller-manager
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - command:
+            - /manager
+          args:
+            - --leader-elect
+            - --remote-cluster-config-file
+            - /mnt/internal-services/remote-client-config/kubeconfig
+            - --leader-election-id
+            - "staging-p01"
+          image: quay.io/konflux-ci/internal-services:ea7baebdd59db96529424e335fd0854c7f66baab
+          name: manager
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - "ALL"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 10m
+              memory: 512Mi
+          env:
+            - name: SERVICE_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          volumeMounts:
+            - mountPath: /mnt/internal-services/remote-client-config
+              name: remote-client-config
+              readOnly: true
+      serviceAccountName: controller-manager
+      terminationGracePeriodSeconds: 10
+      volumes:
+        - name: remote-client-config
+          secret:
+            secretName: remote-client-config-staging-p01

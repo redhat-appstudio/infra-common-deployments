@@ -1,0 +1,11 @@
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: InternalServicesConfig
+metadata:
+  name: config
+spec:
+  allowList:
+  - managed-release-team-tenant
+  debug: true
+  volumeClaim:
+    name: pipeline
+    size: 1Gi

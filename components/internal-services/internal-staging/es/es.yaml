@@ -1,0 +1,796 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: iib-services-config
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: stonesoup/staging/release/iib/iib-services-config
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: iib-services-config
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: iib-preview-services-config
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: hacbs/hacbs-internal-services/iib/iib-preview-services-config
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: hacbs-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: iib-preview-services-config
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: fbc-preview-publishing-credentials
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: hacbs/hacbs-internal-services/fbc/preview/publishing-credentials
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: hacbs-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: fbc-preview-publishing-credentials
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: iib-overwrite-fromimage-credentials
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: stonesoup/staging/release/quay/hacbs-release-tests_iib-pub
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: iib-overwrite-fromimage-credentials
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: iib-service-account
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: stonesoup/staging/release/iib/iib-service-account
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: iib-service-account
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: iib-service-account-prod
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: stonesoup/staging/release/iib/iib-service-account
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: iib-service-account-prod
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: iib-service-account-stage
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: stonesoup/staging/release/iib/iib-service-account
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: iib-service-account-stage
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: remote-client-config
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: hacbs/hacbs-internal-services/internal-services-controller/remote-client-config/hacbs-dev
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: hacbs-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: remote-client-config
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: remote-client-config-staging-p01
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: hacbs/hacbs-internal-services/internal-services-controller/remote-client-config/staging-p01
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: hacbs-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: remote-client-config-staging-p01
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: hacbs-signing-pipeline-certs
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: stonesoup/production/release/radas_signing
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: hacbs-signing-pipeline-certs
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: hacbs-signing-pipeline-staging-certs
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: stonesoup/staging/release/radas_signing
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: hacbs-signing-pipeline-staging-certs
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: file-updates-secret
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: stonesoup/staging/release/gitlab/gitlab.cee/file-updates-secret
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: file-updates-secret
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: create-advisory-stage-secret
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/gitlab/gitlab.cee/create-advisory-stage-secret
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: create-advisory-stage-secret
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: errata-service-account
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/errata/stage/errata-service-account
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: errata-service-account
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: errata-stage-service-account
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/errata/stage/errata-service-account
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: errata-stage-service-account
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: osidb-service-account
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/osidb/prod/osidb-service-account
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: osidb-service-account
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: rhsm-pulp-qa-secret
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/rhsm-pulp/qa/certificate
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: rhsm-pulp-qa-secret
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: rhsm-pulp-stage-secret
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/rhsm-pulp/stage/certificate
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: rhsm-pulp-stage-secret
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: exodus-prod-secret
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/exodus/prod/certificates
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: exodus-prod-secret
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: exodus-stage-secret
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/exodus/nonprod/certificates
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: exodus-stage-secret
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: udcache-stage-secret
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/udcache/stage/certificate
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: udcache-stage-secret
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: udcache-qa-secret
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/udcache/qa/certificate
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: udcache-qa-secret
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: redhat-workloads-token
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/quay/prod/redhat-workloads-token
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: redhat-workloads-token
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: cgw-service-account-stage-secret
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/content-gateway/nonprod/content-gateway-service-account
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: cgw-service-account-stage-secret
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: cgw-service-account-prod-secret
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/content-gateway/prod/content-gateway-service-account
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: cgw-service-account-prod-secret
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: managed-tenants-file-updates-stage-secret
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: stonesoup/staging/release/gitlab/gitlab.cee/managed-tenants
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: managed-tenants-file-updates-stage-secret
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: quay-credentials
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/quay/nonprod/konflux-artifacts/quay-credentials
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: quay-credentials
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: mac-host-credentials
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/signing-servers/nonprod/mac-host-credentials
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: mac-host-credentials
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: mac-signing-credentials
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/signing-servers/nonprod/mac-signing-credentials
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: mac-signing-credentials
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: mac-ssh-key
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/signing-servers/nonprod/mac-ssh-key
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: mac-ssh-key
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: windows-ssh-key
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/signing-servers/nonprod/windows-ssh-key
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: windows-ssh-key
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: windows-credentials
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/signing-servers/nonprod/windows-credentials
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: windows-credentials
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: checksum-keytab
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/signing-servers/nonprod/checksum-keytab
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-release-internal-services-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: checksum-keytab
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: checksum-fingerprint
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/signing-servers/nonprod/checksum-fingerprint
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: checksum-fingerprint
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: quay.io-rhoai
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: releng/konflux/quay/rhoai
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: releng-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: quay.io-rhoai
+    template:
+      type: kubernetes.io/dockerconfigjson
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: quay-token-konflux-release-trusted-artifacts-secret
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: releng/konflux/quay/konflux-ci/konflux-release-trusted-artifacts
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: releng-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: quay-token-konflux-release-trusted-artifacts-secret
+    template:
+      type: kubernetes.io/dockerconfigjson

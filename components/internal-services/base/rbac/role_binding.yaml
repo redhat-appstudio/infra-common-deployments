@@ -1,0 +1,35 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrolebinding
+    app.kubernetes.io/instance: internal-services-manager-rolebinding
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: internal-services
+    app.kubernetes.io/part-of: internal-services
+    app.kubernetes.io/managed-by: kustomize
+  name: internal-services-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: internal-services-manager-role
+subjects:
+  - kind: ServiceAccount
+    name: controller-manager
+  - kind: User
+    apiGroup: rbac.authorization.k8s.io
+    name: damoreno
+  - kind: User
+    apiGroup: rbac.authorization.k8s.io
+    name: jbieren
+  - kind: User
+    apiGroup: rbac.authorization.k8s.io
+    name: lmendes
+  - kind: User
+    apiGroup: rbac.authorization.k8s.io
+    name: shebert
+  - kind: User
+    apiGroup: rbac.authorization.k8s.io
+    name: mmalina
+  - kind: ServiceAccount
+    name: default
