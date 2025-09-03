@@ -1,11 +1,27 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources:
-  - cluster-role.yaml
-  - role-bindings.yaml
-  - service-account.yaml
-  - secret.yaml
-  - https://github.com/konflux-ci/internal-services/config/crd?ref=161b37c5409078000fbe5a161b6bc8c69c566d1f
 
-namespace: internal-services
+resources:
+  # Custom Resource Definitions
+  - crds/appstudio.redhat.com_internalrequests.yaml
+  - crds/appstudio.redhat.com_internalservicesconfigs.yaml
+  #- crds/external-secrets.io_secretstores.yaml
+  # External Secrets Resources
+  - eso/secret-store.yaml
+  # RBAC Resources
+  - rbac/service_account.yaml
+  - rbac/role.yaml
+  - rbac/role_binding.yaml
+  - rbac/leader_election_role.yaml
+  - rbac/leader_election_role_binding.yaml
+  - rbac/auth_proxy_client_clusterrole.yaml
+  - rbac/auth_proxy_role.yaml
+  - rbac/auth_proxy_role_binding.yaml
+  - rbac/auth_proxy_service.yaml
+  - rbac/internalrequest_editor_role.yaml
+  - rbac/internalrequest_viewer_role.yaml
+  - rbac/internalservicesconfig_editor_role.yaml
+  - rbac/internalservicesconfig_viewer_role.yaml
+
+  # CronJob Resources
+  - cronjob/cleanup-internal-requests-pipelineruns.yaml

@@ -1,0 +1,88 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cleanup-internal-requests-pipelineruns
+spec:
+  schedule: "10 03 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          serviceAccountName: controller-manager
+          volumes:
+            - name: temp-directory
+              emptyDir: {}
+          containers:
+            - name: cr-cleanup
+              env:
+                - name: CR_TYPE
+                  value: "pipelinerun"
+                - name: CR_NAMESPACE
+                  value: "internal-services"
+                - name: OLDER_THAN
+                  value: "yesterday"
+                - name: LABELS
+                  value: "pipelines.appstudio.openshift.io/type=release"
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -o pipefail
+                  PATH="/bin:/usr/bin:/usr/local/bin"
+                  MAX_PROCS=5
+                  PRUNING_CRS_FILE="/var/tmp/crs-to-be-pruned"
+                  KUBECTL_OUTPUT=$(mktemp -p /var/tmp)
+                  SECONDS_BACK=$(date -d "${OLDER_THAN}" +%s)
+                  kubectl get "${CR_TYPE}" -n "${CR_NAMESPACE}" -l "${LABELS}" \
+                  --sort-by=.status.completionTime \
+                  --template '{{range .items}}{{.metadata.name}}{{"\t"}}{{.metadata.namespace}}{{"\t"}}{{.status.completionTime}}{{"\n"}}{{end}}' > $KUBECTL_OUTPUT
+                  awk -v since=${SECONDS_BACK} '{
+                       # parsing the completionTime and converting it to epoch
+                       # so we can compute the precise CRs that should be deleted
+                       gsub("[:\\-TZ]", " ", $3)
+                       t=mktime($3)
+                       completionTime=strftime("%s", t)
+                       #
+                       # completionTime should be smaller than `since` seconds so it can be deleted
+                       if(since > completionTime) {
+                         args="%s:%s\n"
+                         printf(args, $1, $2)
+                       }
+                    }' $KUBECTL_OUTPUT > $PRUNING_CRS_FILE
+
+                  # The deleteAndLog will run the CR deletion and save the operation in a structured way that
+                  # can be read easily by kubectl or journalctl
+                  function deleteAndLog() {
+                    cr=${1%:*}
+                    namespace=${1#*:}
+                    kubectl delete "${CR_TYPE}" "${cr}" -n "${namespace}" |while read logLine; do
+                      echo "INFO: namespace=${namespace} log=${logLine}"
+                    done
+                  }
+                  export -f deleteAndLog
+                  xargs -a ${PRUNING_CRS_FILE} -i -P ${MAX_PROCS} bash -c 'deleteAndLog "{}"'
+              imagePullPolicy: IfNotPresent
+              image: quay.io/konflux-ci/release-service-utils:9089cafbf36bb889b4b73d8c2965613810f13736
+              volumeMounts:
+                - mountPath: /var/tmp
+                  name: temp-directory
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 300Mi
+                requests:
+                  cpu: 100m
+                  memory: 200Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                  - ALL
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                seccompProfile:
+                  type: RuntimeDefault
