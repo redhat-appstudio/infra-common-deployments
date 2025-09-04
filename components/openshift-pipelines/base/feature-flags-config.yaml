@@ -1,8 +1,12 @@
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: feature-flags-config
   namespace: openshift-pipelines
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
 data:
   # Enable Tekton Chains to sign pipeline artifacts
   enable-tekton-chains: "true"
