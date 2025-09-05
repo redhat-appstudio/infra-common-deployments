@@ -28,7 +28,7 @@
       name: 'konflux-kubearchive'
     - kind: Group
       apiGroup: rbac.authorization.k8s.io
-      name: 'konflux-migration
+      name: 'konflux-migration'
     - kind: Group
       apiGroup: rbac.authorization.k8s.io
       name: 'konflux-mintmaker-team'
