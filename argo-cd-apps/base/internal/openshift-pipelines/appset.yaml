@@ -12,7 +12,7 @@ spec:
           clusterName: ""
   template:
     metadata:
-      name: smee-{{values.clusterName}}
+      name: openshift-pipelines-{{values.clusterName}}
     spec:
       project: default
       source:
@@ -20,7 +20,7 @@ spec:
         repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
         targetRevision: main
       destination:
-        namespace: smee
+        namespace: openshift-pipelines
         server: '{{server}}'
       syncPolicy:
         automated:
