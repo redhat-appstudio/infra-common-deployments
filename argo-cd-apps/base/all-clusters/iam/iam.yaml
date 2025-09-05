@@ -11,7 +11,7 @@ spec:
           environment: ""
   template:
     metadata:
-      name: iam
+      name: iam-{{nameNormalized}}
     spec:
       project: default
       source:
