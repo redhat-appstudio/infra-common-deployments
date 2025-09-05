@@ -12,7 +12,7 @@ spec:
           clusterName: ""
   template:
     metadata:
-      name: openshift-pipelines-{{values.clusterName}}
+      name: openshift-pipelines
     spec:
       project: default
       source:
