@@ -1,5 +1,5 @@
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: iib-services-config
@@ -21,7 +21,7 @@ spec:
     deletionPolicy: Delete
     name: iib-services-config
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: iib-preview-services-config
@@ -43,7 +43,7 @@ spec:
     deletionPolicy: Delete
     name: iib-preview-services-config
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: fbc-preview-publishing-credentials
@@ -65,7 +65,7 @@ spec:
     deletionPolicy: Delete
     name: fbc-preview-publishing-credentials
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: iib-overwrite-fromimage-credentials
@@ -87,7 +87,7 @@ spec:
     deletionPolicy: Delete
     name: iib-overwrite-fromimage-credentials
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: iib-service-account
@@ -109,7 +109,7 @@ spec:
     deletionPolicy: Delete
     name: iib-service-account
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: iib-service-account-prod
@@ -131,7 +131,7 @@ spec:
     deletionPolicy: Delete
     name: iib-service-account-prod
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: iib-service-account-stage
@@ -153,7 +153,7 @@ spec:
     deletionPolicy: Delete
     name: iib-service-account-stage
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: remote-client-config
@@ -175,7 +175,7 @@ spec:
     deletionPolicy: Delete
     name: remote-client-config
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: remote-client-config-staging-p01
@@ -197,7 +197,7 @@ spec:
     deletionPolicy: Delete
     name: remote-client-config-staging-p01
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: hacbs-signing-pipeline-certs
@@ -219,7 +219,7 @@ spec:
     deletionPolicy: Delete
     name: hacbs-signing-pipeline-certs
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: hacbs-signing-pipeline-staging-certs
@@ -241,7 +241,7 @@ spec:
     deletionPolicy: Delete
     name: hacbs-signing-pipeline-staging-certs
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: file-updates-secret
@@ -263,7 +263,7 @@ spec:
     deletionPolicy: Delete
     name: file-updates-secret
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: create-advisory-stage-secret
@@ -285,7 +285,7 @@ spec:
     deletionPolicy: Delete
     name: create-advisory-stage-secret
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: errata-service-account
@@ -307,7 +307,7 @@ spec:
     deletionPolicy: Delete
     name: errata-service-account
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: errata-stage-service-account
@@ -329,7 +329,7 @@ spec:
     deletionPolicy: Delete
     name: errata-stage-service-account
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: osidb-service-account
@@ -351,7 +351,7 @@ spec:
     deletionPolicy: Delete
     name: osidb-service-account
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: rhsm-pulp-qa-secret
@@ -373,7 +373,7 @@ spec:
     deletionPolicy: Delete
     name: rhsm-pulp-qa-secret
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: rhsm-pulp-stage-secret
@@ -395,7 +395,7 @@ spec:
     deletionPolicy: Delete
     name: rhsm-pulp-stage-secret
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: exodus-prod-secret
@@ -417,7 +417,7 @@ spec:
     deletionPolicy: Delete
     name: exodus-prod-secret
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: exodus-stage-secret
@@ -439,7 +439,7 @@ spec:
     deletionPolicy: Delete
     name: exodus-stage-secret
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: udcache-stage-secret
@@ -461,7 +461,7 @@ spec:
     deletionPolicy: Delete
     name: udcache-stage-secret
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: udcache-qa-secret
@@ -483,7 +483,7 @@ spec:
     deletionPolicy: Delete
     name: udcache-qa-secret
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: redhat-workloads-token
@@ -505,7 +505,7 @@ spec:
     deletionPolicy: Delete
     name: redhat-workloads-token
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: cgw-service-account-stage-secret
@@ -527,7 +527,7 @@ spec:
     deletionPolicy: Delete
     name: cgw-service-account-stage-secret
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: cgw-service-account-prod-secret
@@ -549,7 +549,7 @@ spec:
     deletionPolicy: Delete
     name: cgw-service-account-prod-secret
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: managed-tenants-file-updates-stage-secret
@@ -571,7 +571,7 @@ spec:
     deletionPolicy: Delete
     name: managed-tenants-file-updates-stage-secret
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: quay-credentials
@@ -593,7 +593,7 @@ spec:
     deletionPolicy: Delete
     name: quay-credentials
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: mac-host-credentials
@@ -615,7 +615,7 @@ spec:
     deletionPolicy: Delete
     name: mac-host-credentials
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: mac-signing-credentials
@@ -637,7 +637,7 @@ spec:
     deletionPolicy: Delete
     name: mac-signing-credentials
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: mac-ssh-key
@@ -659,7 +659,7 @@ spec:
     deletionPolicy: Delete
     name: mac-ssh-key
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: windows-ssh-key
@@ -681,7 +681,7 @@ spec:
     deletionPolicy: Delete
     name: windows-ssh-key
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: windows-credentials
@@ -703,7 +703,7 @@ spec:
     deletionPolicy: Delete
     name: windows-credentials
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: checksum-keytab
@@ -725,7 +725,7 @@ spec:
     deletionPolicy: Delete
     name: checksum-keytab
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: checksum-fingerprint
@@ -747,7 +747,7 @@ spec:
     deletionPolicy: Delete
     name: checksum-fingerprint
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: quay.io-rhoai
@@ -771,7 +771,7 @@ spec:
     template:
       type: kubernetes.io/dockerconfigjson
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: quay-token-konflux-release-trusted-artifacts-secret
