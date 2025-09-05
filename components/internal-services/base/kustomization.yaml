@@ -5,9 +5,9 @@ resources:
   # Custom Resource Definitions
   - crds/appstudio.redhat.com_internalrequests.yaml
   - crds/appstudio.redhat.com_internalservicesconfigs.yaml
-  #- crds/external-secrets.io_secretstores.yaml
   # External Secrets Resources
   - eso/secret-store.yaml
+  - eso/secret-id.yaml
   # RBAC Resources
   - rbac/service_account.yaml
   - rbac/role.yaml
