@@ -13,16 +13,10 @@
       name: 'konflux-contributors'
     - kind: Group
       apiGroup: rbac.authorization.k8s.io
-      name: 'konflux-core'
+      name: 'konflux-devprod'
     - kind: Group
       apiGroup: rbac.authorization.k8s.io
       name: 'konflux-ec'
-    - kind: Group
-      apiGroup: rbac.authorization.k8s.io
-      name: 'konflux-hac'
-    - kind: Group
-      apiGroup: rbac.authorization.k8s.io
-      name: 'konflux-has'
     - kind: Group
       apiGroup: rbac.authorization.k8s.io
       name: 'konflux-infra'
@@ -31,10 +25,10 @@
       name: 'konflux-integration'
     - kind: Group
       apiGroup: rbac.authorization.k8s.io
-      name: 'konflux-hac'
+      name: 'konflux-kubearchive'
     - kind: Group
       apiGroup: rbac.authorization.k8s.io
-      name: 'konflux-kubearchive'
+      name: 'konflux-migration
     - kind: Group
       apiGroup: rbac.authorization.k8s.io
       name: 'konflux-mintmaker-team'
@@ -43,22 +37,16 @@
       name: 'konflux-o11y'
     - kind: Group
       apiGroup: rbac.authorization.k8s.io
-      name: 'konflux-performance'
-    - kind: Group
-      apiGroup: rbac.authorization.k8s.io
-      name: 'konflux-pipeline-service'
-    - kind: Group
-      apiGroup: rbac.authorization.k8s.io
       name: 'konflux-qe'
     - kind: Group
       apiGroup: rbac.authorization.k8s.io
       name: 'konflux-release-team'
     - kind: Group
       apiGroup: rbac.authorization.k8s.io
-      name: 'konflux-sre'
+      name: 'konflux-support-ops'
     - kind: Group
       apiGroup: rbac.authorization.k8s.io
-      name: 'konflux-support'
+      name: 'konflux-ui'
     - kind: Group
       apiGroup: rbac.authorization.k8s.io
       name: 'konflux-vanguard'
