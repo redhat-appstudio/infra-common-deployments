@@ -11,7 +11,7 @@ spec:
           environment: ""
   template:
     metadata:
-      name: internal-services
+      name: internal-services-{{nameNormalized}}
     spec:
       project: default
       source:
