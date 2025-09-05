@@ -8,7 +8,7 @@ spec:
     - clusters:
         values:
           sourceRoot: components/internal-services
-          environment: "staging"
+          environment: ""
   template:
     metadata:
       name: internal-services
