@@ -17,18 +17,5 @@ subjects:
   - kind: ServiceAccount
     name: controller-manager
     namespace: internal-services
-  - kind: User
-    apiGroup: rbac.authorization.k8s.io
-    name: damoreno
-  - kind: User
-    apiGroup: rbac.authorization.k8s.io
-    name: jbieren
-  - kind: User
-    apiGroup: rbac.authorization.k8s.io
-    name: lmendes
-  - kind: User
-    apiGroup: rbac.authorization.k8s.io
-    name: shebert
-  - kind: User
-    apiGroup: rbac.authorization.k8s.io
-    name: mmalina
+  - kind: Group
+    name: konflux-release-team
