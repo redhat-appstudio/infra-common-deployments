@@ -16,6 +16,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: controller-manager
+    namespace: internal-services
   - kind: User
     apiGroup: rbac.authorization.k8s.io
     name: damoreno
@@ -31,5 +32,3 @@ subjects:
   - kind: User
     apiGroup: rbac.authorization.k8s.io
     name: mmalina
-  - kind: ServiceAccount
-    name: default
