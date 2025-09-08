@@ -8,10 +8,27 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     argocd.argoproj.io/sync-wave: "-1"
 data:
-  # Enable Tekton Chains to sign pipeline artifacts
-  enable-tekton-chains: "true"
-  # Enable the Tekton Dashboard to visualize pipeline runs
-  enable-tekton-dashboard: "true"
-  # Set the default pod template
-  default-pod-template: |
-    serviceAccountName: pipeline
+  running-in-environment-with-injected-sidecars: 'true'
+  enable-kubernetes-sidecar: 'false'
+  results-from: termination-message
+  enforce-nonfalsifiability: none
+  await-sidecar-readiness: 'true'
+  coschedule: workspaces
+  enable-step-actions: 'true'
+  max-result-size: '4096'
+  disable-inline-spec: ''
+  enable-param-enum: 'false'
+  require-git-ssh-secret-known-hosts: 'false'
+  set-security-context: 'true'
+  enable-concise-resolver-syntax: 'false'
+  enable-cel-in-whenexpression: 'false'
+  enable-tekton-oci-bundles: 'false'
+  send-cloudevents-for-runs: 'false'
+  trusted-resources-verification-no-match-policy: ignore
+  enable-api-fields: alpha
+  enable-artifacts: 'false'
+  keep-pod-on-cancel: 'false'
+  enable-provenance-in-status: 'true'
+  enable-custom-tasks: 'false'
+  disable-creds-init: 'true'
+  disable-affinity-assistant: 'false'
