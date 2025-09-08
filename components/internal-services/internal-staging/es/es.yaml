@@ -719,7 +719,7 @@ spec:
   refreshInterval: 1h
   secretStoreRef:
     kind: SecretStore
-    name: konflux-release-internal-services-vault
+    name: konflux-vault
   target:
     creationPolicy: Owner
     deletionPolicy: Delete
