@@ -13,30 +13,17 @@ infra-common-deployments/
 ├── argo-cd-apps/                           # ArgoCD Application definitions
 │   ├── base/
 │   │   ├── all-clusters/                   # Components deployed to ALL clusters
-│   │   │   ├── external-secrets-operator/  # External Secrets Operator
-│   │   │   └── iam/                        # Identity and Access Management
 │   │   ├── external/                       # Components only for external clusters
-│   │   │   └── smee/                       # Webhook forwarding service
 │   │   └── internal/                       # Components only for internal clusters
-│   │       └── internal-services/          # Internal service RBAC and configs
 │   └── overlays/                           # Environment-specific configurations
 │       ├── external-production/            # External production cluster config
 │       ├── external-staging/               # External staging cluster config
 │       ├── internal-production/            # Internal production cluster config
 │       └── internal-staging/               # Internal staging cluster config
 ├── components/                             # Reusable Kustomize components
-│   ├── external-secrets-operator/          # External Secrets Operator manifests
-│   ├── iam/                                # IAM and group sync manifests
-│   │   └── k-components/                   # Reusable IAM components
-│   │       ├── external-ldap-url/          # External LDAP URL configuration
-│   │       ├── internal-ldap-url/          # Internal LDAP URL configuration
-│   │       ├── konflux-ldap-sa/            # Konflux LDAP service account
-│   │       └── mtls-ca-validators/         # mTLS CA validators
-│   ├── cluster-secret-store/               # Cluster secret store manifests
-│   │   └── k-components/                   # Reusable secret store components
-│   │       └── approle-id/                 # AppRole ID configuration
-│   ├── smee/                               # Smee webhook service manifests
-│   └── internal-services/                  # Internal services RBAC manifests
+│   ├── <component-name>/                   # <component-name> component
+│   │   └── k-components/                   # Reusable <component-name> components (if any)
+|   ...
 └── README.md
 ```
 
@@ -58,7 +45,7 @@ graph LR
 
     A --> B1
     A --> C1
-    A --> D1
+    A --> D1 
     A --> E1
 
     subgraph StagingInternal[kflux-c-stg-i01]
@@ -94,55 +81,16 @@ This repository uses the **App-of-Apps pattern** where:
 2. ApplicationSets automatically discover and deploy components
 3. Components are deployed using Kustomize overlays per environment
 
-## Deployment Guide
-
-### Prerequisites
-
-- OpenShift cluster with appropriate permissions
-- ArgoCD installed and accessible
-- Git repository access
-
-### Bootstrap Process
-
-#### 1. Deploy App-of-Apps
-
-```bash
-# Deploy the App-of-Apps for a cluster to let ArgoCD manage everything
-kubectl apply -k argo-cd-apps/overlays/internal-production/
-```
-
-#### 2. Verify Deployment
-
-```bash
-# Check ArgoCD applications
-kubectl get applications -n argocd
-
-# Access ArgoCD UI
-kubectl port-forward svc/argocd-server -n argocd 8080:80
-# Open https://localhost:8080
-```
-
-### Environment-Specific Deployments
-
-Each environment has its own overlay configuration:
-
-```bash
-# Staging Internal
-kubectl apply -k argo-cd-apps/overlays/internal-staging/
-
-# Staging External
-kubectl apply -k argo-cd-apps/overlays/external-staging/
-
-# Production Internal
-kubectl apply -k argo-cd-apps/overlays/internal-production/
-
-# Production External
-kubectl apply -k argo-cd-apps/overlays/external-production/
-```
-
 ## Current Components
 
 ### All-Clusters Components
+
+#### Cluster Secret Store
+
+- **Purpose**: TODO
+- **Location**: `components/cluster-secret-store/`
+- **Deployment**: Applied only to all clusters via `all-clusters` base
+- **Resources**: ClusterSecretStore
 
 #### External Secrets Operator
 
@@ -174,6 +122,13 @@ kubectl apply -k argo-cd-apps/overlays/external-production/
 - **Deployment**: Applied only to internal clusters (staging/production)
 - **Resources**: Cluster roles, role bindings, service accounts, secrets, and CRD references
 
+#### Openshift Pipelines (Internal Clusters Only)
+
+- **Purpose**: TODO
+- **Location**: `components/openshift-pipelines/`
+- **Deployment**: Applied only to internal clusters (staging/production)
+- **Resources**: ConfigMap, Namespace, and Subscription for OpenShift Pipelines Operator
+
 ### Component Deployment Matrix
 
 | Component | All Clusters | External Only | Internal Only |
@@ -182,6 +137,8 @@ kubectl apply -k argo-cd-apps/overlays/external-production/
 | **IAM (Group Sync)** | ✅ | - | - |
 | **Smee** | - | ✅ | - |
 | **Internal Services** | - | - | ✅ |
+| **Cluster Secret Store** | ✅ | - | - |
+| **Openshift Pipelines** | - | - | ✅ |
 
 ### Environment Overlay Structure
 
@@ -194,6 +151,13 @@ Each overlay includes:
 ## Reusable Components (k-components)
 
 This repository uses Kustomize Components to eliminate duplication between environments. These components are located in `k-components/` directories within each component folder.
+
+### Benefits of k-components
+
+- **DRY Principle**: Eliminates code duplication between environments
+- **Maintainability**: Changes only need to be made in one place
+- **Consistency**: Ensures identical behavior across environments
+- **Reusability**: Components can be easily used in new environments
 
 ### IAM k-components
 
@@ -209,14 +173,6 @@ Located in `components/iam/k-components/`:
 Located in `components/cluster-secret-store/k-components/`:
 
 - **approle-id**: Configures AppRole ID for Vault authentication
-
-### Benefits of k-components
-
-- **DRY Principle**: Eliminates code duplication between environments
-- **Maintainability**: Changes only need to be made in one place
-- **Consistency**: Ensures identical behavior across environments
-- **Reusability**: Components can be easily used in new environments
-
 
 ## Component Development
 
