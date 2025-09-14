@@ -1,0 +1,52 @@
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: kargo
+name: kargo
+repo: oci://ghcr.io/akuity/kargo-charts
+version: 1.7.4
+namespace: kargo
+releaseName: kargo
+valuesInline:
+  api:
+    adminAccount:
+      enabled: false
+    secretManagementEnabled: false
+    tls:
+      selfSignedCert: false
+    host: kargo-api-kargo.apps.rosa.kflux-c-stg-i01.qfla.p3.openshiftapps.com
+    cabundle:
+      configMapName: ocp-service-ca
+    oidc:
+      enabled: true
+      admins:
+        claims:
+          groups:
+          - konflux-admins
+          - cluster-admins
+          - dedicated-admins
+          - konflux-infra
+      dex:
+        enabled: true
+        skipApprovalScreen: true
+        tls:
+          selfSignedCert: false
+        connectors:
+          - type: openshift
+            id: openshift
+            name: OpenShift
+            config:
+              # OpenShift API
+              #issuer: https://api.gbenhiam.lab.upshift.rdu2.redhat.com:6443
+              issuer: https://kubernetes.default.svc
+              rootCA: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+              # Credentials can be string literals or pulled from the environment.
+              clientID: system:serviceaccount:kargo:dex-client
+              clientSecret: $OPENSHIFT_OAUTH_CLIENT_SECRET
+              redirectURI: https://kargo-api-kargo.apps.rosa.kflux-c-stg-i01.qfla.p3.openshiftapps.com/dex/callback
+        env:
+          - name: OPENSHIFT_OAUTH_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: dex-client
+                key: token
