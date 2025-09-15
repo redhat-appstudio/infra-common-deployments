@@ -1,0 +1,59 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - route-and-oauth.yaml
+
+namespace: kargo
+
+generators:
+- kargo-helm-generator.yaml
+
+patches:
+# Enable OCP service certificate for Kargo's API
+- target:
+    kind: Service
+    name: kargo-api
+  patch: |-
+    - op: add
+      path: /metadata/annotations/service.beta.openshift.io~1serving-cert-secret-name
+      value: kargo-api-cert
+
+# Enable OCP service certificate for Kargo's Dex server
+- target:
+    kind: Service
+    name: kargo-dex-server
+  patch: |-
+    - op: add
+      path: /metadata/annotations/service.beta.openshift.io~1serving-cert-secret-name
+      value: kargo-dex-server-cert
+
+# Patch the callback url for the oauth client to the Kargo's API
+- target:
+    kind: ServiceAccount
+    name: dex-client
+  patch: |-
+    - op: add
+      path: /metadata/annotations/serviceaccounts.openshift.io~1oauth-redirecturi.kargo
+      value: https://kargo-api-kargo.apps.rosa.kflux-c-stg-i01.qfla.p3.openshiftapps.com/dex/callback
+
+# Inject the OCP service certificate into the Kargo's API so it can contact Dex
+- target:
+    kind: Deployment
+    name: kargo-api
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/volumes/0/projected/sources/1
+      value:
+        configMap:
+          name: ocp-service-ca
+          items:
+            - key: service-ca.crt
+              path: idp-ca.crt
+
+# Don't run init container as root since OCP doesn't allow it with the default SCC.
+- target:
+    kind: Deployment
+    name: kargo-api
+  patch: |-
+    - op: remove
+      path: /spec/template/spec/initContainers/0/securityContext/runAsUser

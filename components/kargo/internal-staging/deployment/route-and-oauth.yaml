@@ -1,0 +1,38 @@
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: kargo-api
+spec:
+  path: /
+  port:
+    targetPort: 8080
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: reencrypt
+  to:
+    kind: Service
+    name: kargo-api
+    weight: 100
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: dex-client
+  annotations:
+    serviceaccounts.openshift.io/oauth-redirecturi.kargo: tba
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: dex-client
+  annotations:
+    kubernetes.io/service-account.name: dex-client
+type: kubernetes.io/service-account-token
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: ocp-service-ca
+  annotations:
+    service.beta.openshift.io/inject-cabundle: "true"
