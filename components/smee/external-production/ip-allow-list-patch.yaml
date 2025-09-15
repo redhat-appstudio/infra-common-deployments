@@ -8,6 +8,13 @@
 # Note that the configuration string below is very sensitive. It has to be
 # a single-space-separated list of IPs and CIDR ranges. Any extra whitespace
 # added to it makes OpenShift ignore it.
+
+# The current "whitelisted" clusters are:
+# - stone-prod-p01
+# - stone-prod-p02
+# - kflux-ocp-p01
+# - kflux-rhel-p01
+# - kflux-osp-p01
 - op: add
   path: /metadata/annotations/haproxy.router.openshift.io~1ip_whitelist
   value: >-

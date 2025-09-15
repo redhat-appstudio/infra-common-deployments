@@ -19,10 +19,10 @@ spec:
         - name: shared-health
           emptyDir: {}
       containers:
-        - image: "ghcr.io/chmouel/gosmee:v0.26.1"
+        - image: "ghcr.io/chmouel/gosmee:v0.28.0"
           imagePullPolicy: Always
           name: gosmee
-          args: ["server", "--address", "0.0.0.0"]
+          args: ["server", "--max-body-size", "2097152", "--address", "0.0.0.0"]
           ports:
             - name: "gosmee-http"
               containerPort: 3333
@@ -37,8 +37,7 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 30
             timeoutSeconds: 25
-            # High-enough not to fail if other container crashlooping
-            failureThreshold: 12
+            failureThreshold: 12 # High-enough not to fail if other container crashlooping
           securityContext:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
@@ -49,7 +48,7 @@ spec:
             requests:
               cpu: 1
               memory: 256Mi
-        - image: "ghcr.io/chmouel/gosmee:v0.26.1"
+        - image: "ghcr.io/chmouel/gosmee:v0.28.0"
           imagePullPolicy: Always
           name: gosmee-liveness-probe-client
           args:
@@ -82,8 +81,7 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 30
             timeoutSeconds: 25
-            # High-enough not to fail if other container crashlooping
-            failureThreshold: 12
+            failureThreshold: 12 # High-enough not to fail if other container crashlooping
         - name: health-check-sidecar
           image: quay.io/konflux-ci/smee-sidecar:replaced-by-overlay
           imagePullPolicy: Always
