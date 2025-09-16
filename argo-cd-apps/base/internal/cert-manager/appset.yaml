@@ -20,7 +20,7 @@ spec:
         repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
         targetRevision: main
       destination:
-        namespace: cert-manager
+        namespace: cert-manager-operator
         name: in-cluster
       syncPolicy:
         automated:
