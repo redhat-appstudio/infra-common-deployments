@@ -2,6 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: controller-manager-staging-p01
+  annotations:
+     ignore-check.kube-linter.io/liveness-port: "Pending https://issues.redhat.com/browse/RELEASE-1877"
+     ignore-check.kube-linter.io/readiness-port: "Pending https://issues.redhat.com/browse/RELEASE-1877"
+     ignore-check.kube-linter.io/no-read-only-root-fs: "Pending https://issues.redhat.com/browse/RELEASE-1877"
   labels:
     control-plane: controller-manager
     app.kubernetes.io/name: deployment
