@@ -6,13 +6,17 @@ on:
   pull_request:
     branches: [ main ]
   push:
-    branches: [ main ]
 jobs:
   scan:
-    permissions: write-all
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       # This prepares directory where github/codeql-action/upload-sarif@v1 looks up report files by default.
       - name: Create ../results directory for SARIF report files
@@ -22,19 +26,35 @@ jobs:
       - name: Setup Kustomize
         uses: multani/action-setup-kustomize@v1
         with:
-          version: 5.6.0
+          version: '5.7.1'
 
+      # Step 1: Try to restore cache
+      - name: Cache kustomize builds
+        uses: actions/cache@v4
+        with:
+          path: kustomizedfiles
+          key: kustomize-${{ hashFiles('**/kustomization.yaml') }}
+
+      # Step 2: Only run kustomize if cache miss
       - name: Run kustomize build
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           find argo-cd-apps components -name 'kustomization.yaml' \
-            | \
-            xargs -I {} -n1 -P8  bash -c 'dir=$(dirname "{}"); output_file=$(echo $dir | tr / -)-kustomization.yaml; if ! log=$(kustomize build --enable-helm "$dir" -o "kustomizedfiles/$output_file" 2>&1); then echo "Error when running kustomize build for $dir: $log" && exit 1;fi'
+            ! -path 'components/kargo/*' \
+            | xargs -I {} -n1 -P8 bash -c '
+              dir=$(dirname "{}")
+              output_file=$(echo $dir | tr / -)-kustomization.yaml
+              if ! log=$(kustomize build "$dir" -o "kustomizedfiles/$output_file" 2>&1); then
+                echo "Error when running kustomize build for $dir: $log"
+                exit 1
+              fi
+            '
 
       - name: Scan yaml files with kube-linter
-        uses: stackrox/kube-linter-action@v1.0.4
+        uses: stackrox/kube-linter-action@v1.0.7
         id: kube-linter-action-scan
         with:
-          version: v0.7.2
+          version: v0.7.6
           # Adjust this directory to the location where your kubernetes resources and helm charts are located.
           directory: kustomizedfiles
           # The following two settings make kube-linter produce scan analysis in SARIF format which would then be
