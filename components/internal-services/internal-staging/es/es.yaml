@@ -288,6 +288,28 @@ spec:
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
+  name: create-advisory-poc-stage-secret
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/gitlab/gitlab.cee/create-advisory-poc-stage-secret
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: create-advisory-poc-stage-secret
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
   name: errata-service-account
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
