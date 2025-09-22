@@ -6,3 +6,9 @@ resources:
 
   # External Secrets
   - es/
+  # InternalServicesConfig
+  - config/
+  # NetworkPolicy
+  - networkpolicy/
+  # Signing ConfigMaps
+  - signing/

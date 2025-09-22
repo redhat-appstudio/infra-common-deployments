@@ -1,0 +1,13 @@
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: InternalServicesConfig
+metadata:
+  name: config
+spec:
+  allowList:
+  - rhtap-releng-tenant
+  - rh-managed-cnv-fbc-tenant
+  - rh-managed-red-hat-acm-tenant
+  debug: true
+  volumeClaim:
+    name: pipeline
+    size: 1Gi
