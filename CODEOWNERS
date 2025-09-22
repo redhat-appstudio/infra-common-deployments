@@ -1,0 +1,26 @@
+# Owners for everything in the repo
+* @gbenhaim @hugares @enkeefe00
+
+# Owners for cert-manager
+/components/cert-manager/ @gbenhaim @hugares @enkeefe00
+
+# Owners for cluster-secret-store
+/components/cluster-secret-store/ @gbenhaim @hugares @enkeefe00 @oswcab
+
+# Owners for external-secrets-operator
+/components/external-secrets-operator/ @gbenhaim @hugares @enkeefe00 @oswcab
+
+# Owners for iam
+/components/iam/ @gbenhaim @hugares @enkeefe00 @oswcab
+
+# Owners for internal-services
+/components/internal-services/ @davidmogar @johnbieren @scoheb @theflockers @mmalina @happybhati @seanconroy2021 @jinqi7 @filipnikolovski @elenagerman
+
+# Owners for kargo
+/components/kargo/ @gbenhaim @hugares @enkeefe00
+
+# Owners for openshift-pipelines
+/components/openshift-pipelines/ @scoheb
+
+# Owners for smee
+/components/smee/ @ifireball @gbenhaim @amisstea @yftacherzog @avi-biton
