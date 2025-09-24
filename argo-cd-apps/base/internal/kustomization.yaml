@@ -6,3 +6,4 @@ resources:
   - openshift-pipelines
   - kargo
   - cert-manager
+  - konflux-support-ops
