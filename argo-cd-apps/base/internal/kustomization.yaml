@@ -7,3 +7,4 @@ resources:
   - kargo
   - cert-manager
   - konflux-support-ops
+  - konflux-devlake

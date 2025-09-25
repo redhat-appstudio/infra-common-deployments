@@ -1,0 +1,35 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: konflux-devlake
+spec:
+  generators:
+    - clusters:
+        values:
+          sourceRoot: components/konflux-devlake
+          environment: ""
+  template:
+    metadata:
+      name: konflux-devlake
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
+        targetRevision: main
+        path: '{{values.sourceRoot}}/{{values.environment}}'
+      destination:
+        namespace: konflux-devlake
+        name: in-cluster
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: -1
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 3m

@@ -1,0 +1,21 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: konflux-devlake
+
+resources:
+- ../base
+- external-secrets
+
+helmCharts:
+- name: devlake
+  repo: https://apache.github.io/incubator-devlake-helm-chart
+  version: 1.0.2
+  releaseName: konflux-devlake
+  namespace: konflux-devlake
+  valuesFile: helm-values.yaml
+  includeCRDs: true
+
+commonAnnotations:
+  argocd.argoproj.io/sync-wave: "-1"
