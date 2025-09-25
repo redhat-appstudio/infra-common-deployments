@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: controller-manager-staging-rh01
-  namespace: stonesoup-int-srvc
   labels:
     control-plane: controller-manager
     app.kubernetes.io/name: deployment

@@ -7,6 +7,7 @@ resources:
 
   # Manager deployments for staging
   - manager/manager-staging-p01.yaml
+  - manager/manager-staging-rh01.yaml
 
   # Network Policy
   - networkpolicy/network_policy.yaml
