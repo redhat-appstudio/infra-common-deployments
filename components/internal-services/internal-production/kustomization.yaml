@@ -8,6 +8,8 @@ resources:
   - es/
   # InternalServicesConfig
   - config/
+  # Manager deployments
+  - manager/
   # NetworkPolicy
   - networkpolicy/
   # Signing ConfigMaps
