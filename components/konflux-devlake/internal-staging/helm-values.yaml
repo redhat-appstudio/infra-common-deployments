@@ -50,6 +50,8 @@ grafana:
       api_url: "https://www.googleapis.com/oauth2/v1/userinfo"
       allowed_domains: "redhat.com"
       allow_sign_up: true
+      auto_login: true
+      redirect_uri: "${GF_AUTH_GOOGLE_REDIRECT_URI}"
 ui:
   securityContext: {}
   containerSecurityContext: {}
