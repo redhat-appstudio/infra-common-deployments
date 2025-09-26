@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: support-ops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: support-ops
+  template:
+    metadata:
+      labels:
+        app: support-ops
+    spec:
+      containers:
+      - name: support-ops
+        image: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support@sha256:3370bf46392ae10f80cf471bc49b192bef8f31a0752129268f391a3718c0b786
+        imagePullPolicy: Always
+        env:
+        - name: PYTHONPATH
+          value: "/app"
+        - name: SLACK_BOT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: SLACK_BOT_TOKEN
+        - name: SLACK_APP_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: SLACK_APP_TOKEN
+        - name: JIRA_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: JIRA_API_KEY
+        - name: ENABLE_TOKEN_VALIDATION
+          value: "true"
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - "ALL"
+          seccompProfile:
+            type: RuntimeDefault
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
