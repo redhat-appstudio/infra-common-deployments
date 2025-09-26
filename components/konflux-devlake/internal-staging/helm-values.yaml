@@ -35,11 +35,10 @@ grafana:
   env:
     TZ: "UTC"
     GF_SERVER_SERVE_FROM_SUBPATH: "true"
-    GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s/grafana/"
   grafana.ini:
     server:
       serve_from_subpath: "true"
-      root_url: "%(protocol)s://%(domain)s/grafana/"
+      root_url: "${GF_SERVER_ROOT_URL}"
     auth.google:
       enabled: true
       client_id: "${GF_AUTH_GOOGLE_CLIENT_ID}"  # Set via secret
@@ -49,9 +48,8 @@ grafana:
       token_url: "https://accounts.google.com/o/oauth2/token"
       api_url: "https://www.googleapis.com/oauth2/v1/userinfo"
       allowed_domains: "redhat.com"
-      allow_sign_up: true
+      allow_sign_up: false
       auto_login: true
-      redirect_uri: "${GF_AUTH_GOOGLE_REDIRECT_URI}"
 ui:
   securityContext: {}
   containerSecurityContext: {}
