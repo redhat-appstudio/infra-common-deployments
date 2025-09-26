@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - service_account.yaml
+  - role.yaml
+  - role_binding.yaml
+  - leader_election_role.yaml
+  - leader_election_role_binding.yaml
+  - auth_proxy_client_clusterrole.yaml
+  - auth_proxy_role.yaml
+  - auth_proxy_role_binding.yaml
+  - auth_proxy_service.yaml
+  - internalrequest_editor_role.yaml
+  - internalrequest_viewer_role.yaml
+  - internalservicesconfig_editor_role.yaml
+  - internalservicesconfig_viewer_role.yaml

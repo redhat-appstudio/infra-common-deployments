@@ -3,25 +3,10 @@ kind: Kustomization
 
 resources:
   # Custom Resource Definitions
-  - crds/appstudio.redhat.com_internalrequests.yaml
-  - crds/appstudio.redhat.com_internalservicesconfigs.yaml
+  - crds/
   # External Secrets Resources
-  - eso/secret-store.yaml
-  - eso/secret-id.yaml
+  - eso/
   # RBAC Resources
-  - rbac/service_account.yaml
-  - rbac/role.yaml
-  - rbac/role_binding.yaml
-  - rbac/leader_election_role.yaml
-  - rbac/leader_election_role_binding.yaml
-  - rbac/auth_proxy_client_clusterrole.yaml
-  - rbac/auth_proxy_role.yaml
-  - rbac/auth_proxy_role_binding.yaml
-  - rbac/auth_proxy_service.yaml
-  - rbac/internalrequest_editor_role.yaml
-  - rbac/internalrequest_viewer_role.yaml
-  - rbac/internalservicesconfig_editor_role.yaml
-  - rbac/internalservicesconfig_viewer_role.yaml
-
+  - rbac/
   # CronJob Resources
-  - cronjob/cleanup-internal-requests-pipelineruns.yaml
+  - cronjob/

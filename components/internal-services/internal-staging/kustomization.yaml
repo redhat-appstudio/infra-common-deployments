@@ -6,22 +6,16 @@ resources:
   - ../base
 
   # Manager deployments for staging
-  - manager/manager-staging-p01.yaml
-  - manager/manager-staging-rh01.yaml
+  - manager/
 
   # Network Policy
-  - networkpolicy/network_policy.yaml
+  - networkpolicy/
 
-  # Configuration
-  - config/internal-services-config.yaml
+  # InternalServicesConfig
+  - config/
 
   # External Secrets
-  - es/es.yaml
+  - es/
 
   # Signing configurations
-  - signing/hacbs-signing-pipeline-config-openshifthosted.yaml
-  - signing/hacbs-signing-pipeline-config-redhatbeta2.yaml
-  - signing/hacbs-signing-pipeline-config-redhatrelease2.yaml
-  - signing/hacbs-signing-pipeline-config-staging-openshifthosted.yaml
-  - signing/hacbs-signing-pipeline-config-staging-redhatbeta2.yaml
-  - signing/hacbs-signing-pipeline-config-staging-redhatrelease2.yaml
+  - signing/
