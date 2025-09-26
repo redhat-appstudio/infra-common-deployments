@@ -1,0 +1,87 @@
+---
+lake:
+  encryptionSecret:
+    secretName: konflux-devlake-secrets
+    autoCreateSecret: false
+  securityContext: {}
+  containerSecurityContext: {}
+  envs:
+    REMOTE_PLUGIN_DIR: ""
+    DISABLED_REMOTE_PLUGINS: "true"
+    API_REQUESTS_PER_HOUR: "100000"
+    LOGGING_DIR: "/tmp"
+  envFrom:
+    - secretRef:
+        name: konflux-devlake-secrets
+
+mysql:
+  useExternal: true
+  externalServer: "kubernetes.default.svc.cluster.local"  # K8s API - always available
+  externalPort: 443  # HTTPS port - always open
+
+grafana:
+  image:
+    repository: devlake.docker.scarf.sh/apache/devlake-dashboard
+    tag: v1.0.2
+  podSecurityContext: {}
+  securityContext:
+    fsGroup: null
+    runAsGroup: null
+    runAsUser: null
+  initChownData:
+    enabled: false
+  envFromSecrets:
+    - name: "konflux-devlake-secrets"
+  env:
+    TZ: "UTC"
+    GF_SERVER_SERVE_FROM_SUBPATH: "true"
+  grafana.ini:
+    server:
+      serve_from_subpath: "true"
+      root_url: "${GF_SERVER_ROOT_URL}"
+    auth.google:
+      enabled: true
+      client_id: "${GF_AUTH_GOOGLE_CLIENT_ID}"  # Set via secret
+      client_secret: "${GF_AUTH_GOOGLE_CLIENT_SECRET}"  # Set via secret
+      scopes: "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email openid"
+      auth_url: "https://accounts.google.com/o/oauth2/auth"
+      token_url: "https://accounts.google.com/o/oauth2/token"
+      api_url: "https://www.googleapis.com/oauth2/v1/userinfo"
+      allowed_domains: "redhat.com"
+      allow_sign_up: true
+      auto_login: false
+ui:
+  securityContext: {}
+  containerSecurityContext: {}
+  basicAuth:
+    enabled: false
+    autoCreateSecret: true
+    secretName: ""
+
+service:
+  type: ClusterIP
+
+ingress:
+  enabled: false
+
+option:
+  autoCreateSecret: false
+  database: mysql
+  connectionSecretName: "konflux-devlake-secrets"
+
+extraResources:
+  - apiVersion: route.openshift.io/v1
+    kind: Route
+    metadata:
+      name: konflux-devlake-ui
+    spec:
+      to:
+        kind: Service
+        name: konflux-devlake-ui
+        weight: 100
+      port:
+        targetPort: ui
+      tls:
+        termination: edge
+        insecureEdgeTerminationPolicy: Redirect
+      wildcardPolicy: None
