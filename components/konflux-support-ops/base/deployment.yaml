@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: support-ops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: support-ops
+  template:
+    metadata:
+      labels:
+        app: support-ops
+    spec:
+      containers:
+      - name: support-ops
+        image: quay.io/klakshma/konflux-support-ops:v1.0.0 
+        imagePullPolicy: Always
+        env:
+        - name: PYTHONPATH
+          value: "/app"
+        - name: SLACK_BOT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: support-ops-secrets
+              key: slack-bot-token
+        - name: SLACK_APP_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: support-ops-secrets
+              key: slack-app-token
+        # Sandbox tokens (fallback)
+        - name: SLACK_SANDBOX_BOT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: support-ops-secrets
+              key: slack-sandbox-bot-token
+              optional: true
+        - name: SLACK_SANDBOX_APP_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: support-ops-secrets
+              key: slack-sandbox-app-token
+              optional: true
+        # JIRA API Keys for different bots
+        - name: JIRA_API_KEY_KONFLUX
+          valueFrom:
+            secretKeyRef:
+              name: support-ops-secrets
+              key: jira-api-key-konflux
+        - name: JIRA_API_KEY_PIPELINES
+          valueFrom:
+            secretKeyRef:
+              name: support-ops-secrets
+              key: jira-api-key-pipelines
+        - name: JIRA_API_KEY_OPENSHIFT_PIPELINES
+          valueFrom:
+            secretKeyRef:
+              name: support-ops-secrets
+              key: jira-api-key-openshift-pipelines
+        - name: JIRA_API_KEY_RHN
+          valueFrom:
+            secretKeyRef:
+              name: support-ops-secrets
+              key: jira-api-key-rhn
+        - name: TELCO_PRE_GA_JIRA_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: support-ops-secrets
+              key: telco-pre-ga-jira-token
+        - name: JIRA_API_KEY_SP_RHEL
+          valueFrom:
+            secretKeyRef:
+              name: support-ops-secrets
+              key: jira-api-key-sp-rhel
+        - name: JIRA_API_KEY_TFT
+          valueFrom:
+            secretKeyRef:
+              name: support-ops-secrets
+              key: jira-api-key-tft
+        - name: JIRA_API_KEY_OSCI
+          valueFrom:
+            secretKeyRef:
+              name: support-ops-secrets
+              key: jira-api-key-osci
+        # Configuration
+        - name: ENABLE_TOKEN_VALIDATION
+          value: "true"
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - "ALL"
+          seccompProfile:
+            type: RuntimeDefault
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
