@@ -64,9 +64,13 @@ spec:
           name: manager
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - "ALL"
+          ports:
+            - containerPort: 8081
+              name: healthz
           livenessProbe:
             httpGet:
               path: /healthz
