@@ -4,6 +4,7 @@ metadata:
   name: config
 spec:
   allowList:
+  - managed-release-team-tenant
   - rhtap-releng-tenant
   - rh-managed-cnv-fbc-tenant
   - rh-managed-red-hat-acm-tenant
