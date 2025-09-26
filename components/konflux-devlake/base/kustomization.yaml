@@ -6,3 +6,4 @@ namespace: konflux-devlake
 
 resources:
 - namespace.yaml
+- rbac
