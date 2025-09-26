@@ -49,7 +49,7 @@ grafana:
       api_url: "https://www.googleapis.com/oauth2/v1/userinfo"
       allowed_domains: "redhat.com"
       allow_sign_up: true
-      auto_login: true
+      auto_login: false
 ui:
   securityContext: {}
   containerSecurityContext: {}
