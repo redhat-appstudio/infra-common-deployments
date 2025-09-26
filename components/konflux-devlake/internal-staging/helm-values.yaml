@@ -48,7 +48,7 @@ grafana:
       token_url: "https://accounts.google.com/o/oauth2/token"
       api_url: "https://www.googleapis.com/oauth2/v1/userinfo"
       allowed_domains: "redhat.com"
-      allow_sign_up: false
+      allow_sign_up: true
       auto_login: true
 ui:
   securityContext: {}
