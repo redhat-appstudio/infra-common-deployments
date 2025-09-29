@@ -429,7 +429,7 @@ spec:
     - extract:
         conversionStrategy: Default
         decodingStrategy: None
-        key: stonesoup/production/release/gitlab/gitlab.cee/file-updates-secret
+        key: stonesoup/staging/release/gitlab/gitlab.cee/file-updates-secret
   refreshInterval: 1h
   secretStoreRef:
     kind: SecretStore
@@ -504,6 +504,28 @@ spec:
     creationPolicy: Owner
     deletionPolicy: Delete
     name: create-advisory-poc-secret
+--- 
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: create-advisory-poc-stage-secret
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/gitlab/gitlab.cee/create-advisory-poc-stage-secret
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target: 
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: create-advisory-poc-stage-secret
 ---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
@@ -856,6 +878,28 @@ spec:
     creationPolicy: Owner
     deletionPolicy: Delete
     name: managed-tenants-file-updates-prod-secret
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: managed-tenants-file-updates-stage-secret
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: stonesoup/staging/release/gitlab/gitlab.cee/managed-tenants
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: managed-tenants-file-updates-stage-secret
 ---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
