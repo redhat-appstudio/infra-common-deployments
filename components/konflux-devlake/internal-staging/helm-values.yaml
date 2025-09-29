@@ -21,8 +21,8 @@ mysql:
 
 grafana:
   image:
-    repository: devlake.docker.scarf.sh/apache/devlake-dashboard
-    tag: v1.0.2
+    repository: quay.io/redhat-user-workloads/rh-konflux-devprod-tenant/konflux-devlake-dashboards-e1306
+    tag: ff77b036e144324eff9b9e60ea123579b7ea0e4b
   podSecurityContext: {}
   securityContext:
     fsGroup: null
