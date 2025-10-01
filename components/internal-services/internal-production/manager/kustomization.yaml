@@ -2,4 +2,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - manager-kflux-prd-rh03.yaml
+  - manager-kflux-rhel-p01.yaml
+  - manager-prod-ocp-p01.yaml
+  - manager-prod-osp-p01.yaml
+  - manager-stone-prd-rh01.yaml
+  - manager-stone-prd-rh02.yaml
   - manager-stone-prod-p01.yaml
+  - manager-stone-prod-p02.yaml
