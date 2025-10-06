@@ -8,8 +8,8 @@ lake:
   envs:
     REMOTE_PLUGIN_DIR: ""
     DISABLED_REMOTE_PLUGINS: "true"
-    API_REQUESTS_PER_HOUR: "100000"
     LOGGING_DIR: "/tmp"
+    PIPELINE_MAX_PARALLEL: "4"
   envFrom:
     - secretRef:
         name: konflux-devlake-secrets
@@ -21,8 +21,8 @@ mysql:
 
 grafana:
   image:
-    repository: devlake.docker.scarf.sh/apache/devlake-dashboard
-    tag: v1.0.2
+    repository: quay.io/konflux-ci/konflux-devprod/devlake-dashboards
+    tag: 9541996e65c5d884d1cce6b8de2809f2da30765c
   podSecurityContext: {}
   securityContext:
     fsGroup: null
