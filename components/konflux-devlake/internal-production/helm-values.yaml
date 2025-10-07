@@ -5,6 +5,12 @@ lake:
     autoCreateSecret: false
   securityContext: {}
   containerSecurityContext: {}
+  resources:
+    requests:
+      cpu: "2"
+      memory: "4Gi"
+    limits:
+      memory: "8Gi"
   envs:
     REMOTE_PLUGIN_DIR: ""
     DISABLED_REMOTE_PLUGINS: "true"
