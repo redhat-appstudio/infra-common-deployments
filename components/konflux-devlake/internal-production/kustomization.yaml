@@ -7,6 +7,7 @@ namespace: konflux-devlake
 resources:
 - ../base
 - external-secrets
+- https://github.com/konflux-ci/konflux-devlake-mcp.git/k8s?ref=ade23c78280fa9614437df2a2b2ed3dccc38b253
 
 helmCharts:
 - name: devlake
