@@ -15,3 +15,4 @@ resources:
   - internalrequest_viewer_role.yaml
   - internalservicesconfig_editor_role.yaml
   - internalservicesconfig_viewer_role.yaml
+  - view-authenticated-users.yaml
