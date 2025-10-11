@@ -10,6 +10,7 @@ metadata:
     app.kubernetes.io/part-of: internal-services
     app.kubernetes.io/managed-by: kustomize
   name: controller-manager-metrics-service
+  namespace: internal-services
 spec:
   ports:
   - name: https
