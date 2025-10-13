@@ -16,6 +16,7 @@ lake:
     DISABLED_REMOTE_PLUGINS: "true"
     LOGGING_DIR: "/tmp"
     PIPELINE_MAX_PARALLEL: "4"
+    IN_SECURE_SKIP_VERIFY: "true"
   envFrom:
     - secretRef:
         name: konflux-devlake-secrets
