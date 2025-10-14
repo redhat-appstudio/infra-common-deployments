@@ -17,6 +17,7 @@ lake:
     API_REQUESTS_PER_HOUR: "100000"
     LOGGING_DIR: "/tmp"
     PIPELINE_MAX_PARALLEL: "4"
+    IN_SECURE_SKIP_VERIFY: "true"
   envFrom:
     - secretRef:
         name: konflux-devlake-secrets
