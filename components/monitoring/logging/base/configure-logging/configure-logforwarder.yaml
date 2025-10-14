@@ -1,0 +1,59 @@
+---
+apiVersion: observability.openshift.io/v1
+kind: ClusterLogForwarder
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "1"
+  name: instance
+spec:
+  collector:
+    resources:
+      limits:
+        cpu: 1
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+    tolerations:
+      - effect: NoSchedule
+        key: konflux-ci.dev/workload
+        operator: Exists
+  outputs:
+    - name: splunk-receiver-application
+      type: splunk
+      splunk:
+        url: https://splunk-hec.redhat.com
+        authentication:
+          token:
+              secretName: log-forwarder-splunk-rhtap-application-secret
+              key: hecToken
+    - name: splunk-receiver-audit
+      type: splunk
+      splunk:
+        url: https://splunk-hec.redhat.com
+        authentication:
+          token:
+              secretName: log-forwarder-splunk-rhtap-audit-secret
+              key: hecToken
+  filters:
+    - name: parse-json
+      type: parse
+  pipelines:
+    - name: fluentd-forward-logs-to-splunk-rhtap-app-index
+      inputRefs:
+        - application
+      outputRefs:
+        - splunk-receiver-application
+      filterRefs:
+        - parse-json
+    - name: fluentd-forward-logs-to-splunk-rhtap-audit-index
+      inputRefs:
+        - infrastructure
+        - audit
+      outputRefs:
+        - splunk-receiver-audit
+      filterRefs:
+        - parse-json
+  serviceAccount:
+    name: log-collector
