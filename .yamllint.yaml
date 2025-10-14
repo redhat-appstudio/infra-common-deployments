@@ -1,4 +1,10 @@
 extends: relaxed
+
+ignore:
+  # we don't control the content of helm charts, so don't enforce our standards on them
+  - '**/charts/'
+  - '**/templates/'
+
 rules:
-  line-length:
-    max: 120
+  indentation: disable
+  line-length: disable
