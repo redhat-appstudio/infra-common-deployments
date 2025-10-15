@@ -16,6 +16,5 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: controller-manager
-    namespace: internal-services
   - kind: Group
     name: konflux-release-team

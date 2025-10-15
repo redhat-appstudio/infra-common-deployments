@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.18.0
   name: internalrequests.appstudio.redhat.com
 spec:
   group: appstudio.redhat.com
@@ -221,6 +221,11 @@ spec:
                   - type
                   type: object
                 type: array
+              pipelineRun:
+                description: PipelineRun contains the namespaced name of the PipelineRun
+                  executed for this InternalRequest
+                pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?\/[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                type: string
               results:
                 additionalProperties:
                   type: string
