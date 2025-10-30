@@ -1,4 +1,6 @@
 ---
+imageTag: v1.0.3-beta7
+
 lake:
   encryptionSecret:
     secretName: konflux-devlake-secrets
