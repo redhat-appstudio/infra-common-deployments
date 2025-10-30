@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
 - ../base
 - ../base/external-secrets
+- ../base/logging-operator-prerequisite
 patches:
   - target:
       group: external-secrets.io
