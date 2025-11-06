@@ -18,5 +18,10 @@ helmCharts:
   valuesFile: helm-values.yaml
   includeCRDs: true
 
+images:
+- name: quay.io/konflux-ci/konflux-devprod/devlake-mcp-server
+  newName: quay.io/konflux-ci/konflux-devprod/devlake-mcp-server
+  newTag: 711b1fa7feb82af2f4572e21154934f1b0d9d345
+
 commonAnnotations:
   argocd.argoproj.io/sync-wave: "-1"
