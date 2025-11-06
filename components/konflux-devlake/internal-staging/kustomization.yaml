@@ -7,7 +7,7 @@ namespace: konflux-devlake
 resources:
 - ../base
 - external-secrets
-- https://github.com/konflux-ci/konflux-devlake-mcp.git/k8s?ref=ade23c78280fa9614437df2a2b2ed3dccc38b253
+- https://github.com/konflux-ci/konflux-devlake-mcp.git/k8s?ref=711b1fa7feb82af2f4572e21154934f1b0d9d345
 
 helmCharts:
 - name: devlake
@@ -17,6 +17,11 @@ helmCharts:
   namespace: konflux-devlake
   valuesFile: helm-values.yaml
   includeCRDs: true
+
+images:
+- name: quay.io/konflux-ci/konflux-devprod/devlake-mcp-server
+  newName: quay.io/konflux-ci/konflux-devprod/devlake-mcp-server
+  newTag: 711b1fa7feb82af2f4572e21154934f1b0d9d345
 
 commonAnnotations:
   argocd.argoproj.io/sync-wave: "-1"
