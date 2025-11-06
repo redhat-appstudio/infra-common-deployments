@@ -5,3 +5,4 @@ namespace: konflux-support-ops
 
 resources:
 - ../base
+- external-secrets
