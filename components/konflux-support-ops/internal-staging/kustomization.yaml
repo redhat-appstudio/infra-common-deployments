@@ -4,5 +4,5 @@ kind: Kustomization
 namespace: konflux-support-ops
 
 resources:
-- ../base
-- external-secrets
+# - ../base
+# - external-secrets
