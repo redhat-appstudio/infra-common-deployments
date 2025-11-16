@@ -34,6 +34,11 @@ spec:
             secretKeyRef:
               name: konflux-support-ops-secrets
               key: JIRA_API_KEY
+        - name: JIRA_API_KEY_KONFLUX
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: JIRA_API_KEY
         - name: ENABLE_TOKEN_VALIDATION
           value: "true"
         resources:
