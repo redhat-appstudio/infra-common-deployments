@@ -38,7 +38,47 @@ spec:
           valueFrom:
             secretKeyRef:
               name: konflux-support-ops-secrets
-              key: JIRA_API_KEY
+              key: JIRA_API_KEY_KONFLUX
+        - name: JIRA_API_KEY_RHN
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: JIRA_API_KEY_RHN
+        - name: JIRA_API_KEY_SP_RHEL
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: JIRA_API_KEY_SP_RHEL
+        - name: JIRA_API_KEY_TFT
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: JIRA_API_KEY_TFT
+        - name: JIRA_API_KEY_OSCI
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: JIRA_API_KEY_OSCI
+        - name: JIRA_API_KEY_RHAI
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: JIRA_API_KEY_RHAI
+        - name: JIRA_API_KEY_OPENSHIFT_PIPELINES
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: JIRA_API_KEY_OPENSHIFT_PIPELINES
+        - name: TELCO_PRE_GA_JIRA_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: TELCO_PRE_GA_JIRA_TOKEN
+        - name: CONVO_PROD_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: CONVO_PROD_TOKEN
         - name: ENABLE_TOKEN_VALIDATION
           value: "true"
         resources:
