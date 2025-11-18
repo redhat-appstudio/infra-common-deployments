@@ -209,11 +209,11 @@ spec:
     - extract:
         conversionStrategy: Default
         decodingStrategy: None
-        key: stonesoup/production/release/radas_signing
+        key: releng/konflux/rhtap-releng-tenant/private-network/hacbs-signing-pipeline-certs
   refreshInterval: 1h
   secretStoreRef:
     kind: SecretStore
-    name: stonesoup-vault
+    name: releng-vault
   target:
     creationPolicy: Owner
     deletionPolicy: Delete
