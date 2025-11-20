@@ -1014,7 +1014,7 @@ spec:
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: checksum-fingerprint
+  name: checksum-credentials
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     argocd.argoproj.io/sync-wave: "-1"
@@ -1023,7 +1023,7 @@ spec:
     - extract:
         conversionStrategy: Default
         decodingStrategy: None
-        key: releng/konflux/rhtap-releng-tenant/common/checksum-fingerprint
+        key: releng/konflux/rhtap-releng-tenant/common/checksum-credentials
   refreshInterval: 1h
   secretStoreRef:
     kind: SecretStore
@@ -1031,29 +1031,7 @@ spec:
   target:
     creationPolicy: Owner
     deletionPolicy: Delete
-    name: checksum-fingerprint
----
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: checksum-keytab
-  annotations:
-    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-    argocd.argoproj.io/sync-wave: "-1"
-spec:
-  dataFrom:
-    - extract:
-        conversionStrategy: Default
-        decodingStrategy: None
-        key: releng/konflux/rhtap-releng-tenant/common/checksum-keytab
-  refreshInterval: 1h
-  secretStoreRef:
-    kind: SecretStore
-    name: releng-vault
-  target:
-    creationPolicy: Owner
-    deletionPolicy: Delete
-    name: checksum-keytab
+    name: checksum-credentials
 ---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
