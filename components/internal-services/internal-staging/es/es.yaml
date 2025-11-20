@@ -728,7 +728,7 @@ spec:
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: checksum-keytab
+  name: checksum-credentials
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     argocd.argoproj.io/sync-wave: "-1"
@@ -737,7 +737,7 @@ spec:
     - extract:
         conversionStrategy: Default
         decodingStrategy: None
-        key: konflux/release/internal-services/signing-servers/nonprod/checksum-keytab
+        key: konflux/release/internal-services/signing-servers/nonprod/checksum-credentials
   refreshInterval: 1h
   secretStoreRef:
     kind: SecretStore
@@ -745,29 +745,7 @@ spec:
   target:
     creationPolicy: Owner
     deletionPolicy: Delete
-    name: checksum-keytab
----
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: checksum-fingerprint
-  annotations:
-    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-    argocd.argoproj.io/sync-wave: "-1"
-spec:
-  dataFrom:
-    - extract:
-        conversionStrategy: Default
-        decodingStrategy: None
-        key: konflux/release/internal-services/signing-servers/nonprod/checksum-fingerprint
-  refreshInterval: 1h
-  secretStoreRef:
-    kind: SecretStore
-    name: konflux-vault
-  target:
-    creationPolicy: Owner
-    deletionPolicy: Delete
-    name: checksum-fingerprint
+    name: checksum-credentials
 ---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
