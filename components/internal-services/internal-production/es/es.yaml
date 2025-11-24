@@ -429,7 +429,7 @@ spec:
     - extract:
         conversionStrategy: Default
         decodingStrategy: None
-        key: stonesoup/staging/production/gitlab/gitlab.cee/file-updates-secret
+        key: stonesoup/production/release/gitlab/gitlab.cee/file-updates-secret
   refreshInterval: 1h
   secretStoreRef:
     kind: SecretStore
