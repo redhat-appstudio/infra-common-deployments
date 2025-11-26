@@ -79,6 +79,26 @@ spec:
             secretKeyRef:
               name: konflux-support-ops-secrets
               key: CONVO_PROD_TOKEN
+        - name: DB_WRITER_URL
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: DB_WRITER_URL
+        - name: DB_READER_URL
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: DB_READER_URL
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: DB_USERNAME
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: DB_PASSWORD
         - name: ENABLE_TOKEN_VALIDATION
           value: "true"
         resources:
