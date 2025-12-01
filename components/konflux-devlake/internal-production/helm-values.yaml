@@ -2,7 +2,7 @@
 lake:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-backend
-    tag: ee8e50fcd2b8477d099d74ba08fa9546785ae4d6
+    tag: 4fef91f25f2f0884f338c6dabf9e32b53e8b5b55
   encryptionSecret:
     secretName: konflux-devlake-secrets
     autoCreateSecret: false
@@ -33,7 +33,7 @@ mysql:
 grafana:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-dashboards
-    tag: 58871d340b1e3b812a9395413b6c931e5ccab22d
+    tag: 5bf7806e7f4d0cc6a9b7192cb02743fad272c3a1
   podSecurityContext: {}
   securityContext:
     fsGroup: null
@@ -64,7 +64,7 @@ grafana:
 ui:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-frontend
-    tag: 0899f4a4865695fe4a5040aec38224e31edb0222
+    tag: 1a18a1b1187edc30d7fb3e5e9a077ca400a051b4
   securityContext: {}
   containerSecurityContext: {}
   basicAuth:
