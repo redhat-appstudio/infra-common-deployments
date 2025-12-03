@@ -8,3 +8,4 @@ resources:
   - hacbs-signing-pipeline-config-staging-openshifthosted.yaml
   - hacbs-signing-pipeline-config-staging-redhatbeta2.yaml
   - hacbs-signing-pipeline-config-staging-redhatrelease2.yaml
+  - hacbs-signing-pipeline-config-staging-e2e.yaml
