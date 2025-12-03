@@ -79,26 +79,31 @@ spec:
             secretKeyRef:
               name: konflux-support-ops-secrets
               key: CONVO_PROD_TOKEN
-        - name: DB_WRITER_URL
+        - name: POSTGRES_HOST
           valueFrom:
             secretKeyRef:
               name: konflux-support-ops-secrets
-              key: DB_WRITER_URL
-        - name: DB_READER_URL
+              key: POSTGRES_HOST
+        - name: POSTGRES_HOST_READER_URL
           valueFrom:
             secretKeyRef:
               name: konflux-support-ops-secrets
-              key: DB_READER_URL
-        - name: DB_USERNAME
+              key: POSTGRES_HOST_READER_URL
+        - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
               name: konflux-support-ops-secrets
-              key: DB_USERNAME
-        - name: DB_PASSWORD
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
               name: konflux-support-ops-secrets
-              key: DB_PASSWORD
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_PORT
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: POSTGRES_PORT
         - name: ENABLE_TOKEN_VALIDATION
           value: "true"
         resources:
