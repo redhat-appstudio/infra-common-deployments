@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: support-ops
-        image: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support@sha256:6831a3f8c9701d3942cf74575da5c68ab96e7a94ff29a9c518a781b5c0071cd3
+        image: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support@sha256:7028fb803f41e6680d184597b1a96aac22ca6f2b3e41200d01b32bc108ed5e85
         imagePullPolicy: Always
         env:
         - name: PYTHONPATH
