@@ -1,0 +1,16 @@
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: support-ops-dashboard
+  annotations:
+    haproxy.router.openshift.io/timeout: 30s
+spec:
+  port:
+    targetPort: "https"
+  to:
+    kind: Service
+    name: support-ops-dashboard
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: reencrypt
