@@ -33,7 +33,7 @@ mysql:
 grafana:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-dashboards
-    tag: 5bf7806e7f4d0cc6a9b7192cb02743fad272c3a1
+    tag: 16c8ca4696739044e610f05c43a7fe70d529d021
   podSecurityContext: {}
   securityContext:
     fsGroup: null
