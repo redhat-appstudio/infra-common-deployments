@@ -1098,3 +1098,25 @@ spec:
     creationPolicy: Owner
     deletionPolicy: Delete
     name: konflux-release-signing-stage-sa
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: konflux-release-signing-prod-sa
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/signing/prod
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: konflux-release-signing-prod-sa
