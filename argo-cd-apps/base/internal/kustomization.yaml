@@ -5,6 +5,7 @@ resources:
   - internal-services
   - openshift-pipelines
   - kargo
+  - kyverno
   - cert-manager
   - konflux-support-ops
   - konflux-devlake
