@@ -24,3 +24,5 @@ resources:
   - internalservicesconfig_editor_role.yaml
   - internalservicesconfig_viewer_role.yaml
   - view-authenticated-users.yaml
+  - release_team_role.yaml
+  - release_team_role_binding.yaml
