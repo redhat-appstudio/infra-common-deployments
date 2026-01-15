@@ -1,0 +1,63 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: egressfirewall-created-in-all-ns-but-one
+spec:
+  concurrent: false
+  description: |
+    Tests that the ClusterPolicy for generating EgressFirewall is
+    is creating the EgressFirewall in all namespace expect in internal-services.
+  steps:
+    - name: setup-crd
+      try:
+        - apply:
+            file: resources/mock-egressfirewall-crd.yaml
+        - assert:
+            file: resources/mock-egressfirewall-crd.yaml
+    - name: setup-permissions
+      try:
+        - apply:
+            file: ../kyverno_rbac.yaml
+    - name: Apply Kyverno ClusterPolicy and assert it exists
+      try:
+        - apply:
+            file: ../block-signing-server-access.yaml
+        - assert:
+            file: chainsaw-assert-clusterpolicy.yaml
+    - name: create-test-namespace
+      try:
+        - apply:
+            resource:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: test-ns
+    - name: verify-egress-firewall-created
+      try:
+        - assert:
+            resource:
+              apiVersion: k8s.ovn.org/v1
+              kind: EgressFirewall
+              metadata:
+                name: default
+                namespace: test-ns
+    - name: create-internal-services-namespace
+      try:
+        - apply:
+            resource:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: internal-services
+    - name: verify-no-egress-firewall-in-internal-services
+      try:
+      - delete:
+          ref:
+            apiVersion: k8s.ovn.org/v1
+            kind: EgressFirewall
+            namespace: internal-services
+            name: default
+          expect:
+            - check:
+                ($error != null): true

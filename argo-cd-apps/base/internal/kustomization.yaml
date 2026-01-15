@@ -9,3 +9,4 @@ resources:
   - cert-manager
   - konflux-support-ops
   - konflux-devlake
+  - policies
