@@ -11,15 +11,9 @@ generators:
 
 # set resources to jobs
 patches:
-  - path: job_resources.yaml
-    target:
-      group: batch
-      version: v1
-      kind: Job
-      name: konflux-kyverno-migrate-resources
-  - path: job_resources.yaml
-    target:
-      group: batch
-      version: v1
-      kind: Job
-      name: konflux-kyverno-remove-configmap
+- path: job_patches.yaml
+  target:
+    group: batch
+    kind: Job
+    name: konflux-kyverno-migrate-resources
+    version: v1
