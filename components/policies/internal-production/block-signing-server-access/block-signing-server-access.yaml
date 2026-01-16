@@ -1,0 +1,39 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-signing-server-access
+  annotations:
+    policies.kyverno.io/title: Block signing server access
+    policies.kyverno.io/category: Firewall
+    policies.kyverno.io/subject: EgressFirewall
+    policies.kyverno.io/description: >-
+      This policy automatically generates an EgressFirewall resource in all
+      namespaces except the 'internal-services' namespace to block access to the signing server.
+spec:
+  background: true
+  rules:
+    - name: generate-egress-firewall
+      match:
+        any:
+          - resources:
+              kinds:
+                - /v1/Namespace
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - internal-services
+      skipBackgroundRequests: true
+      generate:
+        generateExisting: true
+        apiVersion: k8s.ovn.org/v1
+        kind: EgressFirewall
+        name: default
+        namespace: "{{request.object.metadata.name}}"
+        synchronize: true
+        data:
+          spec:
+            egress:
+              - to:
+                  dnsName: signserver.devel.redhat.com
+                type: Deny

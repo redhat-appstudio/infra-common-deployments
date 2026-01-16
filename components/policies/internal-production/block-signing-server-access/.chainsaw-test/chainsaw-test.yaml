@@ -1,0 +1,284 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: egressfirewall-created-in-all-new-ns-but-one
+spec:
+  concurrent: false
+  description: |
+    Tests that the ClusterPolicy for generating EgressFirewall is
+    is creating the EgressFirewall in all new namespaces except in internal-services.
+  steps:
+    - name: setup-crd
+      try:
+        - apply:
+            file: resources/mock-egressfirewall-crd.yaml
+        - assert:
+            file: resources/mock-egressfirewall-crd.yaml
+    - name: setup-permissions
+      try:
+        - apply:
+            file: ../kyverno_rbac.yaml
+    - name: Apply Kyverno ClusterPolicy and assert it exists
+      try:
+        - apply:
+            file: ../block-signing-server-access.yaml
+        - assert:
+            file: chainsaw-assert-clusterpolicy.yaml
+    - name: create-test-namespace
+      try:
+        - apply:
+            resource:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: test-ns
+    - name: verify-egress-firewall-created
+      try:
+        - assert:
+            resource:
+              apiVersion: k8s.ovn.org/v1
+              kind: EgressFirewall
+              metadata:
+                name: default
+                namespace: test-ns
+              spec:
+                egress:
+                  - to:
+                      dnsName: signserver.devel.redhat.com
+                    type: Deny
+    - name: create-internal-services-namespace
+      try:
+        - apply:
+            resource:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: internal-services
+    - name: verify-no-egress-firewall-in-internal-services
+      try:
+        - delete:
+            ref:
+              apiVersion: k8s.ovn.org/v1
+              kind: EgressFirewall
+              namespace: internal-services
+              name: default
+            expect:
+              - check:
+                  ($error != null): true
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: egressfirewall-created-in-all-existing-ns-but-one
+spec:
+  concurrent: false
+  description: |
+    Tests that the ClusterPolicy for generating EgressFirewall is
+    is creating the EgressFirewall in all existing namespaces except in internal-services.
+  steps:
+    - name: setup-crd
+      try:
+        - apply:
+            file: resources/mock-egressfirewall-crd.yaml
+        - assert:
+            file: resources/mock-egressfirewall-crd.yaml
+    - name: setup-permissions
+      try:
+        - apply:
+            file: ../kyverno_rbac.yaml
+    - name: create-test-namespace
+      try:
+        - apply:
+            resource:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: test-ns
+    - name: create-internal-services-namespace
+      try:
+        - apply:
+            resource:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: internal-services
+    - name: Apply Kyverno ClusterPolicy and assert it exists
+      try:
+        - apply:
+            file: ../block-signing-server-access.yaml
+        - assert:
+            file: chainsaw-assert-clusterpolicy.yaml
+    - name: verify-egress-firewall-created
+      try:
+        - assert:
+            resource:
+              apiVersion: k8s.ovn.org/v1
+              kind: EgressFirewall
+              metadata:
+                name: default
+                namespace: test-ns
+              spec:
+                egress:
+                  - to:
+                      dnsName: signserver.devel.redhat.com
+                    type: Deny
+    - name: verify-no-egress-firewall-in-internal-services
+      try:
+        - delete:
+            ref:
+              apiVersion: k8s.ovn.org/v1
+              kind: EgressFirewall
+              namespace: internal-services
+              name: default
+            expect:
+              - check:
+                  ($error != null): true
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: egressfirewall-recreated-if-deleted
+spec:
+  concurrent: false
+  description: |
+    Tests that the ClusterPolicy for generating EgressFirewall is
+    is recreating the EgressFirewall if deleted
+  steps:
+    - name: setup-crd
+      try:
+        - apply:
+            file: resources/mock-egressfirewall-crd.yaml
+        - assert:
+            file: resources/mock-egressfirewall-crd.yaml
+    - name: setup-permissions
+      try:
+        - apply:
+            file: ../kyverno_rbac.yaml
+    - name: Apply Kyverno ClusterPolicy and assert it exists
+      try:
+        - apply:
+            file: ../block-signing-server-access.yaml
+        - assert:
+            file: chainsaw-assert-clusterpolicy.yaml
+    - name: create-test-namespace
+      try:
+        - apply:
+            resource:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: test-ns
+    - name: verify-egress-firewall-created
+      try:
+        - assert:
+            resource:
+              apiVersion: k8s.ovn.org/v1
+              kind: EgressFirewall
+              metadata:
+                name: default
+                namespace: test-ns
+              spec:
+                egress:
+                  - to:
+                      dnsName: signserver.devel.redhat.com
+                    type: Deny
+    - name: delete-egress-firewall
+      try:
+        - delete:
+            ref:
+              apiVersion: k8s.ovn.org/v1
+              kind: EgressFirewall
+              namespace: test-ns
+              name: default
+    - name: verify-egress-firewall-recreated
+      try:
+        - assert:
+            resource:
+              apiVersion: k8s.ovn.org/v1
+              kind: EgressFirewall
+              metadata:
+                name: default
+                namespace: test-ns
+              spec:
+                egress:
+                  - to:
+                      dnsName: signserver.devel.redhat.com
+                    type: Deny
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: egressfirewall-restored-if-modified
+spec:
+  concurrent: false
+  description: |
+    Tests that the ClusterPolicy for generating EgressFirewall
+    restores the EgressFirewall if it is modified.
+  steps:
+    - name: setup-crd
+      try:
+        - apply:
+            file: resources/mock-egressfirewall-crd.yaml
+        - assert:
+            file: resources/mock-egressfirewall-crd.yaml
+    - name: setup-permissions
+      try:
+        - apply:
+            file: ../kyverno_rbac.yaml
+    - name: Apply Kyverno ClusterPolicy and assert it exists
+      try:
+        - apply:
+            file: ../block-signing-server-access.yaml
+        - assert:
+            file: chainsaw-assert-clusterpolicy.yaml
+    - name: create-test-namespace
+      try:
+        - apply:
+            resource:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: test-ns
+    - name: verify-egress-firewall-created
+      try:
+        - assert:
+            resource:
+              apiVersion: k8s.ovn.org/v1
+              kind: EgressFirewall
+              metadata:
+                name: default
+                namespace: test-ns
+              spec:
+                egress:
+                  - to:
+                      dnsName: signserver.devel.redhat.com
+                    type: Deny
+    - name: modify-egress-firewall
+      try:
+        - apply:
+            resource:
+              apiVersion: k8s.ovn.org/v1
+              kind: EgressFirewall
+              metadata:
+                name: default
+                namespace: test-ns
+              spec:
+                egress:
+                  - to:
+                      dnsName: malicious.example.com
+                    type: Allow
+    - name: verify-egress-firewall-restored
+      try:
+        - assert:
+            resource:
+              apiVersion: k8s.ovn.org/v1
+              kind: EgressFirewall
+              metadata:
+                name: default
+                namespace: test-ns
+              spec:
+                egress:
+                  - to:
+                      dnsName: signserver.devel.redhat.com
+                    type: Deny
