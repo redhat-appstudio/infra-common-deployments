@@ -23,6 +23,7 @@ spec:
           - resources:
               namespaces:
                 - internal-services
+      skipBackgroundRequests: true
       generate:
         generateExisting: true
         apiVersion: k8s.ovn.org/v1
