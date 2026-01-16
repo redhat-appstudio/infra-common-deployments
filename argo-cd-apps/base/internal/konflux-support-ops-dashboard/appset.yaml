@@ -1,0 +1,37 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: konflux-support-ops-dashboard
+spec:
+  generators:
+    - clusters:
+        selector:
+          matchLabels:
+            argocd.argoproj.io/secret: argocd-secret
+        values:
+          sourceRoot: components/konflux-support-ops-dashboard
+  template:
+    metadata:
+      name: konflux-support-ops-dashboard-{{name}}
+    spec:
+      project: default
+      source:
+        path: '{{values.sourceRoot}}/{{metadata.labels.environment}}'
+        repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
+        targetRevision: main
+      destination:
+        namespace: konflux-support-ops-dashboard
+        name: '{{name}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: -1
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 3m
