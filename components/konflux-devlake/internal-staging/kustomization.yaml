@@ -9,6 +9,9 @@ resources:
 - external-secrets
 - https://github.com/konflux-ci/konflux-devlake-mcp.git/k8s?ref=cd87be1563d7d05b00d2e917424b4f6d90c90821
 
+patches:
+- path: configmap-patch.yaml
+
 helmCharts:
 - name: devlake
   repo: https://apache.github.io/incubator-devlake-helm-chart
