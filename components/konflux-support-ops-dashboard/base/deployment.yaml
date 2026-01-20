@@ -1,0 +1,55 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: support-ops-dashboard
+  namespace: konflux-support-ops-dashboard
+  labels:
+    app: support-ops-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: support-ops-dashboard
+  template:
+    metadata:
+      labels:
+        app: support-ops-dashboard
+    spec:
+      volumes:
+        - name: tls-certs
+          secret:
+            secretName: support-ops-dashboard-tls
+      containers:
+        - name: dashboard
+          image: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support@sha256:676d7a5f159e39a29f8f768253e008f11ba0a0b487b82b723d830801907bb328
+          imagePullPolicy: Always
+          ports:
+            - name: https
+              containerPort: 5000
+              protocol: TCP
+          volumeMounts:
+            - name: tls-certs
+              mountPath: /etc/tls
+              readOnly: true
+          env:
+            - name: TLS_CERT_FILE
+              value: /etc/tls/tls.crt
+            - name: TLS_KEY_FILE
+              value: /etc/tls/tls.key
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - "ALL"
+            seccompProfile:
+              type: RuntimeDefault
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi

@@ -8,5 +8,6 @@ resources:
   - kyverno
   - cert-manager
   - konflux-support-ops
+  - konflux-support-ops-dashboard
   - konflux-devlake
   - policies
