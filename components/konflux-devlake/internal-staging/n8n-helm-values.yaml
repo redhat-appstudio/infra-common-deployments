@@ -1,0 +1,144 @@
+---
+# n8n Helm values for OpenShift deployment
+# Namespace: konflux-devlake
+# Purpose: Workflow automation
+# JIRA: DPROD-1141
+# Access: VPN required (behind Red Hat VPN, same as DevLake UI)
+
+replicaCount: 1
+
+image:
+  repository: n8nio/n8n
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# n8n configuration
+config:
+  # Database configuration - using PostgreSQL for n8n internal storage
+  database:
+    type: postgresdb
+    postgresdb:
+      host:
+        secretRef:
+          name: n8n-secrets
+          key: n8n-db-host
+      port: 5432
+      database:
+        secretRef:
+          name: n8n-secrets
+          key: n8n-db-database
+      user:
+        secretRef:
+          name: n8n-secrets
+          key: n8n-db-user
+      password:
+        secretRef:
+          name: n8n-secrets
+          key: n8n-db-password
+
+  # Encryption key for n8n credentials storage
+  encryptionKey:
+    secretRef:
+      name: n8n-secrets
+      key: encryption-key
+
+  # Environment variables
+  extraEnv:
+    - name: N8N_HOST
+      value: "n8n-konflux-devlake.apps.rosa.kflux-c-stg-i01.qfla.p3.openshiftapps.com"
+    - name: N8N_PROTOCOL
+      value: "https"
+    - name: WEBHOOK_URL
+      value: "https://n8n-konflux-devlake.apps.rosa.kflux-c-stg-i01.qfla.p3.openshiftapps.com/"
+    - name: N8N_BASIC_AUTH_ACTIVE
+      value: "true"
+    - name: N8N_BASIC_AUTH_USER
+      valueFrom:
+        secretKeyRef:
+          name: n8n-secrets
+          key: basic-auth-user
+    - name: N8N_BASIC_AUTH_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: n8n-secrets
+          key: basic-auth-password
+    - name: EXECUTIONS_DATA_PRUNE
+      value: "true"
+    - name: EXECUTIONS_DATA_MAX_AGE
+      value: "168"  # Keep execution data for 7 days
+
+# Persistence for workflows and credentials
+persistence:
+  enabled: true
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+  storageClass: gp3-csi 
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 5678
+
+# Resources
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "500m"
+  limits:
+    memory: "1Gi"
+    cpu: "1000m"
+
+# Security context for OpenShift
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+  runAsNonRoot: true
+
+# Health checks
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /healthz
+    port: 5678
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /healthz
+    port: 5678
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Extra resources - OpenShift Route
+extraResources:
+  - apiVersion: route.openshift.io/v1
+    kind: Route
+    metadata:
+      name: n8n
+      namespace: konflux-devlake
+      labels:
+        app: n8n
+    spec:
+      host: n8n-konflux-devlake.apps.rosa.kflux-c-stg-i01.qfla.p3.openshiftapps.com
+      to:
+        kind: Service
+        name: n8n
+        weight: 100
+      port:
+        targetPort: http
+      tls:
+        termination: edge
+        insecureEdgeTerminationPolicy: Redirect
+      wildcardPolicy: None

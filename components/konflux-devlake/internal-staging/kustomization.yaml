@@ -21,6 +21,15 @@ helmCharts:
   valuesFile: helm-values.yaml
   includeCRDs: true
 
+# n8n deployment for workflow automation (DPROD-1141)
+- name: n8n
+  repo: https://8gears.github.io/n8n-helm-chart/
+  version: 0.23.1
+  releaseName: n8n
+  namespace: konflux-devlake
+  valuesFile: n8n-helm-values.yaml
+  includeCRDs: false
+
 images:
 - name: quay.io/konflux-ci/konflux-devprod/devlake-mcp-server
   newName: quay.io/konflux-ci/konflux-devprod/devlake-mcp-server
