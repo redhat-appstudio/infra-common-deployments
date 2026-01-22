@@ -10,7 +10,9 @@ metadata:
   name: "hacbs-signing-pipeline-config-staging-e2e"
 data:
   PYXIS_URL: "https://pyxis.stage.engineering.redhat.com"
-  SIG_KEY_NAMES: "redhate2etesting redhate2etestingpq"
+  # TODO: Temporarily removed redhate2etestingpq - restore when ready
+  # SIG_KEY_NAMES: "redhate2etesting redhate2etestingpq"
+  SIG_KEY_NAMES: "redhate2etesting"
   PYXIS_SSL_CERT_FILE_NAME: "hacbs-signing-pipeline.pem"
   PYXIS_SSL_CERT_SECRET_NAME: "hacbs-signing-pipeline-staging-certs"
   PYXIS_SSL_KEY_FILE_NAME: "hacbs-signing-pipeline.key"

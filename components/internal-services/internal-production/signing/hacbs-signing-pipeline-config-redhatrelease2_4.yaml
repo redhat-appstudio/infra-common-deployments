@@ -10,7 +10,9 @@ metadata:
   name: "hacbs-signing-pipeline-config-redhatrelease2_4"
 data:
   PYXIS_URL: "https://pyxis.engineering.redhat.com"
-  SIG_KEY_NAMES: "redhatrelease2 redhatrelease4"
+  # TODO: Temporarily removed redhatrelease4 - restore when ready
+  # SIG_KEY_NAMES: "redhatrelease2 redhatrelease4"
+  SIG_KEY_NAMES: "redhatrelease2"
   PYXIS_SSL_CERT_FILE_NAME: "hacbs-signing-pipeline.pem"
   PYXIS_SSL_CERT_SECRET_NAME: "hacbs-signing-pipeline-certs"
   PYXIS_SSL_KEY_FILE_NAME: "hacbs-signing-pipeline.key"
