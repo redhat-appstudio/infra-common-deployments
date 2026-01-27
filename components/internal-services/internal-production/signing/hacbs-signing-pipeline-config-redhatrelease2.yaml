@@ -22,6 +22,3 @@ data:
   UMB_URL: "umb.api.redhat.com"
   UMB_LISTEN_TOPIC: VirtualTopic.eng.robosignatory.hacbs.sign
   UMB_PUBLISH_TOPIC: VirtualTopic.eng.hacbs-signing-pipeline.hacbs.sign
-  UMB_BATCH_LISTEN_TOPIC: VirtualTopic.eng.robosignatory.konflux.sign
-  UMB_BATCH_PUBLISH_TOPIC: VirtualTopic.eng.hacbs-signing-pipeline.konflux.sign
-  SIGNER_TYPE: "batch"
