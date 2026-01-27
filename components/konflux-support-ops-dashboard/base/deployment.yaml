@@ -22,8 +22,12 @@ spec:
             secretName: support-ops-dashboard-tls
       containers:
         - name: dashboard
-          image: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support@sha256:676d7a5f159e39a29f8f768253e008f11ba0a0b487b82b723d830801907bb328
+          image: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support@sha256:44388b8dbae4f66c7971ced5ecc089eff1cb221290c364290e10a8ccbcbb2099
           imagePullPolicy: Always
+          command:
+            - python
+          args:
+            - cmds/weekly_support_dashboard.py
           ports:
             - name: https
               containerPort: 5000
