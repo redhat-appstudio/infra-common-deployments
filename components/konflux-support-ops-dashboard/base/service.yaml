@@ -5,13 +5,11 @@ metadata:
   name: support-ops-dashboard
   labels:
     app: support-ops-dashboard
-  annotations:
-    service.beta.openshift.io/serving-cert-secret-name: support-ops-dashboard-tls
 spec:
   ports:
-    - name: https
+    - name: http
       port: 5000
       protocol: TCP
-      targetPort: https
+      targetPort: 5000
   selector:
     app: support-ops-dashboard
