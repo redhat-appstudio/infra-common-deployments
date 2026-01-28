@@ -4,7 +4,7 @@ imageTag: v1.0.3-beta7
 lake:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-backend
-    tag: a17f0e44030aab531e657a0d508bc26c1b6db482
+    tag: 3b095ed861febca92a40260ba36f33926776d6f0
   encryptionSecret:
     secretName: konflux-devlake-secrets
     autoCreateSecret: false
@@ -82,7 +82,7 @@ grafana:
 ui:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-frontend
-    tag: a17f0e44030aab531e657a0d508bc26c1b6db482
+    tag: 3b095ed861febca92a40260ba36f33926776d6f0
   securityContext: {}
   containerSecurityContext: {}
   basicAuth:
