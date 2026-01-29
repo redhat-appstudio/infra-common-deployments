@@ -16,10 +16,6 @@ spec:
       labels:
         app: support-ops-dashboard
     spec:
-      volumes:
-        - name: tls-certs
-          secret:
-            secretName: support-ops-dashboard-tls
       containers:
         - name: dashboard
           image: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support@sha256:d331250490d4e11417b277bad9ca826c222daeffef5cd68a619f953816f42296
@@ -29,18 +25,9 @@ spec:
           args:
             - cmds/weekly_support_dashboard.py
           ports:
-            - name: https
+            - name: http
               containerPort: 5000
               protocol: TCP
-          volumeMounts:
-            - name: tls-certs
-              mountPath: /etc/tls
-              readOnly: true
-          env:
-            - name: TLS_CERT_FILE
-              value: /etc/tls/tls.crt
-            - name: TLS_KEY_FILE
-              value: /etc/tls/tls.key
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
