@@ -1,8 +1,10 @@
 ---
+imageTag: v1.0.3-beta7
+
 lake:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-backend
-    tag: 95e09828666f40a85a51c8d7e242734a493d78af
+    tag: 3b095ed861febca92a40260ba36f33926776d6f0
   encryptionSecret:
     secretName: konflux-devlake-secrets
     autoCreateSecret: false
@@ -17,10 +19,26 @@ lake:
   envs:
     REMOTE_PLUGIN_DIR: ""
     DISABLED_REMOTE_PLUGINS: "true"
-    API_REQUESTS_PER_HOUR: "100000"
     LOGGING_DIR: "/tmp"
-    PIPELINE_MAX_PARALLEL: "4"
+    LOGGING_LEVEL: "info"
     IN_SECURE_SKIP_VERIFY: "true"
+    PIPELINE_MAX_PARALLEL: "4"
+
+    # API timeout - increase for large repositories with slow responses
+    API_TIMEOUT: "180s"
+
+    # API retry attempts for transient failures
+    API_RETRY: "5"
+
+    # ===========================================
+    # GitHub GraphQL Job Collector (PR #8616)
+    # Optimized for large repositories with many workflow jobs
+    # ===========================================
+    # PAGINATING mode: Queries one workflow run at a time with full pagination
+    # - Guarantees complete data collection for workflows with >20 jobs
+    # - More API calls but avoids timeouts and missing data
+    GITHUB_GRAPHQL_JOB_COLLECTION_MODE: "PAGINATING"
+    GITHUB_GRAPHQL_JOB_PAGINATING_PAGE_SIZE: "100"
   envFrom:
     - secretRef:
         name: konflux-devlake-secrets
@@ -64,7 +82,7 @@ grafana:
 ui:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-frontend
-    tag: 95e09828666f40a85a51c8d7e242734a493d78af
+    tag: 3b095ed861febca92a40260ba36f33926776d6f0
   securityContext: {}
   containerSecurityContext: {}
   basicAuth:
