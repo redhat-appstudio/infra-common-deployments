@@ -7,7 +7,7 @@ metadata:
     app: "hacbs-signing-pipeline"
     env: production
     paas.redhat.com/appcode: RSIG-001
-  name: "hacbs-signing-pipeline-config-redhatrelease2_4"
+  name: "hacbs-signing-pipeline-config-redhatrelease2-4"
 data:
   PYXIS_URL: "https://pyxis.engineering.redhat.com"
   # TODO: Temporarily removed redhatrelease4 - restore when ready
