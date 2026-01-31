@@ -5,10 +5,9 @@ metadata:
   name: support-ops-dashboard
   annotations:
     haproxy.router.openshift.io/timeout: 30s
-    haproxy.router.openshift.io/ip_whitelist: ""
 spec:
   port:
-    targetPort: "https"
+    targetPort: https
   to:
     kind: Service
     name: support-ops-dashboard
