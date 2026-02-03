@@ -7,7 +7,7 @@ namespace: konflux-support-ops-dashboard
 resources:
   - ../base
 
-# images:
-#   - name: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support
-#     newName: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support
-#     newTag: sha256:676d7a5f159e39a29f8f768253e008f11ba0a0b487b82b723d830801907bb328
+images:
+  - name: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support
+    newName: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support
+    digest: sha256:4a83c78f84c3be472259dfb14ab1b1f67ee565b5468a3da378f30d074dfd3d44
