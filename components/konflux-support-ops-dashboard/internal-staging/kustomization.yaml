@@ -10,4 +10,4 @@ resources:
 images:
   - name: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support
     newName: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support
-    digest: sha256:d331250490d4e11417b277bad9ca826c222daeffef5cd68a619f953816f42296
+    digest: sha256:4a83c78f84c3be472259dfb14ab1b1f67ee565b5468a3da378f30d074dfd3d44
