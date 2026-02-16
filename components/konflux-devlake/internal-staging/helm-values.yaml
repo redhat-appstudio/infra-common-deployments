@@ -23,7 +23,7 @@ lake:
     LOGGING_LEVEL: "info"
     IN_SECURE_SKIP_VERIFY: "true"
     PIPELINE_MAX_PARALLEL: "4"
-    CORS_ALLOW_ORIGIN: "metrics.dprod.io"
+    CORS_ALLOW_ORIGIN: "https://metrics.dprod.io"
 
     # API timeout - increase for large repositories with slow responses
     API_TIMEOUT: "180s"
