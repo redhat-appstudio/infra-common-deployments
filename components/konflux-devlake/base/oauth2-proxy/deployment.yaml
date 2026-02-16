@@ -1,0 +1,67 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth2-proxy
+  labels:
+    app: oauth2-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oauth2-proxy
+  template:
+    metadata:
+      labels:
+        app: oauth2-proxy
+    spec:
+      containers:
+        - name: oauth2-proxy
+          image: quay.io/oauth2-proxy/oauth2-proxy:v7.14.2
+          ports:
+            - containerPort: 4180
+              name: http
+              protocol: TCP
+          env:
+            - name: OAUTH2_PROXY_PROVIDER
+              value: "keycloak-oidc"
+            - name: OAUTH2_PROXY_CLIENT_ID
+              value: "rh-devlake"
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: konflux-devlake-secrets
+                  key: OAUTH2_PROXY_CLIENT_SECRET
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: konflux-devlake-secrets
+                  key: OAUTH2_PROXY_COOKIE_SECRET
+            - name: OAUTH2_PROXY_OIDC_ISSUER_URL
+              value: "https://auth.redhat.com/auth/realms/EmployeeIDP"
+            - name: OAUTH2_PROXY_UPSTREAMS
+              value: "http://konflux-devlake-ui:4000"
+            - name: OAUTH2_PROXY_HTTP_ADDRESS
+              value: "0.0.0.0:4180"
+            - name: OAUTH2_PROXY_SKIP_AUTH_ROUTES
+              value: "^/grafana/.*,^/health.*,^/api/.*"
+            - name: OAUTH2_PROXY_EMAIL_DOMAINS
+              value: "redhat.com"
+            - name: OAUTH2_PROXY_CODE_CHALLENGE_METHOD
+              value: "S256"
+            - name: OAUTH2_PROXY_REVERSE_PROXY
+              value: "true"
+            - name: OAUTH2_PROXY_SKIP_PROVIDER_BUTTON
+              value: "true"
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
