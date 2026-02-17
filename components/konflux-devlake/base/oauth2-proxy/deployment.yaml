@@ -53,6 +53,8 @@ spec:
               value: "true"
             - name: OAUTH2_PROXY_SKIP_PROVIDER_BUTTON
               value: "true"
+            - name: OAUTH2_PROXY_SESSION_COOKIE_MINIMAL
+              value: "true"
           readinessProbe:
             httpGet:
               path: /ping
