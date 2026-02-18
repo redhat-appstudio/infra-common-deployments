@@ -6,6 +6,7 @@ namespace: konflux-devlake
 
 resources:
 - ../base
+- ../base/oauth2-proxy
 - external-secrets
 - https://github.com/konflux-ci/konflux-devlake-mcp.git/k8s?ref=cd87be1563d7d05b00d2e917424b4f6d90c90821
 
