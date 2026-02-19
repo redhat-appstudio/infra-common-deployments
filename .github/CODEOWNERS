@@ -14,7 +14,7 @@
 /components/iam/ @gbenhaim @hugares @enkeefe00 @oswcab
 
 # Owners for internal-services
-/components/internal-services/ @davidmogar @johnbieren @scoheb @theflockers @mmalina @happybhati @seanconroy2021 @jinqi7 @filipnikolovski @elenagerman @release-service-bot
+/components/internal-services/ @davidmogar @johnbieren @theflockers @mmalina @happybhati @seanconroy2021 @jinqi7 @filipnikolovski @elenagerman @release-service-bot @swickersh @querti @midnightercz
 
 # Owners for kargo
 /components/kargo/ @gbenhaim @hugares @enkeefe00
