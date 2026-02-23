@@ -5,10 +5,12 @@ metadata:
   name: cleanup-internal-requests-pipelineruns
 spec:
   schedule: "10 03 * * *"
+  concurrencyPolicy: Replace
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
+      activeDeadlineSeconds: 3600 # 1h
       template:
         spec:
           restartPolicy: Never
@@ -33,13 +35,17 @@ spec:
                 - |
                   set -o pipefail
                   PATH="/bin:/usr/bin:/usr/local/bin"
-                  MAX_PROCS=5
                   PRUNING_CRS_FILE="/var/tmp/crs-to-be-pruned"
                   KUBECTL_OUTPUT=$(mktemp -p /var/tmp)
                   SECONDS_BACK=$(date -d "${OLDER_THAN}" +%s)
-                  kubectl get "${CR_TYPE}" -n "${CR_NAMESPACE}" -l "${LABELS}" \
-                  --sort-by=.status.completionTime \
-                  --template '{{range .items}}{{.metadata.name}}{{"\t"}}{{.metadata.namespace}}{{"\t"}}{{.status.completionTime}}{{"\n"}}{{end}}' > $KUBECTL_OUTPUT
+
+                  if ! kubectl get "${CR_TYPE}" -n "${CR_NAMESPACE}" -l "${LABELS}" \
+                  --timeout=30s \
+                  --template '{{range .items}}{{if .status.completionTime}}{{.metadata.name}}{{"\t"}}{{.metadata.namespace}}{{"\t"}}{{.status.completionTime}}{{"\n"}}{{end}}{{end}}' > $KUBECTL_OUTPUT; then
+                    echo "ERROR: failed to list ${CR_TYPE} resources"
+                    exit 1
+                  fi
+
                   awk -v since=${SECONDS_BACK} '{
                        # parsing the completionTime and converting it to epoch
                        # so we can compute the precise CRs that should be deleted
@@ -54,17 +60,15 @@ spec:
                        }
                     }' $KUBECTL_OUTPUT > $PRUNING_CRS_FILE
 
-                  # The deleteAndLog will run the CR deletion and save the operation in a structured way that
-                  # can be read easily by kubectl or journalctl
-                  function deleteAndLog() {
-                    cr=${1%:*}
-                    namespace=${1#*:}
-                    kubectl delete "${CR_TYPE}" "${cr}" -n "${namespace}" |while read logLine; do
-                      echo "INFO: namespace=${namespace} log=${logLine}"
-                    done
-                  }
-                  export -f deleteAndLog
-                  xargs -a ${PRUNING_CRS_FILE} -i -P ${MAX_PROCS} bash -c 'deleteAndLog "{}"'
+                  while IFS= read -r line; do
+                    cr=${line%:*}
+                    namespace=${line#*:}
+                    if output=$(kubectl delete "${CR_TYPE}" "${cr}" -n "${namespace}" --wait=false --timeout=30s 2>&1); then
+                      echo "INFO: namespace=${namespace} ${output}"
+                    else
+                      echo "ERROR: namespace=${namespace} ${output}"
+                    fi
+                  done < $PRUNING_CRS_FILE
               imagePullPolicy: IfNotPresent
               image: quay.io/konflux-ci/release-service-utils:9089cafbf36bb889b4b73d8c2965613810f13736
               volumeMounts:
@@ -73,15 +77,15 @@ spec:
               resources:
                 limits:
                   cpu: 200m
-                  memory: 300Mi
+                  memory: 256Mi
                 requests:
-                  cpu: 100m
-                  memory: 200Mi
+                  cpu: 200m
+                  memory: 256Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
                   drop:
-                  - ALL
+                    - ALL
                 readOnlyRootFilesystem: true
                 runAsNonRoot: true
                 seccompProfile:
