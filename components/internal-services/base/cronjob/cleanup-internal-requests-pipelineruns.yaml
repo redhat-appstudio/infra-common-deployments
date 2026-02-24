@@ -40,7 +40,7 @@ spec:
                   SECONDS_BACK=$(date -d "${OLDER_THAN}" +%s)
 
                   if ! kubectl get "${CR_TYPE}" -n "${CR_NAMESPACE}" -l "${LABELS}" \
-                  --timeout=30s \
+                  --request-timeout=30s \
                   --template '{{range .items}}{{if .status.completionTime}}{{.metadata.name}}{{"\t"}}{{.metadata.namespace}}{{"\t"}}{{.status.completionTime}}{{"\n"}}{{end}}{{end}}' > $KUBECTL_OUTPUT; then
                     echo "ERROR: failed to list ${CR_TYPE} resources"
                     exit 1
