@@ -1,0 +1,18 @@
+resources:
+  - ../base
+  - rbac
+  - external-secrets
+  - https://github.com/redhat-appstudio/o11y/config/exporters/monitoring/kanary/base?ref=52d8abfebdbe01bee10a9ee36ba88cc95bbb095d
+
+images:
+  - name: quay.io/redhat-appstudio/o11y
+    newName: quay.io/redhat-appstudio/o11y
+    newTag: 52d8abfebdbe01bee10a9ee36ba88cc95bbb095d
+
+patches:
+  - path: kanary-db-credentials-secret-path.yaml
+    target:
+      name: kanary-db-credentials
+      kind: ExternalSecret
+      group: external-secrets.io
+      version: v1

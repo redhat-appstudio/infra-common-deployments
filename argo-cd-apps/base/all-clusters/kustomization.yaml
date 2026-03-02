@@ -6,3 +6,7 @@ resources:
   - external-secrets-operator
   - iam
   - monitoring-workload-logging
+  - monitoring-registry
+  - monitoring-prometheus
+  - monitoring-grafana
+  - monitoring-blackbox

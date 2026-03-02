@@ -1,0 +1,4 @@
+resources:
+  - rbac
+
+namespace: appstudio-registry-exporter

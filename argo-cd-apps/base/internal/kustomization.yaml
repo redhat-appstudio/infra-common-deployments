@@ -11,3 +11,4 @@ resources:
   - konflux-support-ops-dashboard
   - konflux-devlake
   - policies
+  - monitoring-kanary
