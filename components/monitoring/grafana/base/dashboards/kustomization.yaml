@@ -1,15 +1,18 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- build-service/
-- image-controller/
-- dora-metrics/
-- has/
-- integration/
+# Removed dashboards for applications not in common clusters:
+# - build-service/ (not in common)
+# - dora-metrics/ (not in common)
+# - has/ (not in common)
+# - image-controller/ (not in common)
+# - integration/ (not in common)
+# - pipeline-service/ (not in common)
+# - release/ (not in common)
+
+# Kept dashboards relevant for common clusters:
 - migration/
-- release/
 - performance/
-- pipeline-service/
 - generic-dashboards/
 - namespace-lister/
 - kueue/
