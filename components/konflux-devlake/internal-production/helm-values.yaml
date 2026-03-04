@@ -110,10 +110,10 @@ extraResources:
     spec:
       to:
         kind: Service
-        name: konflux-devlake-ui
+        name: oauth2-proxy
         weight: 100
       port:
-        targetPort: ui
+        targetPort: http
       tls:
         termination: edge
         insecureEdgeTerminationPolicy: Redirect
