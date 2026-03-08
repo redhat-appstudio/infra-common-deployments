@@ -4,7 +4,7 @@ imageTag: v1.0.3-beta7
 lake:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-backend
-    tag: e893053cc74fbe84ad0a3f5f5a8112ade6aad2bc
+    tag: ff6d2f19484d60839a0c0e3b7d1f8cfc9079b4b5
   encryptionSecret:
     secretName: konflux-devlake-secrets
     autoCreateSecret: false
@@ -23,6 +23,7 @@ lake:
     LOGGING_LEVEL: "info"
     IN_SECURE_SKIP_VERIFY: "true"
     PIPELINE_MAX_PARALLEL: "4"
+    CORS_ALLOW_ORIGIN: "https://metrics.dprod.io,https://konflux-devlake-ui-konflux-devlake.apps.rosa.kflux-c-stg-i01.qfla.p3.openshiftapps.com"
 
     # API timeout - increase for large repositories with slow responses
     API_TIMEOUT: "180s"
@@ -109,10 +110,10 @@ extraResources:
     spec:
       to:
         kind: Service
-        name: konflux-devlake-ui
+        name: oauth2-proxy
         weight: 100
       port:
-        targetPort: ui
+        targetPort: http
       tls:
         termination: edge
         insecureEdgeTerminationPolicy: Redirect
