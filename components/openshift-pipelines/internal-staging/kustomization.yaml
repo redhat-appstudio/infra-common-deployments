@@ -4,3 +4,9 @@ kind: Kustomization
 resources:
   # Base resources
   - ../base
+
+patches:
+  - path: tekton-config-patch.yaml
+    target:
+      kind: TektonConfig
+      name: config
