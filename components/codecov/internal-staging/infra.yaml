@@ -1,0 +1,282 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: codecov
+  labels:
+    app: codecov
+    component: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: codecov
+      component: postgres
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: codecov
+        component: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "codecov"
+            - name: POSTGRES_DB
+              value: "codecov"
+            - name: PGDATA
+              value: "/var/lib/postgresql/data/pgdata"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: codecov-secrets
+                  key: postgres-password
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "codecov"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "codecov"]
+            initialDelaySeconds: 15
+            periodSeconds: 20
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: codecov
+  labels:
+    app: codecov
+    component: postgres
+spec:
+  selector:
+    app: codecov
+    component: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timescale
+  namespace: codecov
+  labels:
+    app: codecov
+    component: timescale
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: codecov
+      component: timescale
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: codecov
+        component: timescale
+    spec:
+      containers:
+        - name: timescale
+          image: timescale/timescaledb:latest-pg17
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "codecov"
+            - name: POSTGRES_DB
+              value: "codecov"
+            - name: PGDATA
+              value: "/var/lib/postgresql/data/pgdata"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: codecov-secrets
+                  key: postgres-password
+          volumeMounts:
+            - name: timescale-data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "codecov"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "codecov"]
+            initialDelaySeconds: 15
+            periodSeconds: 20
+      volumes:
+        - name: timescale-data
+          persistentVolumeClaim:
+            claimName: timescale-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: timescale
+  namespace: codecov
+  labels:
+    app: codecov
+    component: timescale
+spec:
+  selector:
+    app: codecov
+    component: timescale
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: codecov
+  labels:
+    app: codecov
+    component: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: codecov
+      component: redis
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: codecov
+        component: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:6.2-alpine
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 15
+            periodSeconds: 20
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: codecov
+  labels:
+    app: codecov
+    component: redis
+spec:
+  selector:
+    app: codecov
+    component: redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: codecov
+  labels:
+    app: codecov
+    component: minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: codecov
+      component: minio
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: codecov
+        component: minio
+    spec:
+      containers:
+        - name: minio
+          image: minio/minio:RELEASE.2020-04-15T00-39-01Z
+          args: ["server", "/export"]
+          ports:
+            - containerPort: 9000
+          env:
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: codecov-secrets
+                  key: minio-access-key
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: codecov-secrets
+                  key: minio-secret-key
+          volumeMounts:
+            - name: archive-data
+              mountPath: /export
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: 9000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: 9000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+      volumes:
+        - name: archive-data
+          persistentVolumeClaim:
+            claimName: archive-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: codecov
+  labels:
+    app: codecov
+    component: minio
+spec:
+  selector:
+    app: codecov
+    component: minio
+  ports:
+    - port: 9000
+      targetPort: 9000

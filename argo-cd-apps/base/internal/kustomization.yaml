@@ -9,5 +9,6 @@ resources:
   - cert-manager
   - konflux-support-ops
   - konflux-support-ops-dashboard
+  - codecov
   - konflux-devlake
   - policies

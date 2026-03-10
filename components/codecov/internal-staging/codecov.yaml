@@ -1,0 +1,223 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: codecov
+  labels:
+    app: codecov
+    component: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: codecov
+      component: api
+  template:
+    metadata:
+      labels:
+        app: codecov
+        component: api
+    spec:
+      containers:
+        - name: api
+          image: codecov/self-hosted-api:latest-calver
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - name: codecov-config
+              mountPath: /config
+      volumes:
+        - name: codecov-config
+          secret:
+            secretName: codecov-secrets
+            items:
+              - key: codecov-yml
+                path: codecov.yml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: codecov
+  labels:
+    app: codecov
+    component: api
+spec:
+  selector:
+    app: codecov
+    component: api
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: codecov
+  labels:
+    app: codecov
+    component: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: codecov
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: codecov
+        component: worker
+    spec:
+      containers:
+        - name: worker
+          image: codecov/self-hosted-worker:latest-calver
+          env:
+            - name: RUN_ENV
+              value: "ENTERPRISE"
+          volumeMounts:
+            - name: codecov-config
+              mountPath: /config
+      volumes:
+        - name: codecov-config
+          secret:
+            secretName: codecov-secrets
+            items:
+              - key: codecov-yml
+                path: codecov.yml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: codecov
+  labels:
+    app: codecov
+    component: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: codecov
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: codecov
+        component: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: codecov/self-hosted-frontend:latest-calver
+          ports:
+            - containerPort: 8080
+          env:
+            - name: CODECOV_BASE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: codecov-secrets
+                  key: codecov-hostname
+            - name: CODECOV_API_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: codecov-secrets
+                  key: codecov-hostname
+            - name: CODECOV_IA_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: codecov-secrets
+                  key: codecov-hostname
+            - name: CODECOV_SCHEME
+              value: "https"
+            - name: CODECOV_GLE_HOST
+              value: "gitlab.cee.redhat.com"
+            - name: GITLAB_ENTERPRISE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: codecov-secrets
+                  key: gitlab-client-id
+          volumeMounts:
+            - name: codecov-config
+              mountPath: /config
+      volumes:
+        - name: codecov-config
+          secret:
+            secretName: codecov-secrets
+            items:
+              - key: codecov-yml
+                path: codecov.yml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: codecov
+  labels:
+    app: codecov
+    component: frontend
+spec:
+  selector:
+    app: codecov
+    component: frontend
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: codecov
+  labels:
+    app: codecov
+    component: gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: codecov
+      component: gateway
+  template:
+    metadata:
+      labels:
+        app: codecov
+        component: gateway
+    spec:
+      containers:
+        - name: gateway
+          image: codecov/self-hosted-gateway:latest-calver
+          ports:
+            - containerPort: 8080
+          env:
+            - name: CODECOV_GATEWAY_MINIO_ENABLED
+              value: "true"
+            - name: CODECOV_GATEWAY_CHROOT_DISABLED
+              value: "true"
+          volumeMounts:
+            - name: codecov-config
+              mountPath: /config
+      volumes:
+        - name: codecov-config
+          secret:
+            secretName: codecov-secrets
+            items:
+              - key: codecov-yml
+                path: codecov.yml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: codecov
+  labels:
+    app: codecov
+    component: gateway
+spec:
+  selector:
+    app: codecov
+    component: gateway
+  ports:
+    - port: 8080
+      targetPort: 8080
