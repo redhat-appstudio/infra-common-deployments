@@ -38,6 +38,13 @@ spec:
                 secretKeyRef:
                   name: codecov-secrets
                   key: postgres-password
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
@@ -111,6 +118,13 @@ spec:
                 secretKeyRef:
                   name: codecov-secrets
                   key: postgres-password
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
           volumeMounts:
             - name: timescale-data
               mountPath: /var/lib/postgresql/data
@@ -172,6 +186,13 @@ spec:
           image: redis:6.2-alpine
           ports:
             - containerPort: 6379
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
           volumeMounts:
             - name: redis-data
               mountPath: /data
@@ -245,6 +266,13 @@ spec:
                 secretKeyRef:
                   name: codecov-secrets
                   key: minio-secret-key
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
           volumeMounts:
             - name: archive-data
               mountPath: /export

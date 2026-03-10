@@ -5,6 +5,7 @@ namespace: codecov
 resources:
   - ../base
   - external-secrets
+  - resource-quota.yaml
   - storage.yaml
   - infra.yaml
   - codecov.yaml
