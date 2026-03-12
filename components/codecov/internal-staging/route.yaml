@@ -1,0 +1,37 @@
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: codecov
+  namespace: codecov
+  labels:
+    app: codecov
+spec:
+  to:
+    kind: Service
+    name: gateway
+    weight: 100
+  port:
+    targetPort: 8080
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: minio
+  namespace: codecov
+  labels:
+    app: codecov
+    component: minio
+spec:
+  to:
+    kind: Service
+    name: minio
+    weight: 100
+  port:
+    targetPort: 9000
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

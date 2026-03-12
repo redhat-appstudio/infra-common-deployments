@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: codecov-quota
+  namespace: codecov
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: 4Gi
+    limits.cpu: "4"
+    limits.memory: 4Gi
+    persistentvolumeclaims: "4"
+    requests.storage: 40Gi
