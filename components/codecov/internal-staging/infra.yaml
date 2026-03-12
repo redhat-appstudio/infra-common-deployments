@@ -45,9 +45,16 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
+            - name: postgres-run
+              mountPath: /var/run/postgresql
+            - name: tmp
+              mountPath: /tmp
           readinessProbe:
             exec:
               command: ["pg_isready", "-U", "codecov"]
@@ -62,6 +69,10 @@ spec:
         - name: postgres-data
           persistentVolumeClaim:
             claimName: postgres-pvc
+        - name: postgres-run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -125,9 +136,16 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
           volumeMounts:
             - name: timescale-data
               mountPath: /var/lib/postgresql/data
+            - name: postgres-run
+              mountPath: /var/run/postgresql
+            - name: tmp
+              mountPath: /tmp
           readinessProbe:
             exec:
               command: ["pg_isready", "-U", "codecov"]
@@ -142,6 +160,10 @@ spec:
         - name: timescale-data
           persistentVolumeClaim:
             claimName: timescale-pvc
+        - name: postgres-run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -193,9 +215,14 @@ spec:
             limits:
               cpu: 200m
               memory: 128Mi
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
           volumeMounts:
             - name: redis-data
               mountPath: /data
+            - name: tmp
+              mountPath: /tmp
           readinessProbe:
             exec:
               command: ["redis-cli", "ping"]
@@ -210,6 +237,8 @@ spec:
         - name: redis-data
           persistentVolumeClaim:
             claimName: redis-pvc
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -273,9 +302,16 @@ spec:
             limits:
               cpu: 300m
               memory: 256Mi
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
           volumeMounts:
             - name: archive-data
               mountPath: /export
+            - name: minio-config
+              mountPath: /.minio
+            - name: tmp
+              mountPath: /tmp
           readinessProbe:
             httpGet:
               path: /minio/health/ready
@@ -292,6 +328,10 @@ spec:
         - name: archive-data
           persistentVolumeClaim:
             claimName: archive-pvc
+        - name: minio-config
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

@@ -31,9 +31,14 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
           volumeMounts:
             - name: codecov-config
               mountPath: /config
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: codecov-config
           secret:
@@ -41,6 +46,8 @@ spec:
             items:
               - key: codecov-yml
                 path: codecov.yml
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -91,9 +98,14 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
           volumeMounts:
             - name: codecov-config
               mountPath: /config
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: codecov-config
           secret:
@@ -101,6 +113,8 @@ spec:
             items:
               - key: codecov-yml
                 path: codecov.yml
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -134,6 +148,9 @@ spec:
             limits:
               cpu: 200m
               memory: 256Mi
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
           env:
             - name: CODECOV_BASE_HOST
               valueFrom:
@@ -162,6 +179,12 @@ spec:
           volumeMounts:
             - name: codecov-config
               mountPath: /config
+            - name: tmp
+              mountPath: /tmp
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
       volumes:
         - name: codecov-config
           secret:
@@ -169,6 +192,12 @@ spec:
             items:
               - key: codecov-yml
                 path: codecov.yml
+        - name: tmp
+          emptyDir: {}
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -218,6 +247,9 @@ spec:
             limits:
               cpu: 200m
               memory: 128Mi
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
           env:
             - name: CODECOV_GATEWAY_MINIO_ENABLED
               value: "true"
@@ -226,6 +258,12 @@ spec:
           volumeMounts:
             - name: codecov-config
               mountPath: /config
+            - name: tmp
+              mountPath: /tmp
+            - name: haproxy-run
+              mountPath: /var/run
+            - name: haproxy-lib
+              mountPath: /var/lib/haproxy
       volumes:
         - name: codecov-config
           secret:
@@ -233,6 +271,12 @@ spec:
             items:
               - key: codecov-yml
                 path: codecov.yml
+        - name: tmp
+          emptyDir: {}
+        - name: haproxy-run
+          emptyDir: {}
+        - name: haproxy-lib
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
