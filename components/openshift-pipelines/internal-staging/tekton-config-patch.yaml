@@ -3,5 +3,5 @@ kind: TektonConfig
 metadata:
   name: config
 spec:
-  results:
-    state: removed
+  result:
+    disabled: true
