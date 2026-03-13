@@ -24,11 +24,37 @@ spec:
       securityContext:
         runAsUser: 1001
         runAsNonRoot: true
+      initContainers:
+        - name: build-ca-bundle
+          image: codecov/self-hosted-api:latest-calver
+          command:
+            - sh
+            - -c
+            - cat /etc/ssl/certs/ca-certificates.crt /config/internal-ca.crt > /ca-certs/ca-bundle.crt
+          securityContext:
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          volumeMounts:
+            - name: codecov-config
+              mountPath: /config
+            - name: ca-certs
+              mountPath: /ca-certs
       containers:
         - name: api
           image: codecov/self-hosted-api:latest-calver
           ports:
             - containerPort: 8000
+          env:
+            - name: SSL_CERT_FILE
+              value: "/ca-certs/ca-bundle.crt"
+            - name: REQUESTS_CA_BUNDLE
+              value: "/ca-certs/ca-bundle.crt"
           resources:
             requests:
               cpu: 100m
@@ -39,6 +65,8 @@ spec:
           volumeMounts:
             - name: codecov-config
               mountPath: /config
+            - name: ca-certs
+              mountPath: /ca-certs
             - name: tmp
               mountPath: /tmp
       volumes:
@@ -48,6 +76,10 @@ spec:
             items:
               - key: codecov-yml
                 path: codecov.yml
+              - key: internal-ca-crt
+                path: internal-ca.crt
+        - name: ca-certs
+          emptyDir: {}
         - name: tmp
           emptyDir: {}
 ---
@@ -92,12 +124,37 @@ spec:
       securityContext:
         runAsUser: 1001
         runAsNonRoot: true
+      initContainers:
+        - name: build-ca-bundle
+          image: codecov/self-hosted-worker:latest-calver
+          command:
+            - sh
+            - -c
+            - cat /etc/ssl/certs/ca-certificates.crt /config/internal-ca.crt > /ca-certs/ca-bundle.crt
+          securityContext:
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          volumeMounts:
+            - name: codecov-config
+              mountPath: /config
+            - name: ca-certs
+              mountPath: /ca-certs
       containers:
         - name: worker
           image: codecov/self-hosted-worker:latest-calver
           env:
             - name: RUN_ENV
               value: "ENTERPRISE"
+            - name: SSL_CERT_FILE
+              value: "/ca-certs/ca-bundle.crt"
+            - name: REQUESTS_CA_BUNDLE
+              value: "/ca-certs/ca-bundle.crt"
           resources:
             requests:
               cpu: 100m
@@ -108,6 +165,8 @@ spec:
           volumeMounts:
             - name: codecov-config
               mountPath: /config
+            - name: ca-certs
+              mountPath: /ca-certs
             - name: tmp
               mountPath: /tmp
       volumes:
@@ -117,6 +176,10 @@ spec:
             items:
               - key: codecov-yml
                 path: codecov.yml
+              - key: internal-ca-crt
+                path: internal-ca.crt
+        - name: ca-certs
+          emptyDir: {}
         - name: tmp
           emptyDir: {}
 ---
