@@ -4,9 +4,5 @@ kind: Kustomization
 resources:
   # Base resources
   - ../base
-
-patches:
-  - path: tekton-config-patch.yaml
-    target:
-      kind: TektonConfig
-      name: config
+  # Disable Tekton Results by letting ArgoCD deploy the TektonConfig
+  - tekton-config.yaml
