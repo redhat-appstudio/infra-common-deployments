@@ -21,6 +21,9 @@ spec:
         app: codecov
         component: api
     spec:
+      securityContext:
+        runAsUser: 1001
+        runAsNonRoot: true
       containers:
         - name: api
           image: codecov/self-hosted-api:latest-calver
@@ -33,8 +36,6 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
-          securityContext:
-            runAsNonRoot: true
           volumeMounts:
             - name: codecov-config
               mountPath: /config
@@ -88,6 +89,9 @@ spec:
         app: codecov
         component: worker
     spec:
+      securityContext:
+        runAsUser: 1001
+        runAsNonRoot: true
       containers:
         - name: worker
           image: codecov/self-hosted-worker:latest-calver
@@ -101,8 +105,6 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
-          securityContext:
-            runAsNonRoot: true
           volumeMounts:
             - name: codecov-config
               mountPath: /config
@@ -140,6 +142,9 @@ spec:
         app: codecov
         component: frontend
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsNonRoot: true
       containers:
         - name: frontend
           image: codecov/self-hosted-frontend:latest-calver
@@ -152,8 +157,6 @@ spec:
             limits:
               cpu: 200m
               memory: 256Mi
-          securityContext:
-            runAsNonRoot: true
           env:
             - name: CODECOV_BASE_HOST
               valueFrom:
@@ -232,6 +235,24 @@ spec:
         app: codecov
         component: gateway
     spec:
+      securityContext:
+        runAsNonRoot: true
+      initContainers:
+        - name: copy-haproxy-config
+          image: codecov/self-hosted-gateway:latest-calver
+          command: ["sh", "-c", "cp -a /etc/haproxy/. /haproxy-config/"]
+          securityContext:
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          volumeMounts:
+            - name: haproxy-config
+              mountPath: /haproxy-config
       containers:
         - name: gateway
           image: codecov/self-hosted-gateway:latest-calver
@@ -244,8 +265,6 @@ spec:
             limits:
               cpu: 200m
               memory: 128Mi
-          securityContext:
-            runAsNonRoot: true
           env:
             - name: CODECOV_GATEWAY_MINIO_ENABLED
               value: "true"
@@ -254,8 +273,14 @@ spec:
           volumeMounts:
             - name: codecov-config
               mountPath: /config
+            - name: haproxy-config
+              mountPath: /etc/haproxy
             - name: tmp
               mountPath: /tmp
+            - name: haproxy-run
+              mountPath: /var/run
+            - name: haproxy-lib
+              mountPath: /var/lib/haproxy
       volumes:
         - name: codecov-config
           secret:
@@ -263,7 +288,13 @@ spec:
             items:
               - key: codecov-yml
                 path: codecov.yml
+        - name: haproxy-config
+          emptyDir: {}
         - name: tmp
+          emptyDir: {}
+        - name: haproxy-run
+          emptyDir: {}
+        - name: haproxy-lib
           emptyDir: {}
 ---
 apiVersion: v1
