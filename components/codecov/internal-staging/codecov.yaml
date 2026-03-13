@@ -7,6 +7,8 @@ metadata:
   labels:
     app: codecov
     component: api
+  annotations:
+    ignore-check.kube-linter.io/no-read-only-root-fs: "third-party image requires writable root fs for startup scripts"
 spec:
   replicas: 1
   selector:
@@ -33,7 +35,6 @@ spec:
               memory: 512Mi
           securityContext:
             runAsNonRoot: true
-            readOnlyRootFilesystem: true
           volumeMounts:
             - name: codecov-config
               mountPath: /config
@@ -73,6 +74,8 @@ metadata:
   labels:
     app: codecov
     component: worker
+  annotations:
+    ignore-check.kube-linter.io/no-read-only-root-fs: "third-party image requires writable root fs for startup scripts"
 spec:
   replicas: 1
   selector:
@@ -100,7 +103,6 @@ spec:
               memory: 512Mi
           securityContext:
             runAsNonRoot: true
-            readOnlyRootFilesystem: true
           volumeMounts:
             - name: codecov-config
               mountPath: /config
@@ -124,6 +126,8 @@ metadata:
   labels:
     app: codecov
     component: frontend
+  annotations:
+    ignore-check.kube-linter.io/no-read-only-root-fs: "third-party image runs sed on built assets at startup"
 spec:
   replicas: 1
   selector:
@@ -150,7 +154,6 @@ spec:
               memory: 256Mi
           securityContext:
             runAsNonRoot: true
-            readOnlyRootFilesystem: true
           env:
             - name: CODECOV_BASE_HOST
               valueFrom:
@@ -181,10 +184,6 @@ spec:
               mountPath: /config
             - name: tmp
               mountPath: /tmp
-            - name: nginx-cache
-              mountPath: /var/cache/nginx
-            - name: nginx-run
-              mountPath: /var/run
       volumes:
         - name: codecov-config
           secret:
@@ -193,10 +192,6 @@ spec:
               - key: codecov-yml
                 path: codecov.yml
         - name: tmp
-          emptyDir: {}
-        - name: nginx-cache
-          emptyDir: {}
-        - name: nginx-run
           emptyDir: {}
 ---
 apiVersion: v1
@@ -223,6 +218,8 @@ metadata:
   labels:
     app: codecov
     component: gateway
+  annotations:
+    ignore-check.kube-linter.io/no-read-only-root-fs: "third-party image requires writable root fs for haproxy config generation"
 spec:
   replicas: 1
   selector:
@@ -249,7 +246,6 @@ spec:
               memory: 128Mi
           securityContext:
             runAsNonRoot: true
-            readOnlyRootFilesystem: true
           env:
             - name: CODECOV_GATEWAY_MINIO_ENABLED
               value: "true"
@@ -260,10 +256,6 @@ spec:
               mountPath: /config
             - name: tmp
               mountPath: /tmp
-            - name: haproxy-run
-              mountPath: /var/run
-            - name: haproxy-lib
-              mountPath: /var/lib/haproxy
       volumes:
         - name: codecov-config
           secret:
@@ -272,10 +264,6 @@ spec:
               - key: codecov-yml
                 path: codecov.yml
         - name: tmp
-          emptyDir: {}
-        - name: haproxy-run
-          emptyDir: {}
-        - name: haproxy-lib
           emptyDir: {}
 ---
 apiVersion: v1
