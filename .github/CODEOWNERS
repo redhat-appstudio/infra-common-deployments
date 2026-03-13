@@ -25,6 +25,10 @@
 # Owners for smee
 /components/smee/ @ifireball @gbenhaim @amisstea @yftacherzog @avi-biton
 
+# Owners for codecov
+/components/codecov/ @ascerra @flacatus @psturc @Dannyb48
+/argo-cd-apps/base/internal/codecov/ @ascerra @flacatus @psturc @Dannyb48
+
 # Owners for konflux-devlake
 /components/konflux-devlake/ @ascerra @flacatus @psturc @Dannyb48
 /argo-cd-apps/base/internal/konflux-devlake/ @ascerra @flacatus @psturc @Dannyb48
