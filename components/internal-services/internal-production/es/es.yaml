@@ -1142,3 +1142,29 @@ spec:
     creationPolicy: Owner
     deletionPolicy: Delete
     name: konflux-release-signing-prod-sa
+
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: quay-signing-pull
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    name: quay-signing-pull
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    template:
+      type: kubernetes.io/dockerconfigjson
+      data:
+        .dockerconfigjson: "{{ .dockerconfig }}"
+  data:
+    - secretKey: .dockerconfig
+      remoteRef:
+        key: konflux/release/internal-services/quay-signing-pull
