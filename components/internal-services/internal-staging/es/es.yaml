@@ -841,4 +841,4 @@ spec:
   data:
     - secretKey: .dockerconfig
       remoteRef:
-        key: konflux/release/internal-services/quay-signing-pull-stage
+        key: konflux/release/internal-services/quay-signing-pull/stage
