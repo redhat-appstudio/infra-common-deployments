@@ -5,6 +5,7 @@ namespace: argocd-local
 resources:
   - ../../base/all-clusters
   - ../../base/internal
+  - ../../base/internal/ca-bundle
 patches:
   - path: environment-patch.yaml
     target:
