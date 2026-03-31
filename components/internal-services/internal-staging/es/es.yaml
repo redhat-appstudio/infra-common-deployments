@@ -842,3 +842,25 @@ spec:
         conversionStrategy: Default
         decodingStrategy: None
         key: konflux/release/internal-services/quay-signing-pull/stage
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: signing-artifact-storage-preprod
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/signing-artifact-storage/preprod
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: signing-artifact-storage-preprod
