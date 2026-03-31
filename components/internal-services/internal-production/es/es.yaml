@@ -1142,7 +1142,6 @@ spec:
     creationPolicy: Owner
     deletionPolicy: Delete
     name: konflux-release-signing-prod-sa
-
 ---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
@@ -1164,7 +1163,8 @@ spec:
       type: kubernetes.io/dockerconfigjson
       data:
         .dockerconfigjson: "{{ .dockerconfig }}"
-  data:
-    - secretKey: .dockerconfig
-      remoteRef:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
         key: konflux/release/internal-services/quay-signing-pull/prod
