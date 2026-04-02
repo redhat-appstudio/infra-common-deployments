@@ -11,6 +11,9 @@ resources:
   # Network Policy
   - networkpolicy/
 
+  # RBAC Resources
+  - rbac/
+
   # InternalServicesConfig
   - config/
 
