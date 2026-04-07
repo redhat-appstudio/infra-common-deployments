@@ -4,7 +4,7 @@ imageTag: v1.0.3-beta7
 lake:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-backend
-    tag: 26cadd67f5c2afacf6dfd1267838a27c94c13ba2
+    tag: 2b981bad328ddff0b92e04592798e6d9748bb594
   encryptionSecret:
     secretName: konflux-devlake-secrets
     autoCreateSecret: false
@@ -46,13 +46,13 @@ lake:
 
 mysql:
   useExternal: true
-  externalServer: "kubernetes.default.svc.cluster.local"  # K8s API - always available
-  externalPort: 443  # HTTPS port - always open
+  externalServer: "kubernetes.default.svc.cluster.local" # K8s API - always available
+  externalPort: 443 # HTTPS port - always open
 
 grafana:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-dashboards
-    tag: 3b8712fbc8199ddeb31f77677143702f4182b535
+    tag: 2b981bad328ddff0b92e04592798e6d9748bb594
   podSecurityContext: {}
   securityContext:
     fsGroup: null
@@ -71,8 +71,8 @@ grafana:
       root_url: "${GF_SERVER_ROOT_URL}"
     auth.google:
       enabled: true
-      client_id: "${GF_AUTH_GOOGLE_CLIENT_ID}"  # Set via secret
-      client_secret: "${GF_AUTH_GOOGLE_CLIENT_SECRET}"  # Set via secret
+      client_id: "${GF_AUTH_GOOGLE_CLIENT_ID}" # Set via secret
+      client_secret: "${GF_AUTH_GOOGLE_CLIENT_SECRET}" # Set via secret
       scopes: "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email openid"
       auth_url: "https://accounts.google.com/o/oauth2/auth"
       token_url: "https://accounts.google.com/o/oauth2/token"
@@ -83,7 +83,7 @@ grafana:
 ui:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-frontend
-    tag: 8f38f831c98b2d7082be48e1be4ebfc23175a046
+    tag: 2b981bad328ddff0b92e04592798e6d9748bb594
   securityContext: {}
   containerSecurityContext: {}
   basicAuth:
