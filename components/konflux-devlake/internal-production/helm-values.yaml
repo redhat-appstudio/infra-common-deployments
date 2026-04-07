@@ -22,11 +22,11 @@ lake:
     LOGGING_DIR: "/tmp"
     LOGGING_LEVEL: "info"
     IN_SECURE_SKIP_VERIFY: "true"
-    PIPELINE_MAX_PARALLEL: "10"
+    PIPELINE_MAX_PARALLEL: "35"
     CORS_ALLOW_ORIGIN: "https://metrics.dprod.io,https://konflux-devlake-ui-konflux-devlake.apps.rosa.kflux-c-prd-i01.7hyu.p3.openshiftapps.com"
 
     # API timeout - increase for large repositories with slow responses
-    API_TIMEOUT: "180s"
+    API_TIMEOUT: "240s"
 
     # API retry attempts for transient failures
     API_RETRY: "5"
