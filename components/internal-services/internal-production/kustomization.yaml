@@ -12,5 +12,7 @@ resources:
   - manager/
   # NetworkPolicy
   - networkpolicy/
+  # RBAC Resources
+  - rbac/
   # Signing ConfigMaps
   - signing/
