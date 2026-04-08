@@ -40,6 +40,18 @@ lake:
     # - More API calls but avoids timeouts and missing data
     GITHUB_GRAPHQL_JOB_COLLECTION_MODE: "PAGINATING"
     GITHUB_GRAPHQL_JOB_PAGINATING_PAGE_SIZE: "100"
+  volumes:
+    - name: jenkins-ca-certs
+      secret:
+        secretName: konflux-devlake-secrets
+        items:
+          - key: ca-certificates.crt
+            path: ca-certificates.crt
+  volumeMounts:
+    - name: jenkins-ca-certs
+      mountPath: /etc/ssl/certs/rhos-ci-jenkins-ca.crt
+      subPath: ca-certificates.crt
+      readOnly: true
   envFrom:
     - secretRef:
         name: konflux-devlake-secrets
