@@ -8,7 +8,7 @@ resources:
 - ../base
 - ../base/oauth2-proxy
 - external-secrets
-- https://github.com/konflux-ci/konflux-devlake-mcp.git/k8s?ref=cd87be1563d7d05b00d2e917424b4f6d90c90821
+- https://github.com/konflux-ci/konflux-devlake-mcp.git/k8s?ref=de791a7936ef889bb20a5992ac6b19b253dc597e
 
 patches:
 - path: configmap-patch.yaml
@@ -25,7 +25,7 @@ helmCharts:
 images:
 - name: quay.io/konflux-ci/konflux-devprod/devlake-mcp-server
   newName: quay.io/konflux-ci/konflux-devprod/devlake-mcp-server
-  newTag: cd87be1563d7d05b00d2e917424b4f6d90c90821
+  newTag: de791a7936ef889bb20a5992ac6b19b253dc597e
 
 commonAnnotations:
   argocd.argoproj.io/sync-wave: "-1"
