@@ -41,16 +41,15 @@ lake:
     GITHUB_GRAPHQL_JOB_COLLECTION_MODE: "PAGINATING"
     GITHUB_GRAPHQL_JOB_PAGINATING_PAGE_SIZE: "100"
   volumes:
-    - name: jenkins-ca-certs
-      secret:
-        secretName: konflux-devlake-secrets
+    - name: trusted-ca
+      configMap:
+        name: trusted-ca
         items:
-          - key: ca-certificates.crt
-            path: ca-certificates.crt
+          - key: ca-bundle.crt
+            path: tls-ca-bundle.pem
   volumeMounts:
-    - name: jenkins-ca-certs
-      mountPath: /etc/ssl/certs/rhos-ci-jenkins-ca.crt
-      subPath: ca-certificates.crt
+    - name: trusted-ca
+      mountPath: /etc/pki/ca-trust/extracted/pem
       readOnly: true
   envFrom:
     - secretRef:
