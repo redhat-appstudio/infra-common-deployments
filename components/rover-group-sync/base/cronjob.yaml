@@ -1,0 +1,84 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: rover-group-sync
+  namespace: rover-group-sync
+spec:
+  schedule: "0 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 7
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: rover-group-sync-sa
+          # Allow non-root (UID 1000) to read mounted Secrets (e.g. SSH key) via group permissions.
+          securityContext:
+            fsGroup: 1000
+          volumes:
+            - name: rover-group-sync-config
+              configMap:
+                name: rover-group-sync-config
+                defaultMode: 420
+            - name: ca
+              secret:
+                secretName: mtls-ca-validators
+            - name: git-repo-creds
+              secret:
+                secretName: git-repo-creds
+                defaultMode: 0640
+            - name: tmp
+              emptyDir: {}
+          containers:
+            - name: rover-group-sync
+              image: quay.io/redhat-user-workloads/konflux-infra-tenant/rover-group-sync@sha256:29815287f5171aed119daeec7a9f5a6785270f5acab42e1adcade0c2e23d14d1
+              imagePullPolicy: IfNotPresent
+              command: ["/bin/bash", "/scripts/sync-rover-groups.sh"]
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 1000
+                capabilities:
+                  drop:
+                    - ALL
+              env:
+                - name: GIT_REPO_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: git-repo-creds
+                      key: url
+                - name: LDAP_DN
+                  valueFrom:
+                    secretKeyRef:
+                      name: ldap-creds
+                      key: username
+                - name: LDAP_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: ldap-creds
+                      key: password
+                - name: GIT_SSH_PUBLIC_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: git-repo-creds
+                      key: ssh_public
+              volumeMounts:
+                - name: rover-group-sync-config
+                  mountPath: /config
+                  readOnly: true
+                - name: ca
+                  mountPath: /secrets
+                  readOnly: true
+                - name: git-repo-creds
+                  mountPath: /secrets/git-repo
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  memory: 512Mi

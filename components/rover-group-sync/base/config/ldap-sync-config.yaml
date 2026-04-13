@@ -1,0 +1,38 @@
+# OpenShift LDAP sync config for: oc adm groups sync --sync-config=...
+# Mirrors components/authentication/base/group-sync/konflux-rover-groups.yaml (RFC2307).
+#
+# Replace:
+#  - url: use IT-approved internal LDAP (ldapfrac was decommissioned for external use)
+#  - bindDN / bindPassword: from the same material as konflux-ldap-sa (Vault path in ExternalSecret)
+#  - ca: path to PEM bundle that validates the LDAP server cert (same trust as mtls-ca-validators)
+#
+# Do not commit real credentials; inject at runtime (CronJob volume from Secret).
+
+kind: LDAPSyncConfig
+apiVersion: v1
+url: ldaps://ldap.corp.redhat.com
+bindDN: "REPLACE_WITH_BIND_DN"
+bindPassword: "REPLACE_WITH_BIND_PASSWORD"
+insecure: false
+ca: "REPLACE_WITH_CA_PATH"
+
+rfc2307:
+  groupsQuery:
+    baseDN: "ou=adhoc,ou=managedGroups,dc=redhat,dc=com"
+    derefAliases: never
+    scope: sub
+    filter: (&(objectClass=rhatRoverGroup)(|(cn=konflux-*)(cn=ai-konflux-user-support)(cn=plm-poe)))
+  groupUIDAttribute: dn
+  groupNameAttributes:
+    - cn
+  groupMembershipAttributes:
+    - uniqueMember
+  usersQuery:
+    baseDN: "dc=redhat,dc=com"
+    derefAliases: never
+    scope: sub
+  userNameAttributes:
+    - uid
+  userUIDAttribute: dn
+  tolerateMemberNotFoundErrors: true
+  tolerateMemberOutOfScopeErrors: true

@@ -12,3 +12,4 @@ resources:
   - codecov
   - konflux-devlake
   - policies
+  - rover-group-sync
