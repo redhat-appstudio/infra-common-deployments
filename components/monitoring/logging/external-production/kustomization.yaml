@@ -7,22 +7,22 @@ resources:
 patches:
   - target:
       group: external-secrets.io
-      version: v1beta1
+      version: v1
       kind: ExternalSecret
       name: log-forwarder-splunk-rhtap-application-external-secret
     patch: |
       - op: replace
         path: /spec/dataFrom/0/extract/key
-        value: production/monitoring/logging/fluentd/splunk-forwarder-rhtap-production-application
+        value: production/monitoring/logging/splunk/rh_rhtap_production_app
   - target:
       group: external-secrets.io
-      version: v1beta1
+      version: v1
       kind: ExternalSecret
       name: log-forwarder-splunk-rhtap-audit-external-secret
     patch: |
       - op: replace
         path: /spec/dataFrom/0/extract/key
-        value: production/monitoring/logging/fluentd/splunk-forwarder-rhtap-production-audit
+        value: production/monitoring/logging/splunk/rh_rhtap_production_audit
   - path: patches/configure-logforwarder-compression-patch.yaml
     target:
       group: observability.openshift.io
