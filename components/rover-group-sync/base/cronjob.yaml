@@ -13,9 +13,8 @@ spec:
         spec:
           restartPolicy: OnFailure
           serviceAccountName: rover-group-sync-sa
-          # Allow non-root (UID 1000) to read mounted Secrets (e.g. SSH key) via group permissions.
-          securityContext:
-            fsGroup: 1000
+          # Do not set runAsUser/fsGroup here: OpenShift restricted-v2 requires the namespace UID/GID
+          # range (e.g. 1001030000–1001039999). Omitting them lets the platform assign a compliant UID.
           volumes:
             - name: rover-group-sync-config
               configMap:
@@ -39,7 +38,6 @@ spec:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true
                 runAsNonRoot: true
-                runAsUser: 1000
                 capabilities:
                   drop:
                     - ALL
