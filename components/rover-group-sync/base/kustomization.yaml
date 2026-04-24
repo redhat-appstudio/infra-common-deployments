@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: rover-group-sync
+resources:
+  - external-secrets
+  - cronjob.yaml
+  - namespace.yaml
+  - serviceaccount.yaml
+configMapGenerator:
+  - name: rover-group-sync-config
+    files:
+      - ldap-sync-config.yaml=./config/ldap-sync-config.yaml
+generatorOptions:
+  disableNameSuffixHash: true

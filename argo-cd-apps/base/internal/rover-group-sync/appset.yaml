@@ -1,0 +1,35 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: rover-group-sync
+spec:
+  generators:
+    - clusters:
+        values:
+          sourceRoot: components/rover-group-sync
+          environment: ""
+  template:
+    metadata:
+      name: rover-group-sync
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
+        targetRevision: main
+        path: '{{values.sourceRoot}}/{{values.environment}}'
+      destination:
+        namespace: rover-group-sync
+        name: in-cluster
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: -1
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 3m
