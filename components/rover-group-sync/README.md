@@ -26,7 +26,7 @@ The LDAP sync config template in `base/config/ldap-sync-config.yaml` has placeho
 | Resource Name | Resource Type | Typical Use | Expected Keys|
 |---------------|---------------|-------------|--------------|
 | `ldap-creds` | `Secret` | LDAP bind credentials | none |
-| `git-repo-creds` | `Secret` | Credentials for the Git repo | `ssh_public` and `ssh_private` keys|
+| `git-repo-creds` | `Secret` | Credentials for the Git repo | `url` and `ssh_private` keys|
 | `mtls-ca-validators` | `Secret` | Permissions for LDAP TLS | `ca.crt` |
 | `rover-group-sync-config` | `ConfigMap` | Template LDAP config for `oc adm groups sync` | ldap-sync-config.yaml |
 
@@ -39,8 +39,7 @@ The LDAP sync config template in `base/config/ldap-sync-config.yaml` has placeho
 | `GIT_PRIVATE_SSH_PATH` | Path to Git repo's private SSH key | No | `secrets/git-repo/ssh_private` | `git-repo-creds` Secret |
 | `LDAP_DN` | LDAP credential injection value | Yes | N/A | `ldap-creds` Secret |
 | `LDAP_PASSWORD` | LDAP credential injection value | Yes | N/A | `ldap-creds` Secret |
-| `GIT_REPO_URL` | Git repository URL | Yes | N/A | `git-creds` Secret |
-| `GIT_SSH_PUBLIC_KEY` | Git repository public SSH key | Yes | N/A | `git-creds` Secret |
+| `GIT_REPO_URL` | Git repository URL | Yes | N/A | `git-repo-creds` Secret |
 | `GIT_BRANCH` | Git repository branch | No | "main" | CronJob env |
 | `ENVIRONMENT` | The type of environment hosting the component | No | "staging" | Cronjob env |
 

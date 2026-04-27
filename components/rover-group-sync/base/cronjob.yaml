@@ -31,7 +31,7 @@ spec:
               emptyDir: {}
           containers:
             - name: rover-group-sync
-              image: quay.io/redhat-user-workloads/konflux-infra-tenant/rover-group-sync@sha256:e0ae3f5eb75fbc26f55a2a8d0aec956da3da419034340ac730f518dfb470d5d7
+              image: quay.io/redhat-user-workloads/konflux-infra-tenant/rover-group-sync@sha256:706e398edf9489e3027cced5c21987f88869fdf4bc1bac5e35c428279d324083
               imagePullPolicy: IfNotPresent
               command: ["/bin/bash", "/scripts/sync-rover-groups.sh"]
               securityContext:
@@ -57,11 +57,6 @@ spec:
                     secretKeyRef:
                       name: ldap-creds
                       key: password
-                - name: GIT_SSH_PUBLIC_KEY
-                  valueFrom:
-                    secretKeyRef:
-                      name: git-repo-creds
-                      key: ssh_public
               volumeMounts:
                 - name: rover-group-sync-config
                   mountPath: /config
