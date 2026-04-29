@@ -18,14 +18,12 @@ spec:
         repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
         targetRevision: main
       destination:
-        namespace: konflux-kueue
         name: in-cluster
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
         syncOptions:
-          - CreateNamespace=true
           - ServerSideApply=true
         retry:
           limit: 50
