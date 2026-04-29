@@ -5,6 +5,7 @@ approvers:
 - hareldev
 - shay6
 - max0n1x
+- pjanouse
 
 reviewers:
 - npotluri-rh
@@ -16,3 +17,4 @@ reviewers:
 - svatares
 - hguemar
 - shacharFridman
+- pjanouse
