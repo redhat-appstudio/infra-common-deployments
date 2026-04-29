@@ -26,6 +26,7 @@ valuesInline:
           - cluster-admins
           - dedicated-admins
           - konflux-infra
+          - konflux-devprod
       dex:
         enabled: true
         skipApprovalScreen: true
