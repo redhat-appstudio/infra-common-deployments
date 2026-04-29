@@ -13,3 +13,4 @@ resources:
   - konflux-devlake
   - policies
   - rover-group-sync
+  - kueue
