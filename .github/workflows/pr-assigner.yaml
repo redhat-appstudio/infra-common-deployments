@@ -1,0 +1,146 @@
+---
+name: Assign PR Reviewers
+
+on:
+  pull_request_target:
+    types: [opened, ready_for_review, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  assign-reviewers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Assign internal-services reviewers from CODEOWNERS
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+
+            const RELEASE_SERVICE_BOT = "release-service-bot";
+
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.info("No pull request in event payload. Skipping.");
+              return;
+            }
+
+            if (context.payload.action === "opened" && pr.draft) {
+              core.info("Draft PR opened. Skipping assignment until ready_for_review.");
+              return;
+            }
+
+            const changedFiles = await github.paginate(
+              github.rest.pulls.listFiles,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                per_page: 100,
+              }
+            );
+
+            const isInternalServicesPR = changedFiles.some((file) =>
+              file.filename.startsWith("components/internal-services/")
+            );
+
+            if (!isInternalServicesPR) {
+              core.info("PR does not touch internal-services component. Skipping assignment.");
+              return;
+            }
+
+            const codeownersPath = ".github/CODEOWNERS";
+            const codeowners = fs.readFileSync(codeownersPath, "utf8");
+            const internalServicesLine = codeowners
+              .split("\n")
+              .map((line) => line.trim())
+              .find((line) => line.startsWith("/components/internal-services/ "));
+
+            if (!internalServicesLine) {
+              core.setFailed("Could not find /components/internal-services/ entry in .github/CODEOWNERS.");
+              return;
+            }
+
+            const owners = internalServicesLine
+              .split(/\s+/)
+              .slice(1)
+              .map((owner) => owner.replace(/^@/, "").trim())
+              .filter(Boolean);
+
+            const excluded = new Set([
+              RELEASE_SERVICE_BOT,
+              pr.user.login,
+            ]);
+
+            const requestedReviewers = (pr.requested_reviewers || []).map((reviewer) => reviewer.login);
+            for (const reviewer of requestedReviewers) {
+              excluded.add(reviewer);
+            }
+
+            const candidates = owners.filter((owner) => !excluded.has(owner));
+            const neededReviewers = Math.max(0, 2 - requestedReviewers.length);
+
+            if (neededReviewers === 0) {
+              core.info("PR already has 2 or more requested reviewers.");
+              return;
+            }
+
+            if (candidates.length === 0) {
+              core.info("No eligible internal-services CODEOWNERS reviewers available.");
+              return;
+            }
+
+            const collaboratorChecks = await Promise.all(
+              candidates.map(async (candidate) => {
+                try {
+                  await github.rest.repos.getCollaboratorPermissionLevel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    username: candidate,
+                  });
+                  return candidate;
+                } catch (error) {
+                  if (error.status === 404) {
+                    core.info(`Skipping non-collaborator reviewer candidate: ${candidate}`);
+                    return null;
+                  }
+                  throw error;
+                }
+              })
+            );
+
+            const collaboratorCandidates = collaboratorChecks.filter(Boolean);
+            if (collaboratorCandidates.length === 0) {
+              core.info("No collaborator candidates available for assignment.");
+              return;
+            }
+
+            const shuffled = [...collaboratorCandidates].sort(() => Math.random() - 0.5);
+            const selected = shuffled.slice(0, neededReviewers);
+
+            if (selected.length === 0) {
+              core.info("No reviewers selected.");
+              return;
+            }
+
+            try {
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                reviewers: selected,
+              });
+            } catch (error) {
+              if (error.status === 422) {
+                core.warning(`Unable to request one or more reviewers: ${error.message}`);
+                return;
+              }
+              throw error;
+            }
+
+            core.info(`Assigned reviewers: ${selected.join(", ")}`);
