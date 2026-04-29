@@ -2,7 +2,10 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ../base
+  # Core resources now managed directly in production
+  - crds/
+  - eso/
+  - cronjob/
 
   # External Secrets
   - es/
