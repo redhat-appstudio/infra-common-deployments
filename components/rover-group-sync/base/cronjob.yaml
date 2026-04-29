@@ -4,9 +4,9 @@ metadata:
   name: rover-group-sync
   namespace: rover-group-sync
 spec:
-  schedule: "0 2 * * *"
+  schedule: "*/15 * * * *"
   concurrencyPolicy: Forbid
-  successfulJobsHistoryLimit: 7
+  successfulJobsHistoryLimit: 32
   jobTemplate:
     spec:
       template:

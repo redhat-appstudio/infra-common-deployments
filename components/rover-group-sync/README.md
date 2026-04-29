@@ -12,7 +12,7 @@ The container image and entrypoint script are maintained in the [infrastructure]
 
 ## Default Behavior
 
-**Schedule:** daily at 02:00 (cluster controller time; typically UTC).
+**Schedule:** every 15 minutes
 **Concurrency:** `Forbid` (no overlapping runs).
 **Volume Mounts:** named to satisfy the expected default environment variable paths
 **Environment:** defaults to a staging environment with `ENVIRONMENT` being set to 'staging'

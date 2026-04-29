@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: rover-group-sync
+  namespace: rover-group-sync
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: rover-group-sync
+              env:
+                - name: ENVIRONMENT
+                  value: "production"
