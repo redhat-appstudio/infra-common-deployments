@@ -1,0 +1,5 @@
+queueName: pipelines-queue
+cel:
+  expressions:
+    - |
+        priority('konflux-default')
