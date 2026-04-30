@@ -5,6 +5,7 @@ resources:
 - kueue
 - tekton-kueue
 - queue-config
+- localqueues
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
