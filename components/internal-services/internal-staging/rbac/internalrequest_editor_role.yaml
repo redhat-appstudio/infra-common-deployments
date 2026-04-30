@@ -1,0 +1,31 @@
+# permissions for end users to edit internalrequests.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: internalrequest-editor-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: internal-services
+    app.kubernetes.io/part-of: internal-services
+    app.kubernetes.io/managed-by: kustomize
+  name: internalrequest-editor-role
+rules:
+- apiGroups:
+  - appstudio.redhat.com
+  resources:
+  - internalrequests
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - appstudio.redhat.com
+  resources:
+  - internalrequests/status
+  verbs:
+  - get
