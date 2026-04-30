@@ -6,4 +6,4 @@ resources:
 commonAnnotations:
   argocd.argoproj.io/sync-wave: "11"
 
-# namespace: DO NOT USE THIS FIELD, this allows us to create localqueues for componnets in more than one namespace
+# namespace: DO NOT USE THIS FIELD, this allows us to create localqueues for components in more than one namespace
