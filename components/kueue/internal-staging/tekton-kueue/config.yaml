@@ -9,3 +9,11 @@ cel:
         pipelineRun.metadata.labels['internal-services.appstudio.openshift.io/rate-limiting-group'] == 'signing-server' ?
         priority('konflux-signing') :
         priority('konflux-default')
+
+    - |
+        has(pipelineRun.metadata.labels) &&
+        'internal-services.appstudio.openshift.io/rate-limited' in pipelineRun.metadata.labels &&
+        pipelineRun.metadata.labels['internal-services.appstudio.openshift.io/rate-limited'] == 'true' &&
+        'internal-services.appstudio.openshift.io/rate-limiting-group' in pipelineRun.metadata.labels &&
+        pipelineRun.metadata.labels['internal-services.appstudio.openshift.io/rate-limiting-group'] == 'signing-server' ?
+        [resource('signing-server-request', 1)] : []

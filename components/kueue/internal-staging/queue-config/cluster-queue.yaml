@@ -19,9 +19,12 @@ spec:
   resourceGroups:
   - coveredResources:
     - tekton.dev/pipelineruns
+    - signing-server-request
     flavors:
     - name: default-flavor
       resources:
       - name: tekton.dev/pipelineruns
-        nominalQuota: '300'
+        nominalQuota: '500'
+      - name: signing-server-request
+        nominalQuota: '500'
   stopPolicy: None
