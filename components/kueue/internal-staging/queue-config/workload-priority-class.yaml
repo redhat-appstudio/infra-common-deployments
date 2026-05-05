@@ -2,6 +2,13 @@
 apiVersion: kueue.x-k8s.io/v1beta1
 kind: WorkloadPriorityClass
 metadata:
+  name: konflux-signing
+value: 950
+description: "High priority for signing pipelines rate-limited via ISV-6622"
+---
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: WorkloadPriorityClass
+metadata:
   name: konflux-default
 value: 400
 description: "Default priority for pipelines"
