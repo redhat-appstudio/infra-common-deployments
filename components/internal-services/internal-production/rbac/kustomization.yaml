@@ -26,3 +26,4 @@ resources:
   - view-authenticated-users.yaml
   - release_team_role.yaml
   - release_team_role_binding.yaml
+  - signing-sa.yaml
