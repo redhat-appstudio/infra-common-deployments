@@ -1,6 +1,6 @@
 # Rover Group Sync
 
-The Rover Group Sync component consists of a scheduled job that ensures `Group` YAML manifest files in a `groups/<environment>/` directory of a Git repository are kept up to date with Konflux's [Rover][rover] LDAP groups. The component runs `oc adm groups sync` (LDAP only), then commits and pushes to the configured branch and Git repository when there are changes to the groups.
+The Rover Group Sync component consists of a scheduled job that ensures `Group` YAML manifest files in a `<environment>/rover/groups` directory of a Git repository are kept up to date with Konflux's [Rover][rover] LDAP groups. The component runs `oc adm groups sync` (LDAP only), then commits and pushes to the configured branch and Git repository when there are changes to the groups.
 
 The container image and entrypoint script are maintained in the [infrastructure](https://github.com/redhat-appstudio/infrastructure) repository under `maintenance/rover-group-sync`.
 
@@ -19,7 +19,7 @@ The container image and entrypoint script are maintained in the [infrastructure]
 
 ## Secrets and Configurations (Vault)
 
-External Secrets sync from Vault (via `appsre-stonesoup-vault`) into Kubernetes `Secret`s. Paths are under `staging/infrastructure/group-sync/`. Currently, all Vault secrets that need to be mounted have keys and mount paths that line up with the expected default environment variable paths in the script (see [Environment Variables](#environment-variables) below). If a Secret's keys change, the new value **must** be passed in via the appropriate env variable.
+External Secrets sync from Vault (via `appsre-stonesoup-vault`) into Kubernetes `Secret`s. Paths are under `<environment>/infrastructure/group-sync/`. Currently, all Vault secrets that need to be mounted have keys and mount paths that line up with the expected default environment variable paths in the script (see [Environment Variables](#environment-variables) below). If a Secret's keys change, the new value **must** be passed in via the appropriate env variable.
 
 The LDAP sync config template in `base/config/ldap-sync-config.yaml` has placeholders to prevent secret credentials from being committed to the repository; the script injects the bind DN, password, and CA path at runtime using environment variables ties to Kubernetes `Secret`s.
 
@@ -45,10 +45,11 @@ The LDAP sync config template in `base/config/ldap-sync-config.yaml` has placeho
 
 ## Local checks
 
-Run a one-off job on the cluster (same pod template as the CronJob):
+Run a one-off job on the cluster w/ a different image (same pod template as the CronJob):
 
 ```bash
-oc create job "rover-group-sync-manual-$(date +%s)" \
-  --from=cronjob/rover-group-sync \
-  -n rover-group-sync
+oc create job --from=cronjob/rover-group-sync "rover-group-sync-test-$(date +%s)" \
+-n rover-group-sync --dry-run=client -o yaml | \
+sed 's|image:.*|image: <image-to-test>|g' | kubectl apply -f -
+
 ```
