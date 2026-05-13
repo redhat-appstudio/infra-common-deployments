@@ -6,9 +6,9 @@ metadata:
   namespace: codecov
 spec:
   hard:
-    requests.cpu: "2"
-    requests.memory: 4Gi
-    limits.cpu: "4"
-    limits.memory: 4Gi
+    requests.cpu: "3"
+    requests.memory: 6Gi
+    limits.cpu: "6"
+    limits.memory: 6Gi
     persistentvolumeclaims: "4"
     requests.storage: 40Gi
