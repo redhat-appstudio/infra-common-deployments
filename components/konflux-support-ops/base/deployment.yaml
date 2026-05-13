@@ -12,6 +12,11 @@ spec:
       labels:
         app: support-ops
     spec:
+      volumes:
+      - name: trusted-ca-bundle
+        configMap:
+          name: config-trusted-cabundle
+          defaultMode: 420
       containers:
       - name: support-ops
         image: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support@sha256:18558ba23b82e8631e987959b82f8c392f16b162ab7a69479ad201975d19537e
@@ -106,6 +111,14 @@ spec:
               key: POSTGRES_PORT
         - name: ENABLE_TOKEN_VALIDATION
           value: "true"
+        - name: SSL_CERT_FILE
+          value: /etc/pki/ca-trust/extracted/pem/ca-bundle.crt
+        - name: REQUESTS_CA_BUNDLE
+          value: /etc/pki/ca-trust/extracted/pem/ca-bundle.crt
+        volumeMounts:
+        - name: trusted-ca-bundle
+          mountPath: /etc/pki/ca-trust/extracted/pem
+          readOnly: true
         resources:
           limits:
             cpu: 500m
