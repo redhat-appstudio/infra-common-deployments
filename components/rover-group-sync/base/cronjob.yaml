@@ -31,7 +31,7 @@ spec:
               emptyDir: {}
           containers:
             - name: rover-group-sync
-              image: quay.io/redhat-user-workloads/konflux-infra-tenant/rover-group-sync@sha256:61ec8cd37f2eaec2cf3d898a8eeae1658e8caa4dd2ffc8d969f086b8dccffe75
+              image: quay.io/redhat-user-workloads/konflux-infra-tenant/rover-group-sync@sha256:b6c92fda223f0e9a064d9d618053fb8563a077f19b079fd123b9d3a1faf093be
               imagePullPolicy: IfNotPresent
               command: ["/bin/bash", "/scripts/sync-rover-groups.sh"]
               securityContext:
