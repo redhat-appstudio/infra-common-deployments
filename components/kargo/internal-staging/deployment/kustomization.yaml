@@ -46,10 +46,11 @@ patches:
       annotations:
         serviceaccounts.openshift.io/oauth-redirecturi.kargo: https://kargo-api-kargo.apps.rosa.kflux-c-stg-i01.qfla.p3.openshiftapps.com/dex/callback
 
-# Use OCP service CA as IDP CA instead of the chart's Dex TLS secret.
+# Use OCP service CA as IDP CA instead of the chart's self-signed Dex TLS secret.
 # Replaces projected sources list entirely (volumes merge by name,
 # sources list has no merge key so it gets replaced wholesale).
-# Assumes no kubeconfigSecrets.kargo or api.tls.enabled are set.
+# Must include the API TLS secret (api.tls.enabled defaults true) alongside
+# the OCP CA configmap. Assumes no kubeconfigSecrets.kargo is set.
 - target:
     kind: Deployment
     name: kargo-api
@@ -65,6 +66,13 @@ patches:
           - name: config
             projected:
               sources:
+              - secret:
+                  name: kargo-api-cert
+                  items:
+                  - key: tls.crt
+                    path: tls.crt
+                  - key: tls.key
+                    path: tls.key
               - configMap:
                   name: ocp-service-ca
                   items:
