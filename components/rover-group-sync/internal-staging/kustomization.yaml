@@ -4,7 +4,7 @@ namespace: rover-group-sync
 
 images:
 - name: rover-group-sync
-  digest: sha256:b6c92fda223f0e9a064d9d618053fb8563a077f19b079fd123b9d3a1faf093be
+  digest: sha256:480e798b8479003a8bc6827de45e151ecb095202569d6df30acaeae697bbbe98
 
 resources:
   - ../base
