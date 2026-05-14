@@ -15,46 +15,76 @@ patches:
     kind: Service
     name: kargo-api
   patch: |-
-    - op: add
-      path: /metadata/annotations/service.beta.openshift.io~1serving-cert-secret-name
-      value: kargo-api-cert
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: kargo-api
+      annotations:
+        service.beta.openshift.io/serving-cert-secret-name: kargo-api-cert
 
 # Enable OCP service certificate for Kargo's Dex server
 - target:
     kind: Service
     name: kargo-dex-server
   patch: |-
-    - op: add
-      path: /metadata/annotations/service.beta.openshift.io~1serving-cert-secret-name
-      value: kargo-dex-server-cert
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: kargo-dex-server
+      annotations:
+        service.beta.openshift.io/serving-cert-secret-name: kargo-dex-server-cert
 
 # Patch the callback url for the oauth client to the Kargo's API
 - target:
     kind: ServiceAccount
     name: dex-client
   patch: |-
-    - op: add
-      path: /metadata/annotations/serviceaccounts.openshift.io~1oauth-redirecturi.kargo
-      value: https://kargo-api-kargo.apps.rosa.kflux-c-stg-i01.qfla.p3.openshiftapps.com/dex/callback
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: dex-client
+      annotations:
+        serviceaccounts.openshift.io/oauth-redirecturi.kargo: https://kargo-api-kargo.apps.rosa.kflux-c-stg-i01.qfla.p3.openshiftapps.com/dex/callback
 
-# Inject the OCP service certificate into the Kargo's API so it can contact Dex
+# Use OCP service CA as IDP CA instead of the chart's Dex TLS secret.
+# Replaces projected sources list entirely (volumes merge by name,
+# sources list has no merge key so it gets replaced wholesale).
+# Assumes no kubeconfigSecrets.kargo or api.tls.enabled are set.
 - target:
     kind: Deployment
     name: kargo-api
   patch: |-
-    - op: replace
-      path: /spec/template/spec/volumes/0/projected/sources/1
-      value:
-        configMap:
-          name: ocp-service-ca
-          items:
-            - key: service-ca.crt
-              path: idp-ca.crt
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: kargo-api
+    spec:
+      template:
+        spec:
+          volumes:
+          - name: config
+            projected:
+              sources:
+              - configMap:
+                  name: ocp-service-ca
+                  items:
+                  - key: service-ca.crt
+                    path: idp-ca.crt
 
 # Don't run init container as root since OCP doesn't allow it with the default SCC.
+# Targets by container name (parse-cabundle) instead of brittle list index.
 - target:
     kind: Deployment
     name: kargo-api
   patch: |-
-    - op: remove
-      path: /spec/template/spec/initContainers/0/securityContext/runAsUser
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: kargo-api
+    spec:
+      template:
+        spec:
+          initContainers:
+          - name: parse-cabundle
+            securityContext:
+              runAsUser: null
