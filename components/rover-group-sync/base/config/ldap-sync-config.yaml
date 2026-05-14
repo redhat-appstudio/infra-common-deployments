@@ -21,7 +21,7 @@ rfc2307:
     baseDN: "ou=adhoc,ou=managedGroups,dc=redhat,dc=com"
     derefAliases: never
     scope: sub
-    filter: (&(objectClass=rhatRoverGroup)(|(cn=konflux-*)(cn=ai-konflux-user-support)(cn=plm-poe)))
+    filter: (&(objectClass=rhatRoverGroup)(|(cn=konflux-*)(cn=ai-konflux-user-support)(cn=plm-poe)(cn=test-platform-ci-admins)))
   groupUIDAttribute: dn
   groupNameAttributes:
     - cn
