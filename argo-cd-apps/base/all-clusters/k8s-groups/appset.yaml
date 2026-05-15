@@ -3,23 +3,19 @@ kind: ApplicationSet
 metadata:
   name: k8s-groups
 spec:
-  goTemplate: true
   generators:
     - clusters:
         values:
           sourceRoot: components/k8s-groups
           environment: ""
-          useCaseDir: rover
   template:
     metadata:
       name: k8s-groups-{{nameNormalized}}
     spec:
       project: default
       source:
-        # Since this app is located in another repository, we need to trim the prefix of the environment
-        # to get the correct path.
-        path: '{{values.sourceRoot}}/{{trimPrefix "external-" (trimPrefix "internal-" .values.environment)}}/{{values.useCaseDir}}'
-        repoURL: https://github.com/redhat-appstudio/internal-infra-deployments.git
+        path: '{{values.sourceRoot}}/components/k8s-groups/{{values.environment}}'
+        repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
         targetRevision: main
       destination:
         namespace: k8s-groups
