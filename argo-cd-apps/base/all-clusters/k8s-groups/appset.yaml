@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: k8s-groups
+spec:
+  goTemplate: true
+  generators:
+    - clusters:
+        values:
+          sourceRoot: components/k8s-groups
+          environment: ""
+          useCaseDir: rover
+  template:
+    metadata:
+      name: k8s-groups-{{nameNormalized}}
+    spec:
+      project: default
+      source:
+        # Since this app is located in another repository, we need to trim the prefix of the environment
+        # to get the correct path.
+        path: '{{values.sourceRoot}}/{{trimPrefix "external-" (trimPrefix "internal-" .values.environment)}}/{{values.useCaseDir}}'
+        repoURL: https://github.com/redhat-appstudio/internal-infra-deployments.git
+        targetRevision: main
+      destination:
+        namespace: k8s-groups
+        name: in-cluster
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: -1
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 3m
