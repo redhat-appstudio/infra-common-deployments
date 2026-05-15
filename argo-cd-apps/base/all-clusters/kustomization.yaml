@@ -5,4 +5,5 @@ resources:
   - cluster-secret-store
   - external-secrets-operator
   - iam
+  - k8s-groups
   - monitoring-workload-logging
