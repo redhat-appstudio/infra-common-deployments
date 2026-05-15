@@ -12,13 +12,13 @@ spec:
           useCaseDir: rover
   template:
     metadata:
-      name: k8s-groups-{{nameNormalized}}
+      name: k8s-groups-{{.nameNormalized}}
     spec:
       project: default
       source:
         # Since this app is located in another repository, we need to trim the prefix of the environment
         # to get the correct path.
-        path: '{{values.sourceRoot}}/{{trimPrefix "external-" (trimPrefix "internal-" .values.environment)}}/{{values.useCaseDir}}'
+        path: '{{.values.sourceRoot}}/{{trimPrefix "external-" (trimPrefix "internal-" .values.environment)}}/{{.values.useCaseDir}}'
         repoURL: https://github.com/redhat-appstudio/internal-infra-deployments.git
         targetRevision: main
       destination:
