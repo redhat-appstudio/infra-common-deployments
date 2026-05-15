@@ -8,3 +8,12 @@ images:
 
 resources:
   - ../base
+
+# Narrow LDAP group sync for staging only (production keeps base konflux-* filter).
+configMapGenerator:
+  - name: rover-group-sync-config
+    behavior: merge
+    files:
+      - ldap-sync-config.yaml=./ldap-sync-config.yaml
+generatorOptions:
+  disableNameSuffixHash: true
