@@ -14,7 +14,7 @@ spec:
     spec:
       project: default
       source:
-        path: '{{values.sourceRoot}}/components/k8s-groups/{{values.environment}}'
+        path: '{{values.sourceRoot}}/{{values.environment}}'
         repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
         targetRevision: main
       destination:
