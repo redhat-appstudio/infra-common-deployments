@@ -1,0 +1,17 @@
+# See the OWNERS docs: https://go.k8s.io/owners
+
+approvers:
+  - hugares
+  - enkeefe00
+  - sadlerap
+  - filariow
+  - mshaposhnik
+  - manish-jangra
+
+reviewers:
+  - hugares
+  - enkeefe00
+  - sadlerap
+  - filariow
+  - mshaposhnik
+  - manish-jangra
