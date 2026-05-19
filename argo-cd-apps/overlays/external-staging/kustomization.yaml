@@ -11,4 +11,9 @@ patches:
       group: argoproj.io
       version: v1alpha1
       kind: ApplicationSet
-
+  - path: namespace-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: ApplicationSet
+      name: iam
