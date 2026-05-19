@@ -5,7 +5,7 @@ metadata:
 spec:
   allowList:
   - managed-release-team-tenant
-  debug: true
+  debug: false
   volumeClaim:
     name: pipeline
     size: 1Gi
