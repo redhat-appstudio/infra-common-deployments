@@ -16,6 +16,8 @@ resources:
 
   # RBAC Resources
   - rbac/
+  # Extra RBAC Resources (local-only, not managed by automation)
+  - extra/
 
   # InternalServicesConfig
   - config/

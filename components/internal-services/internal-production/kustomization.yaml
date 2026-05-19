@@ -18,5 +18,7 @@ resources:
   - networkpolicy/
   # RBAC Resources
   - rbac/
+  # Extra RBAC Resources (local-only, not managed by automation)
+  - extra/
   # Signing ConfigMaps
   - signing/
