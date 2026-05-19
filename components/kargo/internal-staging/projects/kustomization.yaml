@@ -4,6 +4,7 @@ resources:
   - kargo-konflux-infra
   - kargo-konflux-vanguard
   - kargo-konflux
+  - konflux-devprod-poc
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

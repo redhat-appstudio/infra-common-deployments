@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../base
+  - rbac.yaml
+  - external-secrets
+
+replacements:
+  - source:
+      kind: Namespace
+      fieldPath: metadata.name
+    targets:
+      - select:
+          kind: Project
+        fieldPaths:
+          - metadata.name
+
+namespace: konflux-devprod-poc
