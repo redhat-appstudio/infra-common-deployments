@@ -19,7 +19,7 @@ spec:
         repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
         targetRevision: main
       destination:
-        namespace: group-sync-operator
+        namespace: iam
         name: in-cluster
       syncPolicy:
         automated:
