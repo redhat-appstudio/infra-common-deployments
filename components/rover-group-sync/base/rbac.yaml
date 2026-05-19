@@ -6,7 +6,7 @@ metadata:
 rules:
   - apiGroups: ["user.openshift.io"]
     resources: ["groups"]
-    verbs: ["get", "list"]
+    verbs: ["*"]
 ---
 apiVersion: v1
 kind: ServiceAccount
