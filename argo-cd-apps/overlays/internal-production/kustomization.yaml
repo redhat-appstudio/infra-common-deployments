@@ -17,3 +17,9 @@ patches:
       version: v1alpha1
       kind: ApplicationSet
       name: argocd-repo-secrets
+  - path: delete-monitoring-workload-grafana-appset.yaml
+    target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: ApplicationSet
+      name: monitoring-workload-grafana
