@@ -11,9 +11,4 @@ patches:
       group: argoproj.io
       version: v1alpha1
       kind: ApplicationSet
-  - path: delete-argocd-repo-secrets-appset.yaml
-    target:
-      group: argoproj.io
-      version: v1alpha1
-      kind: ApplicationSet
-      name: argocd-repo-secrets
+
