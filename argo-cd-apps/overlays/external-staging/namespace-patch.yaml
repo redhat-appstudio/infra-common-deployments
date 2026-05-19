@@ -1,4 +1,0 @@
----
-- op: replace
-  path: /spec/template/spec/destination/namespace
-  value: iam
