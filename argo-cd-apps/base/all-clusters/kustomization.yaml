@@ -7,4 +7,5 @@ resources:
   - external-secrets-operator
   - iam
   - k8s-groups
+  - monitoring-workload-blackbox
   - monitoring-workload-logging
