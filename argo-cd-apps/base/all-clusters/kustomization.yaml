@@ -8,4 +8,5 @@ resources:
   - iam
   - k8s-groups
   - monitoring-workload-grafana
+  - monitoring-workload-blackbox
   - monitoring-workload-logging
