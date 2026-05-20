@@ -8,3 +8,4 @@ resources:
   - iam
   - k8s-groups
   - monitoring-workload-logging
+  - monitoring-workload-prometheus
