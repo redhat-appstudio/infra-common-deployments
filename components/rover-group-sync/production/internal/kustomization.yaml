@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: rover-group-sync
+
+images:
+- name: rover-group-sync
+  digest: sha256:b6c92fda223f0e9a064d9d618053fb8563a077f19b079fd123b9d3a1faf093be
+
+resources:
+  - ../../base
+
+patches:
+  - path: cronjob-patch.yaml
+    target:
+      kind: CronJob
+      name: rover-group-sync
+  - path: externalsecrets-patch.yaml

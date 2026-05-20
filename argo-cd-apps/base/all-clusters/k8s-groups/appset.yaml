@@ -16,9 +16,9 @@ spec:
     spec:
       project: default
       source:
-        # Since this app is located in another repository, we need to trim the prefix of the environment
-        # to get the correct path.
-        path: '{{.values.sourceRoot}}/{{trimPrefix "external-" (trimPrefix "internal-" .values.environment)}}/{{.values.useCaseDir}}'
+        # Since this app is in another repo that uses tier-only directories (staging/, production/),
+        # extract just the tier from the environment path (e.g. "staging/external" → "staging").
+        path: '{{.values.sourceRoot}}/{{dir .values.environment}}/{{.values.useCaseDir}}'
         repoURL: https://github.com/redhat-appstudio/internal-infra-deployments.git
         targetRevision: main
       destination:
