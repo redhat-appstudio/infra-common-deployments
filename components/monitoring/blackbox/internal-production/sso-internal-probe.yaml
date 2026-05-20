@@ -1,0 +1,23 @@
+---
+kind: Probe
+apiVersion: monitoring.rhobs/v1
+metadata:
+  name: internal-sso-probe
+  labels:
+    kubernetes.io/part-of: appstudio-federate-ms
+    monitoring.rhobs/stack: appstudio-federate-ms
+  namespace: appstudio-monitoring
+spec:
+  interval: 60s
+  jobName: sso-internal
+  module: http_2xx
+  prober:
+    path: /probe
+    scheme: http
+    url: blackbox-exporter-obo.appstudio-monitoring.svc.cluster.local:9115
+  targets:
+    staticConfig:
+      labels:
+        target: EmployeeIDP
+      static:
+        - https://auth.redhat.com/auth/realms/EmployeeIDP/
