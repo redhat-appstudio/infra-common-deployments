@@ -13,6 +13,8 @@ resources:
 - kueue/
 - kyverno/
 - kubearchive/
+- release/
+- perfscale/
 
 # Removing the installation of power-monitoring dashboard for now
 # - power-monitoring/
