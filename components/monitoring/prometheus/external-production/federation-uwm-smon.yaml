@@ -1,0 +1,35 @@
+apiVersion: monitoring.rhobs/v1
+kind: ServiceMonitor
+metadata:
+  name: appstudio-federate-uwm-smon
+  namespace: appstudio-monitoring
+  labels:
+    kubernetes.io/part-of: appstudio-federate-ms
+    monitoring.rhobs/stack: appstudio-federate-ms
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/managed-by: observability-operator
+      app.kubernetes.io/name: appstudio-federate-ms-prometheus
+  endpoints:
+  - params:
+      'match[]':
+        - '{__name__=~".*"}'
+    relabelings:
+    - action: replace
+      targetLabel: __address__
+      replacement: prometheus-user-workload.openshift-user-workload-monitoring.svc:9092
+    - action: labeldrop
+      regex: pod|namespace|service|endpoint|container
+    interval: 30s
+    honorLabels: true
+    port: web
+    scheme: https
+    path: "/federate"
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    tlsConfig:
+      serverName: prometheus-user-workload.openshift-user-workload-monitoring.svc
+      ca:
+        configMap:
+          key: service-ca.crt
+          name: openshift-service-ca.crt
