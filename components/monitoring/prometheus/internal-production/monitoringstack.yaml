@@ -1,0 +1,54 @@
+apiVersion: monitoring.rhobs/v1alpha1
+kind: MonitoringStack
+metadata:
+  name: appstudio-federate-ms
+  namespace: appstudio-monitoring
+spec:
+  resourceSelector:
+    matchLabels:
+      monitoring.rhobs/stack: appstudio-federate-ms
+  logLevel: info
+  retention: 3h
+  alertmanagerConfig:
+    disabled: true
+  resources:
+    requests:
+      cpu: 200m
+      memory: 4Gi
+    limits:
+      memory: 4Gi
+  prometheusConfig:
+    externalLabels:
+      source_environment: production
+      source_cluster: kflux-c-prd-i01
+    replicas: 2
+    remoteWrite:
+    - oauth2:
+        clientId:
+          secret:
+            key: client-id
+            name: rhobs
+        clientSecret:
+          key: client-secret
+          name: rhobs
+        endpointParams:
+          audience: observatorium-osd
+        tokenUrl: https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+      url: https://observatorium-mst.api.openshift.com/api/metrics/v1/rhtap/api/v1/receive
+      writeRelabelConfigs:
+      - action: LabelKeep
+        regex: "__name__|source_environment|source_cluster|namespace|app|pod|container|\
+          label_pipelines_appstudio_openshift_io_type|health_status|dest_namespace|\
+          controller|service|reason|phase|type|resource|resourcequota|le|image|\
+          commit_hash|job|operation|tokenName|rateLimited|state|persistentvolumeclaim|\
+          storageclass|volumename|release_reason|instance|result|deployment_reason|\
+          validation_reason|strategy|succeeded|target|name|method|code|sp|\
+          unexpected_status|failure|hostname|label_app_kubernetes_io_managed_by|status|\
+          pipeline|pipelinename|pipelinerun|schedule|check|grpc_service|grpc_code|\
+          grpc_method|lease|lease_holder|deployment|platform|mode|cpu|role|node|kind|\
+          verb|request_kind|tested_cluster|resource_type|exported_job|http_method|\
+          http_route|http_status_code|gin_errors|rule_result|rule_execution_cause|\
+          policy_name|policy_background_mode|rule_type|policy_type|policy_validation_mode|\
+          resource_request_operation|resource_kind|policy_change_type|event_type|\
+          cluster_queue|quantile|slice|scrape_job|tested_registry|error|queue|\
+          priority_class|severity"
