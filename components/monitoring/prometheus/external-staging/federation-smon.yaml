@@ -1,0 +1,217 @@
+apiVersion: monitoring.rhobs/v1
+kind: ServiceMonitor
+metadata:
+  name: appstudio-federate-smon
+  namespace: appstudio-monitoring
+  labels:
+    kubernetes.io/part-of: appstudio-federate-ms
+    monitoring.rhobs/stack: appstudio-federate-ms
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/managed-by: observability-operator
+      app.kubernetes.io/name: appstudio-federate-ms-prometheus
+  endpoints:
+  - params:
+      'match[]':
+
+      # =================================================================
+      # Deployment Status (common-cluster namespaces)
+      # =================================================================
+
+      # Namespace: appstudio-monitoring
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="appstudio-monitoring"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="appstudio-monitoring"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="appstudio-monitoring"}'
+
+      # Namespace: argocd-local
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="argocd-local"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="argocd-local"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="argocd-local"}'
+
+      # Namespace: cert-manager / cert-manager-operator
+      - '{__name__="kube_deployment_status_replicas_ready", namespace=~"cert-manager.*"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace=~"cert-manager.*"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace=~"cert-manager.*"}'
+
+      # Namespace: external-secrets-operator
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="external-secrets-operator"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="external-secrets-operator"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="external-secrets-operator"}'
+
+      # Namespace: kargo and kargo-*
+      - '{__name__="kube_deployment_status_replicas_ready", namespace=~"kargo.*"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace=~"kargo.*"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace=~"kargo.*"}'
+
+      # Namespace: konflux-devlake
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="konflux-devlake"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="konflux-devlake"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="konflux-devlake"}'
+
+      # Namespace: konflux-kyverno
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="konflux-kyverno"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="konflux-kyverno"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="konflux-kyverno"}'
+
+      # Namespace: konflux-policies
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="konflux-policies"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="konflux-policies"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="konflux-policies"}'
+
+      # Namespace: konflux-portal-server
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="konflux-portal-server"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="konflux-portal-server"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="konflux-portal-server"}'
+
+      # Namespace: konflux-support-ops / konflux-support-ops-dashboard
+      - '{__name__="kube_deployment_status_replicas_ready", namespace=~"konflux-support-ops.*"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace=~"konflux-support-ops.*"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace=~"konflux-support-ops.*"}'
+
+      # Namespace: openshift-gitops
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="openshift-gitops"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="openshift-gitops"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="openshift-gitops"}'
+
+      # Namespace: openshift-pipelines
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="openshift-pipelines"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="openshift-pipelines"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="openshift-pipelines"}'
+
+      # Namespace: openshift-logging
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="openshift-logging"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="openshift-logging"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="openshift-logging"}'
+
+      # Namespace: monitoring (catch-all for monitoring namespaces)
+      - '{__name__="kube_deployment_status_replicas_ready", namespace=~".*monitoring.*"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace=~".*monitoring.*"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace=~".*monitoring.*"}'
+
+      # Namespace: group-sync-operator
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="group-sync-operator"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="group-sync-operator"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="group-sync-operator"}'
+
+      # Namespace: internal-services
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="internal-services"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="internal-services"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="internal-services"}'
+
+      # Namespace: codecov
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="codecov"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="codecov"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="codecov"}'
+
+      # Namespace: tekton-kueue
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="tekton-kueue"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="tekton-kueue"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="tekton-kueue"}'
+
+      # Namespace: openshift-kueue-operator
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="openshift-kueue-operator"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="openshift-kueue-operator"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="openshift-kueue-operator"}'
+
+      # =================================================================
+      # Container Metrics
+      # =================================================================
+      - '{__name__="kube_pod_container_status_waiting_reason", namespace!~"openshift-.*|kube-.*"}'
+      - '{__name__="kube_pod_container_status_terminated_reason", namespace!~"openshift-.*|kube-.*"}'
+      - '{__name__="kube_pod_container_status_last_terminated_reason", reason="OOMKilled"}'
+      - '{__name__="kube_pod_container_status_restarts_total", namespace!~"openshift-.*|kube-.*"}'
+      - '{__name__="container_cpu_usage_seconds_total", namespace!~"openshift-.*|kube-.*"}'
+      - '{__name__="container_memory_usage_bytes", namespace!~"openshift-.*|kube-.*"}'
+      - '{__name__="namespace:container_memory_usage_bytes:sum"}'
+      - '{__name__="namespace:container_cpu_usage:sum"}'
+      - '{__name__="namespace_memory:kube_pod_container_resource_requests:sum"}'
+      - '{__name__="namespace_cpu:kube_pod_container_resource_requests:sum"}'
+      - '{__name__="namespace_memory:kube_pod_container_resource_limits:sum"}'
+      - '{__name__="namespace_cpu:kube_pod_container_resource_limits:sum"}'
+      - '{__name__="node_namespace_pod_container:container_memory_working_set_bytes", namespace=~"openshift-monitoring|openshift-user-workload-monitoring|appstudio-monitoring"}'
+      - '{__name__="kube_pod_container_info", namespace!~"openshift-.*|kube-.*"}'
+
+      # =================================================================
+      # Pod Metrics
+      # =================================================================
+      - '{__name__="kube_pod_status_unschedulable", namespace!~"openshift-.*|kube-.*"}'
+      - '{__name__="kube_pod_status_phase", namespace!~"openshift-.*|kube-.*"}'
+
+      # =================================================================
+      # Controller Metrics
+      # =================================================================
+      - '{__name__="controller_runtime_reconcile_errors_total", namespace!~"openshift-.*|kube-.*"}'
+      - '{__name__="controller_runtime_reconcile_total", namespace!~"openshift-.*|kube-.*"}'
+
+      # =================================================================
+      # Kubernetes State Metrics
+      # =================================================================
+      - '{__name__="kube_node_role"}'
+      - '{__name__="kube_node_status_allocatable", resource=~"cpu|memory"}'
+      - '{__name__="kube_node_status_condition", condition="MemoryPressure", status="true"}'
+      - '{__name__="kube_job_spec_completions"}'
+      - '{__name__="kube_job_status_succeeded"}'
+      - '{__name__="kube_job_status_failed"}'
+
+      # =================================================================
+      # Node Metrics
+      # =================================================================
+      - '{__name__="node_cpu_seconds_total", mode="idle"}'
+      - '{__name__="node_memory_MemTotal_bytes"}'
+      - '{__name__="node_memory_MemAvailable_bytes"}'
+
+      # =================================================================
+      # Prometheus Self-Metrics
+      # =================================================================
+      - '{__name__="prometheus_ready"}'
+      - '{__name__="prometheus_engine_query_duration_seconds_count"}'
+      - '{__name__="prometheus_engine_query_duration_seconds"}'
+      - '{__name__="prometheus_tsdb_head_series"}'
+      - '{__name__="prometheus_tsdb_head_chunks"}'
+      - '{__name__="prometheus_target_interval_length_seconds_count"}'
+      - '{__name__="prometheus_target_interval_length_seconds_sum"}'
+      - '{__name__="prometheus_target_scrapes_exceeded_sample_limit_total"}'
+      - '{__name__="prometheus_target_scrapes_sample_duplicate_timestamp_total"}'
+      - '{__name__="prometheus_target_scrapes_sample_out_of_bounds_total"}'
+      - '{__name__="prometheus_target_scrapes_sample_out_of_order_total"}'
+      - '{__name__="prometheus_tsdb_head_samples_appended_total"}'
+      - '{__name__="prometheus_sd_discovered_targets"}'
+      - '{__name__="prometheus_target_sync_length_seconds_sum"}'
+      - '{__name__="prometheus_remote_storage_exemplars_failed_total"}'
+      - '{__name__="prometheus_remote_storage_histograms_failed_total"}'
+      - '{__name__="prometheus_remote_storage_metadata_failed_total"}'
+      - '{__name__="prometheus_remote_storage_samples_failed_total"}'
+      - '{__name__="promhttp_metric_handler_requests_total"}'
+      - '{__name__="promhttp_metric_handler_requests_in_flight"}'
+      - '{__name__="prometheus_tsdb_head_chunks_storage_size_bytes"}'
+      - '{__name__="prometheus_tsdb_storage_blocks_bytes"}'
+      - '{__name__="prometheus_tsdb_wal_storage_size_bytes"}'
+      - '{__name__="prometheus_tsdb_wal_writes_failed_total"}'
+      - '{__name__="prometheus_tsdb_wal_truncations_failed_total"}'
+      - '{__name__="prometheus_tsdb_reloads_failures_total"}'
+      - '{__name__="prometheus_tsdb_head_truncations_failed_total"}'
+      - '{__name__="prometheus_tsdb_compactions_failed_total"}'
+      - '{__name__="prometheus_tsdb_checkpoint_deletions_failed_total"}'
+      - '{__name__="prometheus_tsdb_checkpoint_creations_failed_total"}'
+      - '{__name__="prometheus_build_info"}'
+      - '{__name__="process_start_time_seconds"}'
+
+    relabelings:
+    - action: replace
+      targetLabel: __address__
+      replacement: prometheus-k8s.openshift-monitoring.svc:9091
+    - action: labeldrop
+      regex: pod|namespace|service|endpoint|container
+    interval: 30s
+    honorLabels: true
+    port: web
+    scheme: https
+    path: "/federate"
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    tlsConfig:
+      serverName: prometheus-k8s.openshift-monitoring.svc
+      ca:
+        configMap:
+          key: service-ca.crt
+          name: openshift-service-ca.crt

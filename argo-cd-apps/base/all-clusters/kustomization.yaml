@@ -9,3 +9,4 @@ resources:
   - k8s-groups
   - monitoring-workload-grafana
   - monitoring-workload-logging
+  - monitoring-workload-prometheus
