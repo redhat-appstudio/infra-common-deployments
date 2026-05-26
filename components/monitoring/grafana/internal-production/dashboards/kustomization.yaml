@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- dora-metrics/
+- migration/
+- pipeline-service/
+- generic-dashboards/
+- kueue/
+- kyverno/
+- perfscale/
+
+# Skip applying the grafana operands (integreatly.org) while the grafana operator is being installed.
+# See more information about this option, here:
+# https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/#skip-dry-run-for-new-custom-resources-types
+commonAnnotations:
+  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+
+configurations:
+  - cm-dashboard.yaml
+
+namespace: "appstudio-grafana"
