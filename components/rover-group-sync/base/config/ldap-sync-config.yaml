@@ -1,5 +1,4 @@
 # OpenShift LDAP sync config for: oc adm groups sync --sync-config=...
-# Mirrors components/authentication/base/group-sync/konflux-rover-groups.yaml (RFC2307).
 #
 # Replace:
 #  - url: use IT-approved internal LDAP (ldapfrac was decommissioned for external use)
