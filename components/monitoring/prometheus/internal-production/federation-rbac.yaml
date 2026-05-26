@@ -1,0 +1,15 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: appstudio-federate-ms-view
+  labels:
+    kubernetes.io/part-of: appstudio-federate-ms
+    monitoring.rhobs/stack: appstudio-federate-ms
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-monitoring-view
+subjects:
+- kind: ServiceAccount
+  name: appstudio-federate-ms-prometheus
+  namespace: appstudio-monitoring
