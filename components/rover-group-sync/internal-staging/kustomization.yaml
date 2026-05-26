@@ -3,8 +3,9 @@ kind: Kustomization
 namespace: rover-group-sync
 
 images:
-- name: rover-group-sync
-  digest: sha256:a0c5c759213f0a9242da4dfeb7ab7536d7db032ddb96acfe09d4347638173e05
+- name: quay.io/redhat-user-workloads/konflux-infra-tenant/rover-group-sync
+  newName: quay.io/redhat-user-workloads/konflux-infra-tenant/rover-group-sync
+  digest: sha256:dac15d10a0294dc45e6146547462f135eedf83a334f5aa7f32855a5e4c835e64
 
 resources:
   - ../base
