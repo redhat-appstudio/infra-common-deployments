@@ -6,3 +6,15 @@ namespace: konflux-support-ops
 resources:
 - ../base
 - external-secrets
+
+patches:
+- target:
+    kind: Deployment
+    name: support-ops
+  patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: support-ops
+    spec:
+      replicas: 0
