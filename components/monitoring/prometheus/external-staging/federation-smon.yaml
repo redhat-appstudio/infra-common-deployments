@@ -16,58 +16,13 @@ spec:
       'match[]':
 
       # =================================================================
-      # Deployment Status (common-cluster namespaces)
+      # Deployment Status (default cluster namespaces)
       # =================================================================
-
-      # Namespace: appstudio-monitoring
-      - '{__name__="kube_deployment_status_replicas_ready", namespace="appstudio-monitoring"}'
-      - '{__name__="kube_deployment_status_replicas_available", namespace="appstudio-monitoring"}'
-      - '{__name__="kube_deployment_spec_replicas", namespace="appstudio-monitoring"}'
-
-      # Namespace: argocd-local
-      - '{__name__="kube_deployment_status_replicas_ready", namespace="argocd-local"}'
-      - '{__name__="kube_deployment_status_replicas_available", namespace="argocd-local"}'
-      - '{__name__="kube_deployment_spec_replicas", namespace="argocd-local"}'
-
-      # Namespace: cert-manager / cert-manager-operator
-      - '{__name__="kube_deployment_status_replicas_ready", namespace=~"cert-manager.*"}'
-      - '{__name__="kube_deployment_status_replicas_available", namespace=~"cert-manager.*"}'
-      - '{__name__="kube_deployment_spec_replicas", namespace=~"cert-manager.*"}'
-
-      # Namespace: external-secrets-operator
-      - '{__name__="kube_deployment_status_replicas_ready", namespace="external-secrets-operator"}'
-      - '{__name__="kube_deployment_status_replicas_available", namespace="external-secrets-operator"}'
-      - '{__name__="kube_deployment_spec_replicas", namespace="external-secrets-operator"}'
-
-      # Namespace: kargo and kargo-*
-      - '{__name__="kube_deployment_status_replicas_ready", namespace=~"kargo.*"}'
-      - '{__name__="kube_deployment_status_replicas_available", namespace=~"kargo.*"}'
-      - '{__name__="kube_deployment_spec_replicas", namespace=~"kargo.*"}'
-
-      # Namespace: konflux-devlake
-      - '{__name__="kube_deployment_status_replicas_ready", namespace="konflux-devlake"}'
-      - '{__name__="kube_deployment_status_replicas_available", namespace="konflux-devlake"}'
-      - '{__name__="kube_deployment_spec_replicas", namespace="konflux-devlake"}'
 
       # Namespace: konflux-kyverno
       - '{__name__="kube_deployment_status_replicas_ready", namespace="konflux-kyverno"}'
       - '{__name__="kube_deployment_status_replicas_available", namespace="konflux-kyverno"}'
       - '{__name__="kube_deployment_spec_replicas", namespace="konflux-kyverno"}'
-
-      # Namespace: konflux-policies
-      - '{__name__="kube_deployment_status_replicas_ready", namespace="konflux-policies"}'
-      - '{__name__="kube_deployment_status_replicas_available", namespace="konflux-policies"}'
-      - '{__name__="kube_deployment_spec_replicas", namespace="konflux-policies"}'
-
-      # Namespace: konflux-portal-server
-      - '{__name__="kube_deployment_status_replicas_ready", namespace="konflux-portal-server"}'
-      - '{__name__="kube_deployment_status_replicas_available", namespace="konflux-portal-server"}'
-      - '{__name__="kube_deployment_spec_replicas", namespace="konflux-portal-server"}'
-
-      # Namespace: konflux-support-ops / konflux-support-ops-dashboard
-      - '{__name__="kube_deployment_status_replicas_ready", namespace=~"konflux-support-ops.*"}'
-      - '{__name__="kube_deployment_status_replicas_available", namespace=~"konflux-support-ops.*"}'
-      - '{__name__="kube_deployment_spec_replicas", namespace=~"konflux-support-ops.*"}'
 
       # Namespace: openshift-gitops
       - '{__name__="kube_deployment_status_replicas_ready", namespace="openshift-gitops"}'
@@ -89,21 +44,6 @@ spec:
       - '{__name__="kube_deployment_status_replicas_available", namespace=~".*monitoring.*"}'
       - '{__name__="kube_deployment_spec_replicas", namespace=~".*monitoring.*"}'
 
-      # Namespace: group-sync-operator
-      - '{__name__="kube_deployment_status_replicas_ready", namespace="group-sync-operator"}'
-      - '{__name__="kube_deployment_status_replicas_available", namespace="group-sync-operator"}'
-      - '{__name__="kube_deployment_spec_replicas", namespace="group-sync-operator"}'
-
-      # Namespace: internal-services
-      - '{__name__="kube_deployment_status_replicas_ready", namespace="internal-services"}'
-      - '{__name__="kube_deployment_status_replicas_available", namespace="internal-services"}'
-      - '{__name__="kube_deployment_spec_replicas", namespace="internal-services"}'
-
-      # Namespace: codecov
-      - '{__name__="kube_deployment_status_replicas_ready", namespace="codecov"}'
-      - '{__name__="kube_deployment_status_replicas_available", namespace="codecov"}'
-      - '{__name__="kube_deployment_spec_replicas", namespace="codecov"}'
-
       # Namespace: tekton-kueue
       - '{__name__="kube_deployment_status_replicas_ready", namespace="tekton-kueue"}'
       - '{__name__="kube_deployment_status_replicas_available", namespace="tekton-kueue"}'
@@ -113,6 +53,35 @@ spec:
       - '{__name__="kube_deployment_status_replicas_ready", namespace="openshift-kueue-operator"}'
       - '{__name__="kube_deployment_status_replicas_available", namespace="openshift-kueue-operator"}'
       - '{__name__="kube_deployment_spec_replicas", namespace="openshift-kueue-operator"}'
+
+      # Namespace: OpenShift Control Plane
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="openshift-apiserver"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="openshift-apiserver"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="openshift-apiserver"}'
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="openshift-oauth-apiserver"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="openshift-oauth-apiserver"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="openshift-oauth-apiserver"}'
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="openshift-kube-apiserver"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="openshift-kube-apiserver"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="openshift-kube-apiserver"}'
+
+      # =================================================================
+      # Kueue Metrics
+      # =================================================================
+      - '{__name__="tekton_kueue_cel_evaluations_total"}'
+      - '{__name__="kueue_cluster_queue_status"}'
+      - '{__name__="kueue_admission_wait_time_seconds_bucket"}'
+      - '{__name__="up", job=~".*kueue.*"}'
+      - '{__name__="kueue_admitted_active_workloads", cluster_queue="cluster-pipeline-queue"}'
+      - '{__name__="kueue_pending_workloads", cluster_queue="cluster-pipeline-queue"}'
+      - '{__name__="kueue_admitted_workloads_total"}'
+      - '{__name__="kueue_cluster_queue_resource_reservation", cluster_queue="cluster-pipeline-queue"}'
+      - '{__name__="kueue_cluster_queue_nominal_quota", cluster_queue="cluster-pipeline-queue"}'
+      - '{__name__="kueue_quota_reserved_wait_time_seconds_bucket", cluster_queue="cluster-pipeline-queue"}'
+      - '{__name__="kueue_admission_attempt_duration_seconds_bucket"}'
+      - '{__name__="kueue_cluster_queue_resource_usage", cluster_queue="cluster-pipeline-queue"}'
+      - '{__name__="kueue_cluster_queue_resource_reservation", cluster_queue="cluster-pipeline-queue"}'
+      - '{__name__="kueue_admission_checks_wait_time_seconds_bucket", cluster_queue="cluster-pipeline-queue"}'
 
       # =================================================================
       # Container Metrics
@@ -137,6 +106,7 @@ spec:
       # =================================================================
       - '{__name__="kube_pod_status_unschedulable", namespace!~"openshift-.*|kube-.*"}'
       - '{__name__="kube_pod_status_phase", namespace!~"openshift-.*|kube-.*"}'
+      - '{__name__="node_namespace_pod:kube_pod_info:", namespace=~"openshift-etcd|openshift-kube-apiserver|openshift-kueue-operator|tekton-kueue|kueue-external-admission|openshift-pipelines"}'
 
       # =================================================================
       # Controller Metrics
@@ -153,6 +123,12 @@ spec:
       - '{__name__="kube_job_spec_completions"}'
       - '{__name__="kube_job_status_succeeded"}'
       - '{__name__="kube_job_status_failed"}'
+
+      # =================================================================
+      # ArgoCD Metrics
+      # =================================================================
+      - '{__name__="argocd_app_reconcile_bucket", namespace="gitops-service-argocd"}'
+      - '{__name__="argocd_app_info", namespace="gitops-service-argocd"}'
 
       # =================================================================
       # Node Metrics
@@ -196,6 +172,74 @@ spec:
       - '{__name__="prometheus_tsdb_checkpoint_creations_failed_total"}'
       - '{__name__="prometheus_build_info"}'
       - '{__name__="process_start_time_seconds"}'
+
+      # =================================================================
+      # Deployment Status (common-cluster specific namespaces)
+      # =================================================================
+
+      # Namespace: group-sync-operator
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="group-sync-operator"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="group-sync-operator"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="group-sync-operator"}'
+
+      # Namespace: internal-services
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="internal-services"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="internal-services"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="internal-services"}'
+
+      # Namespace: codecov
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="codecov"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="codecov"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="codecov"}'
+
+      # Namespace: kargo and kargo-*
+      - '{__name__="kube_deployment_status_replicas_ready", namespace=~"kargo.*"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace=~"kargo.*"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace=~"kargo.*"}'
+
+      # Namespace: konflux-devlake
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="konflux-devlake"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="konflux-devlake"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="konflux-devlake"}'
+
+      # Namespace: appstudio-monitoring
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="appstudio-monitoring"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="appstudio-monitoring"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="appstudio-monitoring"}'
+
+      # Namespace: konflux-support-ops / konflux-support-ops-dashboard
+      - '{__name__="kube_deployment_status_replicas_ready", namespace=~"konflux-support-ops.*"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace=~"konflux-support-ops.*"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace=~"konflux-support-ops.*"}'
+
+      # Namespace: argocd-local
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="argocd-local"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="argocd-local"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="argocd-local"}'
+
+      # Namespace: cert-manager / cert-manager-operator
+      - '{__name__="kube_deployment_status_replicas_ready", namespace=~"cert-manager.*"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace=~"cert-manager.*"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace=~"cert-manager.*"}'
+
+      # Namespace: external-secrets-operator
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="external-secrets-operator"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="external-secrets-operator"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="external-secrets-operator"}'
+
+      # Namespace: konflux-policies
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="konflux-policies"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="konflux-policies"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="konflux-policies"}'
+
+      # Namespace: konflux-portal-server
+      - '{__name__="kube_deployment_status_replicas_ready", namespace="konflux-portal-server"}'
+      - '{__name__="kube_deployment_status_replicas_available", namespace="konflux-portal-server"}'
+      - '{__name__="kube_deployment_spec_replicas", namespace="konflux-portal-server"}'
+
+      # Cronjob rover-group-sync
+      - '{__name__="kube_cronjob_status_last_successful_time", cronjob=~"rover-group-sync|cleanup-internal-requests-pipelineruns|kargo-garbage-collector"}'
+      - '{__name__="kube_cronjob_status_last_schedule_time", cronjob=~"rover-group-sync|cleanup-internal-requests-pipelineruns|kargo-garbage-collector"}'
 
     relabelings:
     - action: replace
