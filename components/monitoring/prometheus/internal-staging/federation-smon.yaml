@@ -276,8 +276,8 @@ spec:
       - '{__name__="kube_deployment_spec_replicas", namespace="konflux-portal-server"}'
 
       # Cronjob rover-group-sync
-      - '{__name__="kube_cronjob_status_last_successful_time"}", cronjob="rover-group-sync"}'
-      - '{__name__="kube_cronjob_status_last_schedule_time"}", cronjob="rover-group-sync"}'
+      - '{__name__="kube_cronjob_status_last_successful_time", cronjob="rover-group-sync"}'
+      - '{__name__="kube_cronjob_status_last_schedule_time", cronjob="rover-group-sync"}'
 
     relabelings:
     - action: replace
