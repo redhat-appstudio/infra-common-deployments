@@ -4,3 +4,4 @@ kind: Kustomization
 
 resources:
 - konflux-devprod-admins.yaml
+- konflux-devprod-projectconfigs.yaml
