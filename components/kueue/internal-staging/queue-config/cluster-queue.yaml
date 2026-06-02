@@ -24,7 +24,7 @@ spec:
     - name: default-flavor
       resources:
       - name: tekton.dev/pipelineruns
-        nominalQuota: '300'
+        nominalQuota: '0'
       - name: signing-server-request
-        nominalQuota: '300'
+        nominalQuota: '0'
   stopPolicy: None
