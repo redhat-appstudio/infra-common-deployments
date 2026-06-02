@@ -1,6 +1,6 @@
 # Rover Group Sync
 
-The Rover Group Sync component consists of a scheduled job that ensures `Group` YAML manifest files in a `<environment>/rover/groups` directory of a Git repository are kept up to date with Konflux's [Rover][rover] LDAP groups. The component runs `oc adm groups sync` (LDAP only), then commits and pushes to the configured branch and Git repository when there are changes to the groups.
+The Rover Group Sync component consists of a scheduled job that ensures `Group` YAML manifest files in a `<environment>/rover/groups` directory of a Git repository are kept up to date with Konflux's [Rover][rover] LDAP groups. The component runs `oc adm groups sync` (LDAP only), then commits and pushes to the configured branch and Git repository (currently [internal-infra-deployments](https://github.com/redhat-appstudio/internal-infra-deployments/tree/main)) when there are changes to the groups.
 
 The container image and entrypoint script are maintained in the [infrastructure](https://github.com/redhat-appstudio/infrastructure) repository under `maintenance/rover-group-sync`.
 
@@ -13,8 +13,11 @@ The container image and entrypoint script are maintained in the [infrastructure]
 ## Default Behavior
 
 **Schedule:** every 15 minutes
+
 **Concurrency:** `Forbid` (no overlapping runs).
+
 **Volume Mounts:** named to satisfy the expected default environment variable paths
+
 **Environment:** defaults to a staging environment with `ENVIRONMENT` being set to 'staging'
 
 ## Secrets and Configurations (Vault)
