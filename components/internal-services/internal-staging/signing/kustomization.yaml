@@ -1,9 +1,0 @@
----
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - hacbs-signing-pipeline-config-openshifthosted.yaml
-  - hacbs-signing-pipeline-config-redhatbeta2.yaml
-  - hacbs-signing-pipeline-config-redhatrelease2.yaml
-  - hacbs-signing-pipeline-config-staging-e2e.yaml
-  - hacbs-signing-pipeline-config-staging-e2e-pq.yaml
