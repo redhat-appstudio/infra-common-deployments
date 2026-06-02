@@ -16,7 +16,7 @@ patches:
 
 helmCharts:
 - name: devlake
-  repo: https://apache.github.io/incubator-devlake-helm-chart
+  repo: https://apache.github.io/devlake-helm-chart
   version: 1.0.2
   releaseName: konflux-devlake
   namespace: konflux-devlake
