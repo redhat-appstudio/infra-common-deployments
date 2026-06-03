@@ -24,3 +24,6 @@ resources:
 
   # External Secrets
   - es/
+
+  # Signing configurations
+  - signing/
