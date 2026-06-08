@@ -8,6 +8,9 @@ version: 1.10.3
 namespace: kargo
 releaseName: kargo
 valuesInline:
+  image:
+    repository: quay.io/konflux-ci/kargo
+    tag: "65cb390"
   api:
     adminAccount:
       enabled: false
@@ -29,6 +32,9 @@ valuesInline:
           - konflux-devprod
       dex:
         enabled: true
+        image:
+          repository: quay.io/konflux-ci/dex
+          tag: 0e579a6bc47dd7d7c9fe128e2428a13fb4d4a64a
         skipApprovalScreen: true
         tls:
           selfSignedCert: false
