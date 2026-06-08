@@ -22,17 +22,11 @@ lake:
     LOGGING_DIR: "/tmp"
     LOGGING_LEVEL: "info"
     IN_SECURE_SKIP_VERIFY: "true"
-    PIPELINE_MAX_PARALLEL: "50"
+    PIPELINE_MAX_PARALLEL: "10"
     CORS_ALLOW_ORIGIN: "https://metrics.dprod.io,https://konflux-devlake-ui-konflux-devlake.apps.rosa.kflux-c-prd-i01.7hyu.p3.openshiftapps.com"
 
     # API timeout - increase for large repositories with slow responses
     API_TIMEOUT: "240s"
-
-    # =========================================================
-    # Disable Jira subtasks that generate excessive temp files to reduce pipeline run time and ephemeral storage usaage
-    # These write to domain tables (sprint_issues, accounts, issue_relationships) not used by Issue Cycle Time dashboards.
-    # =========================================================
-    ENABLE_SUBTASKS_BY_DEFAULT: "jira:convertSprintIssues:false,jira:convertAccounts:false,jira:convertIssueRelationships:false,jira:collectParentIssues:false"
 
     # API retry attempts for transient failures
     API_RETRY: "5"
