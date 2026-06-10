@@ -25,6 +25,12 @@ lake:
     PIPELINE_MAX_PARALLEL: "4"
     CORS_ALLOW_ORIGIN: "https://konflux-devlake-ui-konflux-devlake.apps.rosa.kflux-c-stg-i01.qfla.p3.openshiftapps.com"
 
+    # Force full git clone on every run, including incremental syncs.
+    # Fixes missing commits caused by --shallow-since edge cases where
+    # upstream gitextractor skips commits during incremental collection.
+    # Uses more disk and memory but ensures complete git history.
+    FORCE_FULL_GIT_HISTORY: "true"
+
     # API timeout - increase for large repositories with slow responses
     API_TIMEOUT: "180s"
 
