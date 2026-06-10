@@ -85,6 +85,3 @@ spec:
             prNumber: ${{ outputs['open-pr'].pr.id }}
             mergeMethod: squash
             wait: true
-  verification:
-    analysisTemplates:
-      - name: hello-world

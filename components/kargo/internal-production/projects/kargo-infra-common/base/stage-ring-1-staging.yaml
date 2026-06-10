@@ -2,17 +2,16 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: ring-2-production
+  name: ring-1-staging
   annotations:
-    kargo.akuity.io/color: violet
+    kargo.akuity.io/color: yellow
 spec:
   requestedFreight:
     - origin:
         kind: Warehouse
         name: kargo
       sources:
-        stages:
-          - ring-1-staging
+        direct: true
   promotionTemplate:
     spec:
       steps:
@@ -24,7 +23,7 @@ spec:
               - branch: main
                 path: ./src
         - task:
-            name: ring-2-promote
+            name: ring-1-promote
           as: promote
           vars:
             - name: srcPath
