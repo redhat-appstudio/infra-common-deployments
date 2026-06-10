@@ -1,0 +1,18 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: kargo
+spec:
+  freightCreationPolicy: Automatic
+  interval: 5m0s
+  subscriptions:
+    - image:
+        repoURL: quay.io/konflux-ci/kargo
+        imageSelectionStrategy: NewestBuild
+        discoveryLimit: 5
+    - image:
+        repoURL: quay.io/konflux-ci/dex
+        imageSelectionStrategy: NewestBuild
+        discoveryLimit: 5
+        allowTags: ^[0-9a-f]{40}$
