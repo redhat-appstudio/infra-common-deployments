@@ -11,7 +11,8 @@ spec:
         kind: Warehouse
         name: kargo
       sources:
-        direct: true
+        stages:
+          - ring-1-staging
   promotionTemplate:
     spec:
       steps:
@@ -85,6 +86,3 @@ spec:
             prNumber: ${{ outputs['open-pr'].pr.id }}
             mergeMethod: squash
             wait: true
-  verification:
-    analysisTemplates:
-      - name: hello-world

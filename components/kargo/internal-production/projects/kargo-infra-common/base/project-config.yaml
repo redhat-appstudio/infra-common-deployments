@@ -5,5 +5,7 @@ metadata:
   name: kargo-infra-common
 spec:
   promotionPolicies:
+    - stage: ring-1-staging
+      autoPromotionEnabled: false
     - stage: ring-2-production
       autoPromotionEnabled: false
