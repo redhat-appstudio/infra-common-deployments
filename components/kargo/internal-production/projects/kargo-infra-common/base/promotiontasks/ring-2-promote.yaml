@@ -1,0 +1,19 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: ring-2-promote
+spec:
+  vars:
+    - name: srcPath
+  steps:
+    # --- kargo ---
+    - uses: yaml-update
+      as: update-kargo
+      config:
+        path: ${{ vars.srcPath }}/components/kargo/internal-production/deployment/kargo-helm-generator.yaml
+        updates:
+          - key: valuesInline.image.tag
+            value: ${{ imageFrom("quay.io/konflux-ci/kargo").Tag }}
+          - key: valuesInline.api.oidc.dex.image.tag
+            value: ${{ imageFrom("quay.io/konflux-ci/dex").Tag }}

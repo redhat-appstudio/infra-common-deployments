@@ -1,0 +1,7 @@
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: kargo-infra-common
+  labels:
+    kargo.akuity.io/project: "true"

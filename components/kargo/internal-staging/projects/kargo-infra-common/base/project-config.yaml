@@ -1,0 +1,9 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: kargo-infra-common
+spec:
+  promotionPolicies:
+    - stage: ring-1-staging
+      autoPromotionEnabled: true
