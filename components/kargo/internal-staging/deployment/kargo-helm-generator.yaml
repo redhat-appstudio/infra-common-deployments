@@ -10,7 +10,7 @@ releaseName: kargo
 valuesInline:
   image:
     repository: quay.io/konflux-ci/kargo
-    tag: "ddf19ef"
+    tag: 1.10-3e6f995
   api:
     adminAccount:
       enabled: false
@@ -34,7 +34,7 @@ valuesInline:
         enabled: true
         image:
           repository: quay.io/konflux-ci/dex
-          tag: 0e579a6bc47dd7d7c9fe128e2428a13fb4d4a64a
+          tag: 57c968485b6888c3ddb5929bff26f19da16d81e1
         skipApprovalScreen: true
         tls:
           selfSignedCert: false
