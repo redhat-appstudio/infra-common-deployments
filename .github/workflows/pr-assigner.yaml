@@ -1,5 +1,5 @@
 ---
-name: Assign PR Reviewers
+name: Assign PR Assignees
 
 on:
   pull_request_target:
@@ -7,16 +7,17 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
+  pull-requests: read
+  issues: write # assignees are managed via the Issues API, even on PRs
 
 jobs:
-  assign-reviewers:
+  assign-assignees:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Assign internal-services reviewers from CODEOWNERS
+      - name: Assign internal-services assignees from CODEOWNERS
         uses: actions/github-script@v8
         with:
           script: |
@@ -77,21 +78,21 @@ jobs:
               pr.user.login,
             ]);
 
-            const requestedReviewers = (pr.requested_reviewers || []).map((reviewer) => reviewer.login);
-            for (const reviewer of requestedReviewers) {
-              excluded.add(reviewer);
+            const existingAssignees = (pr.assignees || []).map((assignee) => assignee.login);
+            for (const assignee of existingAssignees) {
+              excluded.add(assignee);
             }
 
             const candidates = owners.filter((owner) => !excluded.has(owner));
-            const neededReviewers = Math.max(0, 2 - requestedReviewers.length);
+            const neededAssignees = Math.max(0, 2 - existingAssignees.length);
 
-            if (neededReviewers === 0) {
-              core.info("PR already has 2 or more requested reviewers.");
+            if (neededAssignees === 0) {
+              core.info("PR already has 2 or more assignees.");
               return;
             }
 
             if (candidates.length === 0) {
-              core.info("No eligible internal-services CODEOWNERS reviewers available.");
+              core.info("No eligible internal-services CODEOWNERS assignees available.");
               return;
             }
 
@@ -106,7 +107,7 @@ jobs:
                   return candidate;
                 } catch (error) {
                   if (error.status === 404) {
-                    core.info(`Skipping non-collaborator reviewer candidate: ${candidate}`);
+                    core.info(`Skipping non-collaborator assignee candidate: ${candidate}`);
                     return null;
                   }
                   throw error;
@@ -121,26 +122,26 @@ jobs:
             }
 
             const shuffled = [...collaboratorCandidates].sort(() => Math.random() - 0.5);
-            const selected = shuffled.slice(0, neededReviewers);
+            const selected = shuffled.slice(0, neededAssignees);
 
             if (selected.length === 0) {
-              core.info("No reviewers selected.");
+              core.info("No assignees selected.");
               return;
             }
 
             try {
-              await github.rest.pulls.requestReviewers({
+              await github.rest.issues.addAssignees({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                pull_number: pr.number,
-                reviewers: selected,
+                issue_number: pr.number,
+                assignees: selected,
               });
             } catch (error) {
               if (error.status === 422) {
-                core.warning(`Unable to request one or more reviewers: ${error.message}`);
+                core.warning(`Unable to assign one or more assignees: ${error.message}`);
                 return;
               }
               throw error;
             }
 
-            core.info(`Assigned reviewers: ${selected.join(", ")}`);
+            core.info(`Assigned assignees: ${selected.join(", ")}`);
