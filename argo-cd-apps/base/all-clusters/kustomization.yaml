@@ -11,3 +11,4 @@ resources:
   - monitoring-workload-blackbox
   - monitoring-workload-logging
   - monitoring-workload-prometheus
+# test: verify CI runs on PRs
