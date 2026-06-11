@@ -126,7 +126,7 @@ Each environment overlay is **self-contained** — never create shared base laye
 |-------|-------------|--------------|
 | **yamllint** (GHA + Prow) | All PRs | YAML formatting validation |
 | **kube-linter** | All PRs | Kubernetes manifest best-practice scans |
-| **chainsaw-tests** | `kyverno/**`, `policies/**` | Kyverno policy integration tests |
+| **chainsaw-tests** | `components/kyverno/**`, `components/policies/**` | Kyverno policy integration tests |
 | **agents-md-lint** | `AGENTS.md` changes | Validates AGENTS.md under 300 lines |
 | **pr-assigner** | PR opened/updated | Auto-assigns reviewers |
 

@@ -81,15 +81,24 @@ Both GitHub Actions and Prow run yamllint — both must pass.
 
 Scans kustomized Kubernetes manifests for security and best practice violations. Check the logs for specific rule violations.
 
-To reproduce locally:
+To reproduce locally (must match CI — build ALL kustomizations, not just one overlay):
 
 ```bash
 mkdir -p kustomizedfiles
-kustomize build argo-cd-apps/overlays/<env>/ -o kustomizedfiles/<env>.yaml
+find argo-cd-apps components -name 'kustomization.yaml' \
+  ! -path 'components/kargo/*' \
+  ! -path 'components/konflux-devlake/*' \
+  | xargs -I {} -n1 -P8 bash -c '
+    dir=$(dirname "{}")
+    output_file=$(echo $dir | tr / -)-kustomization.yaml
+    kustomize build --enable-helm "$dir" -o "kustomizedfiles/$output_file"
+  '
 kube-linter lint --config .kube-linter.yaml kustomizedfiles/
 ```
 
-**Note:** kube-linter excludes `kargo/` and `konflux-devlake/` (Helm-based components).
+Building only a single overlay will miss failures CI catches on other kustomizations.
+
+If Helm-based overlays fail locally, compare your local `helm version` and `kustomize version` with CI's versions (see `.github/workflows/kube-linter.yaml` for the kustomize version CI uses).
 
 ### chainsaw-tests
 
