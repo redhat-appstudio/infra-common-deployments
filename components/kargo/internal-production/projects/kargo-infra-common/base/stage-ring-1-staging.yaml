@@ -12,6 +12,11 @@ spec:
         name: kargo
       sources:
         direct: true
+    - origin:
+        kind: Warehouse
+        name: kargo-helm
+      sources:
+        direct: true
   promotionTemplate:
     spec:
       steps:
