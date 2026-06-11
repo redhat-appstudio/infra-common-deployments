@@ -11,6 +11,7 @@ spec:
         repoURL: quay.io/konflux-ci/kargo
         imageSelectionStrategy: NewestBuild
         discoveryLimit: 5
+        allowTags: ^1\.10-[0-9a-f]{7}$
     - image:
         repoURL: quay.io/konflux-ci/dex
         imageSelectionStrategy: NewestBuild
