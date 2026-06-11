@@ -7,8 +7,8 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
-  issues: write # assignees are managed via the Issues API, even on PRs
+  pull-requests: write # required to list PR files and to assign on PRs via the Issues API
+  issues: write
 
 jobs:
   assign-assignees:
