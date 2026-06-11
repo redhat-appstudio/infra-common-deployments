@@ -75,11 +75,11 @@ spec:
                   name: temp-directory
               resources:
                 limits:
-                  cpu: 200m
-                  memory: 512Mi
+                  cpu: 1
+                  memory: 4096Mi
                 requests:
-                  cpu: 200m
-                  memory: 512Mi
+                  cpu: 500m
+                  memory: 4096Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
