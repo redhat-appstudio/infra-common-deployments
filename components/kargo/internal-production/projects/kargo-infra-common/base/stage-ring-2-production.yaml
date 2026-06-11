@@ -13,6 +13,12 @@ spec:
       sources:
         stages:
           - ring-1-staging
+    - origin:
+        kind: Warehouse
+        name: kargo-helm
+      sources:
+        stages:
+          - ring-1-staging
   promotionTemplate:
     spec:
       steps:
@@ -36,6 +42,7 @@ spec:
             message: |
               chore(${{ ctx.stage }}): promote infra-common components
 
+              chart: ${{ chartFrom("oci://ghcr.io/akuity/kargo-charts", "kargo").Version }}
               kargo: ${{ imageFrom("quay.io/konflux-ci/kargo").Tag }}
               dex: ${{ imageFrom("quay.io/konflux-ci/dex").Tag }}
         - uses: git-push
@@ -61,6 +68,7 @@ spec:
 
               | Component | Image | Tag |
               |-----------|-------|-----|
+              | chart | `oci://ghcr.io/akuity/kargo-charts/kargo` | `${{ chartFrom("oci://ghcr.io/akuity/kargo-charts", "kargo").Version }}` |
               | kargo | `quay.io/konflux-ci/kargo` | `${{ imageFrom("quay.io/konflux-ci/kargo").Tag }}` |
               | dex | `quay.io/konflux-ci/dex` | `${{ imageFrom("quay.io/konflux-ci/dex").Tag }}` |
 

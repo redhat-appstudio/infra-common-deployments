@@ -6,6 +6,6 @@ metadata:
 spec:
   promotionPolicies:
     - stage: ring-1-staging
-      autoPromotionEnabled: false
+      autoPromotionEnabled: true
     - stage: ring-2-production
       autoPromotionEnabled: false
