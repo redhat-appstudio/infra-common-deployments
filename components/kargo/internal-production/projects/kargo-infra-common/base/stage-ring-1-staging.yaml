@@ -28,7 +28,7 @@ spec:
               - branch: main
                 path: ./src
         - task:
-            name: ring-1-promote
+            name: kargo-promote-ring-1
           as: kargo-promote
           vars:
             - name: srcPath
