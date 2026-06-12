@@ -1,5 +1,19 @@
+---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+
 resources:
   - deployment
   - projects
+
+patches:
+  - target:
+      kind: ServiceAccount
+      name: dex-client
+    patch: |-
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: dex-client
+        annotations:
+          serviceaccounts.openshift.io/oauth-redirecturi.kargo: https://kargo-api-kargo.apps.rosa.kflux-c-prd-i01.7hyu.p3.openshiftapps.com/dex/callback
