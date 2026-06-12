@@ -68,3 +68,11 @@ kustomize build <path> | kubectl apply --dry-run=client -f -
 - Chainsaw tests require Kyverno fully rolled out (300s timeout).
 - Environment patches target ApplicationSets by group/version/kind —
   changing ApplicationSet structure may silently break patches.
+
+## Skills
+
+- Before opening a PR, writing a PR description, or interpreting CI
+  results, read `skills/pr-workflow.md`
+- When a CI check fails on a PR, read `skills/ci-troubleshooting.md`
+- When working interactively on new features or significant changes,
+  read `skills/brainstorming-workflow.md` before making changes
