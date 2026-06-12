@@ -5,7 +5,7 @@ resources:
   - namespace.yaml
   - project.yaml
   - project-config.yaml
-  - rbac.yaml
+  - rbac
   - external-secrets
   - promotiontasks
   - stage-ring-1-staging.yaml
