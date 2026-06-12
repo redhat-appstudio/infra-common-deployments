@@ -30,7 +30,7 @@ spec:
                 path: ./src
         - task:
             name: ring-2-promote
-          as: promote
+          as: kargo-promote
           vars:
             - name: srcPath
               value: ./src
