@@ -6,6 +6,7 @@ namespace: konflux-support-ops-dashboard
 
 resources:
   - ../base
+  - external-secrets
 
 images:
   - name: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support

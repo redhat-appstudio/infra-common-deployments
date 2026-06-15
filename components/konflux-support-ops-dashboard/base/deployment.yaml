@@ -41,6 +41,16 @@ spec:
               value: /etc/tls/tls.crt
             - name: TLS_KEY_FILE
               value: /etc/tls/tls.key
+            - name: LDAP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: ldap-ops-secrets
+                  key: LDAP_USER
+            - name: 
+              valueFrom:
+                secretKeyRef:
+                  name: ldap-ops-secrets
+                  key: LDAP_PASSWORD
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
