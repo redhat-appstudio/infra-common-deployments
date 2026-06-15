@@ -46,7 +46,7 @@ spec:
                 secretKeyRef:
                   name: ldap-ops-secrets
                   key: LDAP_USER
-            - name: 
+            - name: LDAP_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: ldap-ops-secrets
