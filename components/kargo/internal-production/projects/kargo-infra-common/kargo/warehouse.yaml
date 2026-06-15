@@ -8,8 +8,7 @@ spec:
   interval: 5m0s
   subscriptions:
     - chart:
-        repoURL: oci://ghcr.io/akuity/kargo-charts
-        name: kargo
+        repoURL: oci://ghcr.io/akuity/kargo-charts/kargo
         semverConstraint: ^1.10.0
         discoveryLimit: 5
     - image:

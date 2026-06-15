@@ -6,15 +6,16 @@ metadata:
 spec:
   vars:
     - name: srcPath
+    - name: component
   steps:
-    # --- kargo ---
     - uses: yaml-update
       as: update-kargo
+      if: ${{ vars.component == "kargo" }}
       config:
         path: ${{ vars.srcPath }}/components/kargo/internal-production/deployment/kargo-helm-generator.yaml
         updates:
           - key: version
-            value: ${{ chartFrom("oci://ghcr.io/akuity/kargo-charts", "kargo").Version }}
+            value: ${{ chartFrom("oci://ghcr.io/akuity/kargo-charts/kargo").Version }}
           - key: valuesInline.image.tag
             value: ${{ imageFrom("quay.io/konflux-ci/kargo").Tag }}
           - key: valuesInline.api.oidc.dex.image.tag
