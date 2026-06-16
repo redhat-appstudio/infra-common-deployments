@@ -5,6 +5,7 @@ namespace: argocd-local
 resources:
   - ../../base/all-clusters
   - ../../base/external
+  - dummy-deployment.yaml
 patches:
   - path: environment-patch.yaml
     target:
