@@ -76,3 +76,5 @@ kustomize build <path> | kubectl apply --dry-run=client -f -
 - When a CI check fails on a PR, read `skills/ci-troubleshooting.md`
 - When working interactively on new features or significant changes,
   read `skills/brainstorming-workflow.md` before making changes
+- When onboarding a new component to Kargo automated promotion,
+  read `skills/kargo-onboard.md`
