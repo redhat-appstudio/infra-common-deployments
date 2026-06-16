@@ -298,40 +298,14 @@ also update the external config files.
 
 ## Example: Kargo Component (Reference)
 
-The `kargo/` directory is the reference implementation:
+The [`kargo/`](../kargo/) directory is the reference implementation:
 
-**Warehouse** — watches the Kargo Helm chart (OCI), Kargo image, and Dex image:
-
-```yaml
-subscriptions:
-  - chart:
-      repoURL: oci://ghcr.io/akuity/kargo-charts/kargo
-      semverConstraint: ^1.10.0
-  - image:
-      repoURL: quay.io/konflux-ci/kargo
-      allowTags: ^1\.10-[0-9a-f]{7}$
-  - image:
-      repoURL: quay.io/konflux-ci/dex
-      allowTags: ^[0-9a-f]{40}$
-```
-
-**Promotion Task** — updates the Helm generator with chart version + image tags:
-
-```yaml
-steps:
-  - uses: yaml-update
-    as: update-kargo
-    if: ${{ ctx.targetFreight.origin.name == "kargo" }}
-    config:
-      path: ${{ vars.srcPath }}/components/kargo/internal-staging/deployment/kargo-helm-generator.yaml
-      updates:
-        - key: version
-          value: ${{ chartFrom("oci://ghcr.io/akuity/kargo-charts/kargo").Version }}
-        - key: valuesInline.image.tag
-          value: ${{ imageFrom("quay.io/konflux-ci/kargo").Tag }}
-        - key: valuesInline.api.oidc.dex.image.tag
-          value: ${{ imageFrom("quay.io/konflux-ci/dex").Tag }}
-```
+- **Warehouse** — watches the Kargo Helm chart (OCI), Kargo image, and Dex
+  image: [`kargo/warehouse.yaml`](../kargo/warehouse.yaml)
+- **Promotion Task (staging)** — updates the Helm generator with chart version
+  and image tags: [`kargo/promotiontasks/kargo-promote-ring-1.yaml`](../kargo/promotiontasks/kargo-promote-ring-1.yaml)
+- **Promotion Task (production)** — same pattern targeting production config:
+  [`kargo/promotiontasks/kargo-promote-ring-2.yaml`](../kargo/promotiontasks/kargo-promote-ring-2.yaml)
 
 ## Checklist
 
