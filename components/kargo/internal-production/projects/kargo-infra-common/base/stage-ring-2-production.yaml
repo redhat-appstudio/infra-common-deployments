@@ -29,13 +29,11 @@ spec:
               - branch: main
                 path: ./src
         - task:
-            name: ring-2-promote
-          as: promote
+            name: kargo-promote-ring-2
+          as: kargo-promote
           vars:
             - name: srcPath
               value: ./src
-            - name: component
-              value: ${{ vars.component }}
         - uses: git-commit
           as: commit
           config:

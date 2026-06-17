@@ -2,15 +2,14 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
-  name: ring-1-promote
+  name: kargo-promote-ring-1
 spec:
   vars:
     - name: srcPath
-    - name: component
   steps:
     - uses: yaml-update
       as: update-kargo
-      if: ${{ vars.component == "kargo" }}
+      if: ${{ ctx.targetFreight.origin.name == "kargo" }}
       config:
         path: ${{ vars.srcPath }}/components/kargo/internal-staging/deployment/kargo-helm-generator.yaml
         updates:
