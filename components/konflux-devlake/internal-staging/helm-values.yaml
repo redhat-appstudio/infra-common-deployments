@@ -50,7 +50,23 @@ lake:
     DB_URL: "mysql://$(MYSQL_USER):$(MYSQL_PASSWORD)@$(MYSQL_SERVER):$(MYSQL_PORT)/$(MYSQL_DATABASE)?charset=$(DB_CHARSET)&parseTime=$(DB_PARSE_TIME)&loc=$(DB_LOCATION)&tls=true"
     # Go's crypto/x509 on Debian reads /etc/ssl/certs/ by default, not
     # /etc/pki/ where OpenShift mounts the trusted CA ConfigMap.
-    SSL_CERT_FILE: "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"
+    SSL_CERT_FILE: "/etc/ssl/combined/ca-bundle.crt"
+  initContainers:
+    - name: build-ca-bundle
+      image: quay.io/konflux-ci/konflux-devprod/devlake-backend
+      command:
+        - sh
+        - -c
+        - cat /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /etc/ssl/rds/rds-ca-bundle.pem > /etc/ssl/combined/ca-bundle.crt
+      volumeMounts:
+        - name: trusted-ca
+          mountPath: /etc/pki/ca-trust/extracted/pem
+          readOnly: true
+        - name: rds-ca
+          mountPath: /etc/ssl/rds
+          readOnly: true
+        - name: combined-ca
+          mountPath: /etc/ssl/combined
   volumes:
     - name: trusted-ca
       configMap:
@@ -58,9 +74,23 @@ lake:
         items:
           - key: ca-bundle.crt
             path: tls-ca-bundle.pem
+    - name: rds-ca
+      secret:
+        secretName: konflux-devlake-secrets
+        items:
+          - key: AWS_RDS_CRTS
+            path: rds-ca-bundle.pem
+    - name: combined-ca
+      emptyDir: {}
   volumeMounts:
     - name: trusted-ca
       mountPath: /etc/pki/ca-trust/extracted/pem
+      readOnly: true
+    - name: rds-ca
+      mountPath: /etc/ssl/rds
+      readOnly: true
+    - name: combined-ca
+      mountPath: /etc/ssl/combined
       readOnly: true
   extraEnvsFromSecret: konflux-devlake-secrets
 
