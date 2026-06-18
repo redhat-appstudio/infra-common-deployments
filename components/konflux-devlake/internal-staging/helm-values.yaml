@@ -48,6 +48,9 @@ lake:
     GITHUB_GRAPHQL_JOB_PAGINATING_PAGE_SIZE: "100"
 
     DB_URL: "mysql://$(MYSQL_USER):$(MYSQL_PASSWORD)@$(MYSQL_SERVER):$(MYSQL_PORT)/$(MYSQL_DATABASE)?charset=$(DB_CHARSET)&parseTime=$(DB_PARSE_TIME)&loc=$(DB_LOCATION)&tls=true"
+    # Go's crypto/x509 on Debian reads /etc/ssl/certs/ by default, not
+    # /etc/pki/ where OpenShift mounts the trusted CA ConfigMap.
+    SSL_CERT_FILE: "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"
   volumes:
     - name: trusted-ca
       configMap:
