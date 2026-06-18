@@ -76,3 +76,23 @@ patches:
             - name: parse-cabundle
               securityContext:
                 runAsUser: null
+
+  # OpenShift OwnerReferencesPermissionEnforcement fix (upstream: akuity/kargo#5945)
+  # JSON patch appends finalizer permissions so blockOwnerDeletion in ownerReferences works.
+  - target:
+      kind: ClusterRole
+      name: kargo-controller
+    patch: |-
+      - op: add
+        path: /rules/-
+        value:
+          apiGroups:
+            - kargo.akuity.io
+          resources:
+            - freights/finalizers
+            - promotions/finalizers
+            - stages/finalizers
+          verbs:
+            - patch
+            - update
+
