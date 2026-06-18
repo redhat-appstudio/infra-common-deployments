@@ -26,6 +26,8 @@ spec:
           value: https://github.com/redhat-appstudio/infra-common-deployments.git
         - name: component
           value: ${{ ctx.targetFreight.origin.name }}
+        - name: argocdApiUrl
+          value: https://argocd-server.argocd-local.svc.cluster.local
       steps:
         - uses: git-clone
           as: clone
@@ -77,39 +79,30 @@ spec:
           config:
             repoURL: ${{ vars.repoURL }}
             prNumber: ${{ outputs['open-pr'].pr.id }}
-        - uses: argocd-update
-          if: ${{ vars.component == 'kargo' }}
-          as: argocd-update-kargo
+        # Workaround for argocd-wait race condition (https://github.com/akuity/kargo/issues/6357)
+        # Credit: @cdemarco-drw
+        # TODO: Replace with native argocd-wait desiredRevision parameter when upstream implements it
+        - uses: http
+          as: wait-for-argocd-revision
+          retry:
+            timeout: 15m
           config:
-            apps:
-              - name: kargo-in-cluster
-                namespace: argocd-local
-                sources:
-                  - repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
-                    desiredRevision: ${{ outputs['wait-for-pr'].commit }}
-                    updateTargetRevision: false
+            method: GET
+            url: ${{ vars.argocdApiUrl }}/api/v1/applications/${{ vars.component }}-in-cluster?appNamespace=argocd-local
+            headers:
+              - name: Authorization
+                value: Bearer ${{ secret('kargo-argocd-token').token }}
+            successExpression: |
+              response.status == 200 &&
+              response.body?.status?.sync?.status == 'Synced' &&
+              response.body?.status?.sync?.revision == '${{ outputs['wait-for-pr'].commit }}'
+            failureExpression: |
+              response.body?.status?.health?.status == 'Degraded' ||
+              response.body?.status?.operationState?.phase in ['Failed', 'Error']
+            timeout: 60s
         - uses: argocd-wait
-          if: ${{ vars.component == 'kargo' }}
-          as: argocd-wait-kargo
+          as: argocd-wait
           config:
             apps:
-              - name: kargo-in-cluster
-                namespace: argocd-local
-        - uses: argocd-update
-          if: ${{ vars.component == 'dummy-deployment' }}
-          as: argocd-update-dummy
-          config:
-            apps:
-              - name: dummy-deployment-in-cluster
-                namespace: argocd-local
-                sources:
-                  - repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
-                    desiredRevision: ${{ outputs['wait-for-pr'].commit }}
-                    updateTargetRevision: false
-        - uses: argocd-wait
-          if: ${{ vars.component == 'dummy-deployment' }}
-          as: argocd-wait-dummy
-          config:
-            apps:
-              - name: dummy-deployment-in-cluster
+              - name: ${{ vars.component }}-in-cluster
                 namespace: argocd-local
