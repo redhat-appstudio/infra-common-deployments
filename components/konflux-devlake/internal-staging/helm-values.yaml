@@ -4,7 +4,7 @@ imageTag: v1.0.3-beta7
 lake:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-backend
-    tag: 77ede6af89e40a038c6fccd90979706a48bc2f79
+    tag: 10ee0c7cf0bec845e4397157bc895336adf7dd6b
   encryptionSecret:
     secretName: konflux-devlake-secrets
     autoCreateSecret: false
@@ -36,6 +36,9 @@ lake:
 
     # API retry attempts for transient failures
     API_RETRY: "5"
+
+    # Default sync time range for new projects (days back from today)
+    DEFAULT_SYNC_DAYS: "60"
 
     # ===========================================
     # GitHub GraphQL Job Collector (PR #8616)
@@ -103,7 +106,7 @@ grafana:
 ui:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-frontend
-    tag: 77ede6af89e40a038c6fccd90979706a48bc2f79
+    tag: 10ee0c7cf0bec845e4397157bc895336adf7dd6b
   securityContext: {}
   containerSecurityContext: {}
   basicAuth:
