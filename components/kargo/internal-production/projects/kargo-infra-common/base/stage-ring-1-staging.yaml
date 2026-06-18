@@ -9,6 +9,11 @@ spec:
   requestedFreight:
     - origin:
         kind: Warehouse
+        name: dummy-deployment
+      sources:
+        direct: true
+    - origin:
+        kind: Warehouse
         name: kargo
       sources:
         direct: true
@@ -27,6 +32,12 @@ spec:
             checkout:
               - branch: main
                 path: ./src
+        - task:
+            name: dummy-deployment-promote-ring-1
+          as: dummy-deployment-promote
+          vars:
+            - name: srcPath
+              value: ./src
         - task:
             name: kargo-promote-ring-1
           as: kargo-promote

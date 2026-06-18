@@ -6,6 +6,7 @@ namespace: kargo-infra-common
 
 resources:
   - base
+  - dummy-deployment
   - kargo
 
 commonAnnotations:
