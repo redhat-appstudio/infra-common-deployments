@@ -59,9 +59,7 @@ lake:
     - name: trusted-ca
       mountPath: /etc/pki/ca-trust/extracted/pem
       readOnly: true
-  envFrom:
-    - secretRef:
-        name: konflux-devlake-secrets
+  extraEnvsFromSecret: konflux-devlake-secrets
 
 mysql:
   useExternal: true
