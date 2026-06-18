@@ -46,6 +46,8 @@ lake:
     # - More API calls but avoids timeouts and missing data
     GITHUB_GRAPHQL_JOB_COLLECTION_MODE: "PAGINATING"
     GITHUB_GRAPHQL_JOB_PAGINATING_PAGE_SIZE: "100"
+
+    DB_URL: "mysql://$(MYSQL_USER):$(MYSQL_PASSWORD)@$(MYSQL_SERVER):$(MYSQL_PORT)/$(MYSQL_DATABASE)?charset=$(DB_CHARSET)&parseTime=$(DB_PARSE_TIME)&loc=$(DB_LOCATION)&tls=true"
   volumes:
     - name: trusted-ca
       configMap:
