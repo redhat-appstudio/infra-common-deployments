@@ -1,18 +1,17 @@
+---
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: dummy-deployment
+  name: kargo-shard-controller
 spec:
   generators:
     - clusters:
         values:
-          sourceRoot: components/dummy-deployment
+          sourceRoot: components/kargo-shard-controller
           environment: ""
   template:
     metadata:
-      name: dummy-deployment-{{nameNormalized}}
-      annotations:
-        kargo.akuity.io/authorized-stage: "kargo-infra-common:ring-1-staging"
+      name: kargo-shard-controller-{{nameNormalized}}
     spec:
       project: default
       source:
@@ -20,7 +19,7 @@ spec:
         repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
         targetRevision: main
       destination:
-        namespace: konflux-dummy-deploy
+        namespace: kargo-shard-staging
         name: in-cluster
       syncPolicy:
         automated:
@@ -28,9 +27,3 @@ spec:
           selfHeal: true
         syncOptions:
           - CreateNamespace=true
-        retry:
-          limit: -1
-          backoff:
-            duration: 10s
-            factor: 2
-            maxDuration: 3m
