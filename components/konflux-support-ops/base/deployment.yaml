@@ -19,7 +19,7 @@ spec:
           defaultMode: 420
       containers:
       - name: support-ops
-        image: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support@sha256:a7c6f12ea243d5855a4c031a25e66a1dc5dbb78eaab61c96ce5a364ffe387361
+        image: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support@sha256:df05f8b8128aad06c20da59f84481e0c2b2668f45d736e9e5055d57c1ec3eff9
         imagePullPolicy: Always
         env:
         - name: PYTHONPATH
@@ -39,6 +39,11 @@ spec:
             secretKeyRef:
               name: konflux-support-ops-secrets
               key: JIRA_API_KEY
+        - name: JIRA_API_KEY_CKI
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: JIRA_API_KEY_CKI
         - name: JIRA_API_KEY_KONFLUX
           valueFrom:
             secretKeyRef:
