@@ -3,7 +3,8 @@ kind: Kustomization
 resources:
   - project.yaml
   - ns.yaml
-  - rbac.yaml
+  - rbac
+  - external-secrets
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

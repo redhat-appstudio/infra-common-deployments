@@ -1,0 +1,13 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: dummy-deployment-manifest-wh
+  namespace: infra-demo
+spec:
+  subscriptions:
+  - git:
+      repoURL: https://github.com/enkeefe00/infra-deployments
+      commitSelectionStrategy: NewestFromBranch
+      branch: setup-ring-overlays
+      includePaths:
+        - 'components/dummy-deployment/new-base'

@@ -1,0 +1,29 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ClusterPromotionTask
+metadata:
+  name: update-repo-ref
+spec:
+  image: INSERT_IMAGE_HERE
+  command:
+          - sh
+          - -c
+          - |
+            cd ${{ config.kustomizationDirPath }}
+
+            # 1. Search for the existing repo inside the resources block of the kustomization.yaml file
+            RESOURCES_BLOCK=$(awk '/^resources:/ {p=1; next} /^[a-zA-Z]/ {p=0} p' kustomization.yaml)
+            OLD_RESOURCE=$(echo "$RESOURCES_BLOCK" | grep -E '^[[:space:]]*-[[:space:]]*${{ config.srcRepoURL }}' | awk '{print $2}' | head -n 1)
+            
+            if [ -z "$OLD_RESOURCE" ]; then
+              echo "⚠️ No resource found starting with repo URL: ${{ config.srcRepoURL }}"
+              exit 0
+            fi
+          
+            # 2. Construct the new repo reference and perform the clean swap
+            NEW_RESOURCE="${{ config.srcRepoURL }}?ref=${{ config.newRef }}"
+
+            echo "🔄 Found old source repo resource: $OLD_RESOURCE"
+            echo "🚀 Replacing it with new source repo reference:  $NEW_RESOURCE"
+
+            kustomize edit remove resource "$OLD_RESOURCE"
+            kustomize edit add resource "$NEW_RESOURCE"

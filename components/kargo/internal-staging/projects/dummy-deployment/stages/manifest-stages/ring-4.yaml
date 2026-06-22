@@ -1,0 +1,125 @@
+kind: Stage
+apiVersion: kargo.akuity.io/v1alpha1
+metadata:
+  name: manifest-ring-4
+  namespace: infra-demo
+  annotations:
+    kargo.akuity.io/color: blue
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: dummy-deployment-manifest-wh
+      sources:
+        direct: false
+        stages:
+          - manifest-ring-3
+  promotionTemplate:
+    spec:
+      vars:
+        - name: repoURL
+          value: https://github.com/enkeefe00/infra-deployments
+        - name: component
+          value: dummy-deployment
+        - name: homeDir
+          value: ./home
+        - name: ring
+          value: ring-4
+      steps:
+        - uses: git-clone
+          config:
+            repoURL: ${{ vars.repoURL }}
+            author:
+              email: kargo-bot@local
+              name: Kargo Bot
+            checkout:
+              - as: checkout-freight-commit
+                commit: ${{ commitFrom(vars.repo).ID }}
+                path: ./{{ vars.homeDir }}
+
+        - uses: delete
+          as: delete-old-base-resources
+          config:
+            path: ./${{ vars.homeDir }}/components/${{ vars.component }}/base
+
+        - uses: copy
+          as: copy-new-base-resources
+          config:
+            inPath: ./${{ vars.homeDir }}/components/${{ vars.component }}/new-base
+            outPath: ./${{ vars.homeDir }}/components/${{ vars.component }}/base
+          
+        - uses: delete
+          as: delete-new-base-resources
+          config:
+            path: ./${{ vars.homeDir }}/components/${{ vars.component }}/new-base
+
+        - uses: kustomize-replace-resource
+          as: promote-base-to-ring-0
+          continueOnError: true
+          config:
+            kustomizeDirPath: ./${{ vars.homeDir }}/components/${{ vars.component }}/rings/ring-0/base
+            newResource: ../../../base
+            oldResource: ../../../new-base
+        
+        - uses: kustomize-replace-resource
+          as: promote-base-to-ring-1
+          continueOnError: true
+          config:
+            kustomizeDirPath: ./${{ vars.homeDir }}/components/${{ vars.component }}/rings/ring-1/base
+            newResource: ../../../base
+            oldResource: ../../../new-base
+        
+        - uses: kustomize-replace-resource
+          as: promote-base-to-ring-2
+          continueOnError: true
+          config:
+            kustomizeDirPath: ./${{ vars.homeDir }}/components/${{ vars.component }}/rings/ring-2/base
+            newResource: ../../../base
+            oldResource: ../../../new-base
+        
+        - uses: kustomize-replace-resource
+          as: promote-base-to-ring-3
+          continueOnError: true
+          config:
+            kustomizeDirPath: ./${{ vars.homeDir }}/components/${{ vars.component }}/rings/ring-3/base
+            newResource: ../../../base
+            oldResource: ../../../new-base
+        
+        - uses: kustomize-replace-resource
+          as: promote-base-to-ring-4
+          continueOnError: true
+          config:
+            kustomizeDirPath: ./${{ vars.homeDir }}/components/${{ vars.component }}/rings/ring-4/base
+            newResource: ../../../base
+            oldResource: ../../../new-base
+        
+        - as: commit
+          config:
+            message: "Promote ${{ vars.component }} changes to ${{ vars.ring }}"
+            path: ./${{ vars.homeDir }}
+          uses: git-commit
+
+        - as: push
+          config:
+            force: true
+            path: ./${{ vars.homeDir }}
+            targetBranch: kargo-${{ vars.ring }}-${{ vars.component }}
+          uses: git-push
+
+        - as: open-pr
+          config:
+            labels:
+              - ready-for-review
+            repoURL: ${{ vars.repoURL }}
+            sourceBranch: ${{ ctx.outputs.push.branch }}
+            targetBranch: main
+            title: "(promotion) ${{ vars.component }} changes to ${{ vars.ring }}"
+          continueOnError: true
+          uses: git-open-pr
+
+        - as: wait-for-pr
+          config:
+            prNumber: ${{ outputs['open-pr'].pr.id }}
+            repoURL: ${{ vars.repoURL }}
+          if: ${{ status('open-pr') != 'Errored' }}
+          uses: git-wait-for-pr

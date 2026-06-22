@@ -1,0 +1,63 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: image-promotion
+spec:
+  vars:
+    - name: homeDir
+      value: ./home
+    - name: repoURL
+      value: https://github.com/flacatus/infra-deployments
+    - name: component
+      value: dummy-deployment
+    - name: ring
+  steps:
+    - uses: git-clone
+      config:
+        repoURL: ${{ vars.repoURL }}
+        author:
+          email: kargo-bot@local
+          name: Kargo Bot
+        checkout:
+          - as: checkout-freight-commit
+            commit: ${{ commitFrom(vars.repo).ID }}
+            path: ./{{ vars.homeDir }}
+
+    - uses: kustomize-replace-resource
+      as: promote-new-base
+      continueOnError: true
+      config:
+        kustomizeDirPath: ./${{ vars.homeDir }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base
+        newResource: ../../../new-base
+        oldResource: ../../../base
+
+    - as: commit
+      config:
+        message: "Promote ${{ vars.component }} changes to ${{ vars.ring }}"
+        path: ./${{ vars.homeDir }}
+      uses: git-commit
+
+    - as: push
+      config:
+        force: true
+        path: ./${{ vars.homeDir }}
+        targetBranch: kargo-${{ vars.ring }}-${{ vars.component }}
+      uses: git-push
+
+    - as: open-pr
+      config:
+        labels:
+          - ready-for-review
+        repoURL: ${{ vars.repoURL }}
+        sourceBranch: ${{ ctx.outputs.push.branch }}
+        targetBranch: main
+        title: "(promotion) ${{ vars.component }} changes to ${{ vars.ring }}"
+      continueOnError: true
+      uses: git-open-pr
+
+    - as: wait-for-pr
+      config:
+        prNumber: ${{ outputs['open-pr'].pr.id }}
+        repoURL: ${{ vars.repoURL }}
+      if: ${{ status('open-pr') != 'Errored' }}
+      uses: git-wait-for-pr

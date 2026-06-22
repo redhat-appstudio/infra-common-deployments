@@ -1,0 +1,72 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: image-promotion
+spec:
+  vars:
+    - name: homeDir
+      value: ./home
+    - name: imageRepo
+      value: quay.io/redhat-appstudio-qe/dummy-deployment
+    - name: repoURL
+      value: https://github.com/flacatus/infra-deployments
+    - name: component
+      value: dummy-deployment
+    - name: ring
+  steps:
+    - as: clone
+      config:
+        checkout:
+          - branch: main
+            path: ./${{ vars.homeDir }}
+        repoURL: ${{ vars.repoURL }}
+      uses: git-clone
+
+    - as: set-image
+      config:
+        images:
+          - image: ${{ vars.imageRepo }}
+            tag: ${{ imageFrom(vars.imageRepo).Tag }}
+        path: ./${{ vars.homeDir }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base
+      uses: kustomize-set-image
+
+    - task:
+        name: update-repo-ref
+      vars:
+        - name: srcRepoURL
+          value: https://github.com/flacatus/konflux-dummy-deploy//k8s
+        - name: newRef
+          value: ${{ imageFrom(vars.imageRepo).Tag }}
+        - name: kustomizationDirPath
+          value: ./${{ vars.homeDir }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base
+
+    - as: commit
+      config:
+        message: "Promote ${{ vars.component }} changes to ${{ vars.ring }}"
+        path: ./${{ vars.homeDir }}
+      uses: git-commit
+
+    - as: push
+      config:
+        force: true
+        path: ./${{ vars.homeDir }}
+        targetBranch: kargo-${{ vars.ring }}-${{ vars.component }}
+      uses: git-push
+
+    - as: open-pr
+      config:
+        labels:
+          - ready-for-review
+        repoURL: ${{ vars.repoURL }}
+        sourceBranch: ${{ ctx.outputs.push.branch }}
+        targetBranch: main
+        title: "(promotion) ${{ vars.component }} changes to ${{ vars.ring }}"
+      continueOnError: true
+      uses: git-open-pr
+
+    - as: wait-for-pr
+      config:
+        prNumber: ${{ outputs['open-pr'].pr.id }}
+        repoURL: ${{ vars.repoURL }}
+      if: ${{ status('open-pr') != 'Errored' }}
+      uses: git-wait-for-pr

@@ -1,0 +1,22 @@
+kind: Stage
+apiVersion: kargo.akuity.io/v1alpha1
+metadata:
+  name: manifest-ring-0
+  namespace: infra-demo
+  annotations:
+    kargo.akuity.io/color: pink
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: dummy-deployment-manifest-wh
+      sources:
+        direct: true
+  promotionTemplate:
+    spec:
+      steps:
+        - task:
+            name: manifest-promotion
+          vars:
+            - name: ring
+              value: ring-0

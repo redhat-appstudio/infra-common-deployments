@@ -1,0 +1,24 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: image-ring-2
+  namespace: infra-demo
+  annotations:
+    kargo.akuity.io/color: yellow
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: dummy-deployment-image-wh
+      sources:
+        direct: false
+        stages:
+          - image-ring-1
+  promotionTemplate:
+    spec:
+      steps:
+        - task:
+            name: image-promotion
+          vars:
+            - name: ring
+              value: ring-2

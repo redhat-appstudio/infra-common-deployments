@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - route-and-oauth.yaml
   - rbac
+  - custom-promotion-tasks

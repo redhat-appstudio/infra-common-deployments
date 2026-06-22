@@ -1,7 +1,5 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: iam
 resources:
-- ../base
-- kargo-resources-admin-crb.yaml
+  - update-repo-ref.yaml
+  - kustomize-replace-resource.yaml

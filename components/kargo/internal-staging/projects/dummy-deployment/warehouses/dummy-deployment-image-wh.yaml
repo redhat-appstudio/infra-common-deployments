@@ -1,0 +1,15 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: dummy-deployment-image-wh
+  namespace: infra-demo
+spec:
+  freightCreationPolicy: Automatic
+  interval: 5m0s
+  subscriptions:
+    - image:
+        allowTags: ^[a-f0-9]{40}$
+        discoveryLimit: 20
+        imageSelectionStrategy: NewestBuild
+        repoURL: quay.io/redhat-appstudio-qe/dummy-deployment
+        strictSemvers: true

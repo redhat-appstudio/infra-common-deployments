@@ -1,0 +1,10 @@
+apiVersion: ee.kargo.akuity.io/v1alpha1
+kind: ClusterPromotionTask
+metadata:
+  name: kustomize-replace-resource
+spec:
+  image: INSERT_IMAGE_HERE
+  command:
+    - cd "${{ config.kustomizeDirPath }}"
+    - kustomize edit add resource "${{ config.newResource }}"
+    - kustomize edit remove resource "${{ config.oldResource }}"
