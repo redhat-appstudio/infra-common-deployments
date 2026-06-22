@@ -3,6 +3,8 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: ring-1-staging
+  labels:
+    kargo.akuity.io/shard: staging
   annotations:
     kargo.akuity.io/color: yellow
 spec:
@@ -24,6 +26,8 @@ spec:
           value: https://github.com/redhat-appstudio/infra-common-deployments.git
         - name: component
           value: ${{ ctx.targetFreight.origin.name }}
+        - name: argocdApiUrl
+          value: https://argocd-server.argocd-local.svc.cluster.local
       steps:
         - uses: git-clone
           as: clone
@@ -75,3 +79,31 @@ spec:
           config:
             repoURL: ${{ vars.repoURL }}
             prNumber: ${{ outputs['open-pr'].pr.id }}
+        # TODO: Re-enable once ArgoCD API access is in place (shard controller + token)
+        # Workaround for argocd-wait race condition (https://github.com/akuity/kargo/issues/6357)
+        # Credit: @cdemarco-drw
+        # TODO: Replace with native argocd-wait desiredRevision parameter when upstream implements it
+        # - uses: http
+        #   as: wait-for-argocd-revision
+        #   retry:
+        #     timeout: 15m
+        #   config:
+        #     method: GET
+        #     url: ${{ vars.argocdApiUrl }}/api/v1/applications/${{ vars.component }}-in-cluster?appNamespace=argocd-local
+        #     headers:
+        #       - name: Authorization
+        #         value: Bearer ${{ secret('kargo-argocd-token').token }}
+        #     successExpression: |
+        #       response.status == 200 &&
+        #       response.body?.status?.sync?.status == 'Synced' &&
+        #       response.body?.status?.sync?.revision == '${{ outputs['wait-for-pr'].commit }}'
+        #     failureExpression: |
+        #       response.body?.status?.health?.status == 'Degraded' ||
+        #       response.body?.status?.operationState?.phase in ['Failed', 'Error']
+        #     timeout: 60s
+        # - uses: argocd-wait
+        #   as: argocd-wait
+        #   config:
+        #     apps:
+        #       - name: ${{ vars.component }}-in-cluster
+        #         namespace: argocd-local

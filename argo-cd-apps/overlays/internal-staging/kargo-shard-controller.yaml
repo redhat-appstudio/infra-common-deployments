@@ -1,0 +1,29 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: kargo-shard-controller
+spec:
+  generators:
+    - clusters:
+        values:
+          sourceRoot: components/kargo-shard-controller
+          environment: ""
+  template:
+    metadata:
+      name: kargo-shard-controller-{{nameNormalized}}
+    spec:
+      project: default
+      source:
+        path: '{{values.sourceRoot}}/{{values.environment}}'
+        repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
+        targetRevision: main
+      destination:
+        namespace: kargo-shard-staging
+        name: in-cluster
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
