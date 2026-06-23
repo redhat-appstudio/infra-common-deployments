@@ -7,3 +7,4 @@ resources:
   - secret.yaml
   - namespace.yaml
   - lease-rbac.yaml
+  - project-rbac.yaml
