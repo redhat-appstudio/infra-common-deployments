@@ -26,5 +26,7 @@ valuesInline:
     argocd:
       integrationEnabled: true
       namespace: argocd-local
+    argoRollouts:
+      integrationEnabled: false
   kubeconfigSecrets:
     kargo: production-kargo-kubeconfig
