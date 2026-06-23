@@ -89,9 +89,9 @@ spec:
         #       response.body?.status?.health?.status == 'Degraded' ||
         #       response.body?.status?.operationState?.phase in ['Failed', 'Error']
         #     timeout: 60s
-        # - uses: argocd-wait
-        #   as: argocd-wait
-        #   config:
-        #     apps:
-        #       - name: ${{ vars.component }}-in-cluster
-        #         namespace: argocd-local
+        - uses: argocd-wait
+          as: argocd-wait
+          config:
+            apps:
+              - name: ${{ vars.component }}-in-cluster
+                namespace: argocd-local
