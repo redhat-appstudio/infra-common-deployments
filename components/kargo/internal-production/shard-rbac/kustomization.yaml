@@ -5,3 +5,5 @@ resources:
   - serviceaccount.yaml
   - clusterrolebinding.yaml
   - secret.yaml
+  - namespace.yaml
+  - lease-rbac.yaml
