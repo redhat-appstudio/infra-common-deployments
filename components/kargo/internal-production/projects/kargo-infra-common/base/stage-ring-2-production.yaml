@@ -20,8 +20,8 @@ spec:
           value: https://github.com/redhat-appstudio/infra-common-deployments.git
         - name: component
           value: ${{ ctx.targetFreight.origin.name }}
-        - name: argocdApiUrl
-          value: https://argocd-server.argocd-local.svc.cluster.local
+        # - name: argocdApiUrl
+        #   value: https://argocd-server.argocd-local.svc.cluster.local
       steps:
         - uses: git-clone
           as: clone
