@@ -18,6 +18,11 @@ spec:
         name: kargo
       sources:
         direct: true
+    - origin:
+        kind: Warehouse
+        name: rover-group-sync
+      sources:
+        direct: true
   promotionTemplate:
     spec:
       vars:
@@ -44,6 +49,12 @@ spec:
         - task:
             name: kargo-promote-ring-1
           as: kargo-promote
+          vars:
+            - name: srcPath
+              value: ./src
+        - task:
+            name: rover-group-sync-promote-ring-1
+          as: rover-group-sync-promote
           vars:
             - name: srcPath
               value: ./src

@@ -13,6 +13,12 @@ spec:
       sources:
         stages:
           - ring-1-staging
+    - origin:
+        kind: Warehouse
+        name: rover-group-sync
+      sources:
+        stages:
+          - ring-1-staging
   promotionTemplate:
     spec:
       vars:
@@ -33,6 +39,12 @@ spec:
         - task:
             name: kargo-promote-ring-2
           as: kargo-promote
+          vars:
+            - name: srcPath
+              value: ./src
+        - task:
+            name: rover-group-sync-promote-ring-2
+          as: rover-group-sync-promote
           vars:
             - name: srcPath
               value: ./src
