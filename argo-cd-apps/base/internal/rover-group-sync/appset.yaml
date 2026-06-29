@@ -12,6 +12,8 @@ spec:
   template:
     metadata:
       name: rover-group-sync
+      annotations:
+        kargo.akuity.io/authorized-stage: kargo-infra-common:ring-1-staging,kargo-infra-common:ring-2-production
     spec:
       project: default
       source:
