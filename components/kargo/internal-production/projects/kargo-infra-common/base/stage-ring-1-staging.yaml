@@ -87,12 +87,28 @@ spec:
           config:
             repoURL: ${{ vars.repoURL }}
             prNumber: ${{ outputs['open-pr'].pr.id }}
-        - uses: argocd-update
-          as: argocd-update
+        - uses: http
+          as: wait-for-revision
+          retry:
+            timeout: 15m
+          config:
+            method: GET
+            url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/argocd-local/applications/${{ vars.component }}-in-cluster
+            headers:
+              - name: Authorization
+                value: Bearer ${{ secret('argocd-app-reader-token').token }}
+            insecureSkipTLSVerify: true
+            successExpression: |
+              response.status == 200 &&
+              response.body?.status?.sync?.status == 'Synced' &&
+              response.body?.status?.sync?.revision == '${{ outputs['wait-for-pr'].commit }}'
+            failureExpression: |
+              response.body?.status?.health?.status == 'Degraded' ||
+              response.body?.status?.operationState?.phase in ['Failed', 'Error']
+            timeout: 60s
+        - uses: argocd-wait
+          as: argocd-wait
           config:
             apps:
               - name: ${{ vars.component }}-in-cluster
                 namespace: argocd-local
-                sources:
-                  - repoURL: ${{ vars.repoURL }}
-                    desiredRevision: ${{ outputs['wait-for-pr'].commit }}
