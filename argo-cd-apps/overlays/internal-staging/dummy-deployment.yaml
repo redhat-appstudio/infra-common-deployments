@@ -11,8 +11,6 @@ spec:
   template:
     metadata:
       name: dummy-deployment-{{nameNormalized}}
-      annotations:
-        kargo.akuity.io/authorized-stage: kargo-infra-common:ring-1-staging
     spec:
       project: default
       source:
