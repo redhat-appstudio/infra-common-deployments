@@ -1218,7 +1218,7 @@ spec:
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: quay-podman-desktop-oci
+  name: quay-internal-oci
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     argocd.argoproj.io/sync-wave: "-1"
@@ -1227,7 +1227,7 @@ spec:
     - extract:
         conversionStrategy: Default
         decodingStrategy: None
-        key: releng/konflux/rhtap-releng-tenant/private-network/quay-podman-desktop-oci
+        key: releng/konflux/rhtap-releng-tenant/private-network/quay-internal-oci
   refreshInterval: 1h
   secretStoreRef:
     kind: SecretStore
@@ -1235,4 +1235,4 @@ spec:
   target:
     creationPolicy: Owner
     deletionPolicy: Delete
-    name: quay-podman-desktop-oci
+    name: quay-internal-oci
