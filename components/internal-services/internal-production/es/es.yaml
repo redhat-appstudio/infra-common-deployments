@@ -1214,3 +1214,25 @@ spec:
     creationPolicy: Owner
     deletionPolicy: Delete
     name: signing-artifact-storage-prod
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: quay-podman-desktop-oci
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: releng/konflux/rhtap-releng-tenant/private-network/quay-podman-desktop-oci
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: releng-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: quay-podman-desktop-oci
