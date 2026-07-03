@@ -76,18 +76,38 @@ spec:
             sourceBranch: ${{ ctx.project }}/${{ vars.component }}/ring-1-staging
             targetBranch: main
             title: "chore(${{ ctx.stage }}): promote ${{ vars.component }} to staging"
+            description: |
+              ## Automated Promotion — Staging (Ring 1)
+
+              **Component:** `${{ vars.component }}`
+              **Project:** `${{ ctx.project }}`
+              **Stage:** `${{ ctx.stage }}`
+
+              This PR was automatically created by [Kargo](https://kargo.io) as part of the
+              `kargo-infra-common` promotion pipeline.
+
+              ### What changed
+              - Updated `${{ vars.component }}` configuration in the **internal-staging** environment
+                to align with the latest freight from the upstream warehouse.
+
+              ### Merge policy
+              This PR will be automatically merged once all required CI checks pass.
+
+              > **Note:** Do not manually edit this branch — it is force-pushed on each promotion cycle.
             labels:
               - ring-1
               - staging
               - automated-promotion
               - component/${{ vars.component }}
-        - uses: git-wait-for-pr
+        - uses: git-merge-pr
           if: ${{ status('open-pr') != 'Errored' }}
-          as: wait-for-pr
+          as: merge-pr
           config:
             repoURL: ${{ vars.repoURL }}
             prNumber: ${{ outputs['open-pr'].pr.id }}
+            wait: true
         - uses: argocd-update
+          if: ${{ status('open-pr') != 'Errored' }}
           as: argocd-update
           config:
             apps:
@@ -95,4 +115,4 @@ spec:
                 namespace: argocd-local
                 sources:
                   - repoURL: ${{ vars.repoURL }}
-                    desiredRevision: ${{ outputs['wait-for-pr'].commit }}
+                    desiredRevision: ${{ outputs['merge-pr'].commit }}

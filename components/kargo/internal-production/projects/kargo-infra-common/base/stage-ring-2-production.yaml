@@ -66,6 +66,24 @@ spec:
             sourceBranch: ${{ ctx.project }}/${{ vars.component }}/ring-2-production
             targetBranch: main
             title: "chore(${{ ctx.stage }}): promote ${{ vars.component }} to production"
+            description: |
+              ## Automated Promotion — Production (Ring 2)
+
+              **Component:** `${{ vars.component }}`
+              **Project:** `${{ ctx.project }}`
+              **Stage:** `${{ ctx.stage }}`
+
+              This PR was automatically created by [Kargo](https://kargo.io) as part of the
+              `kargo-infra-common` promotion pipeline.
+
+              ### What changed
+              - Updated `${{ vars.component }}` configuration in the **internal-production** environment
+                to align with freight verified in the staging ring.
+
+              ### Merge policy
+              This PR requires manual approval before merging to production.
+
+              > **Note:** Do not manually edit this branch — it is force-pushed on each promotion cycle.
             labels:
               - ring-2
               - production
@@ -78,6 +96,7 @@ spec:
             repoURL: ${{ vars.repoURL }}
             prNumber: ${{ outputs['open-pr'].pr.id }}
         - uses: argocd-update
+          if: ${{ status('open-pr') != 'Errored' }}
           as: argocd-update
           config:
             apps:
