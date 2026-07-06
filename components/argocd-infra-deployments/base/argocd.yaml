@@ -1,0 +1,316 @@
+apiVersion: argoproj.io/v1beta1
+kind: ArgoCD
+metadata:
+    name: argocd-infra-deployments
+    namespace: argocd-infra-deployments
+spec:
+  kustomizeBuildOptions: "--enable-helm"
+  resourceTrackingMethod: annotation
+  extraConfig:
+    resource.compareoptions: |
+      # disables status field diffing in specified resource types
+      ignoreAggregatedRoles: true
+    resource.customizations.ignoreResourceUpdates.all: |-
+      jsonPointers:
+       - /status
+    resource.ignoreResourceUpdatesEnabled: 'true'
+    # Taken from: https://docs.crossplane.io/latest/guides/crossplane-with-argo-cd/#set-health-status
+    resource.customizations: |
+      "*.crossplane.io/*":
+        health.lua: |
+          health_status = {
+            status = "Progressing",
+            message = "Provisioning ..."
+          }
+
+          local function contains (table, val)
+            for i, v in ipairs(table) do
+              if v == val then
+                return true
+              end
+            end
+            return false
+          end
+
+          local has_no_status = {
+            "Composition",
+            "CompositionRevision",
+            "DeploymentRuntimeConfig",
+            "ControllerConfig",
+            "ProviderConfig",
+            "ProviderConfigUsage"
+          }
+
+          if obj.status == nil or next(obj.status) == nil and contains(has_no_status, obj.kind) then
+              health_status.status = "Healthy"
+              health_status.message = "Resource is up-to-date."
+            return health_status
+          end
+
+          if obj.status == nil or next(obj.status) == nil or obj.status.conditions == nil then
+            if obj.kind == "ProviderConfig" and obj.status.users ~= nil then
+              health_status.status = "Healthy"
+              health_status.message = "Resource is in use."
+              return health_status
+            end
+            return health_status
+          end
+
+          for i, condition in ipairs(obj.status.conditions) do
+            if condition.type == "LastAsyncOperation" then
+              if condition.status == "False" then
+                health_status.status = "Degraded"
+                health_status.message = condition.message
+                return health_status
+              end
+            end
+
+            if condition.type == "Synced" then
+              if condition.status == "False" then
+                health_status.status = "Degraded"
+                health_status.message = condition.message
+                return health_status
+              end
+            end
+
+            if contains({"Ready", "Healthy", "Offered", "Established"}, condition.type) then
+              if condition.status == "True" then
+                health_status.status = "Healthy"
+                health_status.message = "Resource is up-to-date."
+                return health_status
+              end
+            end
+          end
+
+          return health_status
+  resourceHealthChecks:
+  - group: logging.openshift.io
+    kind: ClusterLogForwarder
+    check: |
+      local obj = resource
+      local hs = {
+        status = "Progressing",
+        message = "Waiting for pipeline readiness status"
+      }
+      local allPipelines = {}
+      local notReadyPipelines = {}
+
+      local pipelines = (obj and obj.status and type(obj.status) == "table" and obj.status.pipelines) or {}
+      for _, pipeline in ipairs(pipelines) do
+          local conditions = pipeline.conditions or { { type = "Ready", status = "False", message = "The conditions field is missing for " .. pipeline.name } }
+          for _, condition in ipairs(conditions) do
+              if condition.type == "Ready" then
+                  hs.message = condition.message
+                  hs.status = condition.status == "False" and "Degraded" or "Healthy"
+                  table.insert(allPipelines, pipeline.name)
+                  if hs.status == "Degraded" then
+                      table.insert(notReadyPipelines, pipeline.name)
+                  end
+              end
+          end
+      end
+
+      hs.status = #notReadyPipelines == 0 and "Healthy" or "Degraded"
+      hs.message = #notReadyPipelines == 0 and "All pipelines are ready" or "Not ready pipelines: " .. table.concat(notReadyPipelines, ", ")
+
+      return hs
+  - group: operators.coreos.com
+    kind: Subscription
+    check: |
+      health_status = {}
+      if obj.status ~= nil then
+          if obj.status.conditions ~= nil then
+              numDegraded = 0
+              numPending = 0
+              msg = ""
+              for i, condition in pairs(obj.status.conditions) do
+                  msg = msg .. i .. ": " .. condition.type .. " | " .. condition.status .. "\n"
+                  if condition.type == "InstallPlanPending" and condition.status == "True" then
+                      numPending = numPending + 1
+                  elseif (condition.type == "InstallPlanMissing" and condition.reason ~= "ReferencedInstallPlanNotFound") then
+                      numDegraded = numDegraded + 1
+                  elseif (condition.type == "CatalogSourcesUnhealthy" or condition.type == "InstallPlanFailed" or condition.type == "ResolutionFailed") and condition.status == "True" then
+                      numDegraded = numDegraded + 1
+                  end
+              end
+          end
+          if numDegraded == 0 and numPending == 0 then
+              health_status.status = "Healthy"
+              health_status.message = msg
+              return health_status
+          elseif numPending > 0 and numDegraded == 0 and obj.spec.installPlanApproval == "Manual" then
+              health_status.status = "Healthy"
+              health_status.message = "An install plan for a subscription is pending installation but install plan approval is set to manual so considering this as healthy: " .. msg
+              return health_status
+          elseif numPending > 0 and numDegraded == 0 then
+              health_status.status = "Progressing"
+              health_status.message = "An install plan for a subscription is pending installation"
+              return health_status
+          else
+              health_status.status = "Degraded"
+              health_status.message = msg
+              return health_status
+          end
+      end
+      return health_status
+  server:
+    annotations:
+      ignore-check.kube-linter.io/unset-cpu-requirements: "no cpu limits"
+    autoscale:
+      enabled: false
+    grpc:
+      ingress:
+        enabled: false
+    ingress:
+      enabled: false
+    resources:
+      limits:
+        memory: 256Mi
+      requests:
+        cpu: 125m
+        memory: 128Mi
+    route:
+      enabled: true
+      tls:
+        termination: reencrypt
+    service:
+      type: ''
+  grafana:
+    enabled: false
+    ingress:
+      enabled: false
+    resources:
+      limits:
+        memory: 256Mi
+      requests:
+        cpu: 250m
+        memory: 128Mi
+    route:
+      enabled: false
+  notifications:
+    enabled: false
+  prometheus:
+    enabled: false
+    ingress:
+      enabled: false
+    route:
+      enabled: false
+  initialSSHKnownHosts: {}
+  sso:
+    dex:
+      openShiftOAuth: true
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 250m
+          memory: 128Mi
+    provider: dex
+  applicationSet:
+    annotations:
+      ignore-check.kube-linter.io/unset-cpu-requirements: "no cpu limits"
+    resources:
+      limits:
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+    webhookServer:
+      ingress:
+        enabled: false
+      route:
+        enabled: false
+  rbac:
+    policy: |
+        p, role:konflux-argocd-devs, applications, get, */*, allow
+        p, role:konflux-argocd-devs, applications, sync, */*, allow
+        p, role:konflux-argocd-devs, logs, get, */*, allow
+        g, konflux-admins, role:konflux-argocd-devs
+        g, konflux-build, role:konflux-argocd-devs
+        g, konflux-contributors, role:konflux-argocd-devs
+        g, konflux-devprod, role:konflux-argocd-devs
+        g, konflux-ec, role:konflux-argocd-devs
+        g, konflux-infra, role:konflux-argocd-devs
+        g, konflux-integration, role:konflux-argocd-devs
+        g, konflux-kubearchive, role:konflux-argocd-devs
+        g, konflux-migration, role:konflux-argocd-devs
+        g, konflux-mintmaker-team, role:konflux-argocd-devs
+        g, konflux-o11y, role:konflux-argocd-devs
+        g, konflux-qe, role:konflux-argocd-devs
+        g, konflux-release-team, role:konflux-argocd-devs
+        g, konflux-support-ops, role:konflux-argocd-devs
+        g, konflux-ui, role:konflux-argocd-devs
+        g, konflux-vanguard, role:konflux-argocd-devs
+
+    scopes: '[groups]'
+  repo:
+    annotations:
+      ignore-check.kube-linter.io/unset-cpu-requirements: "no cpu limits"
+    resources:
+      limits:
+        memory: 2Gi
+      requests:
+        cpu: 250m
+        memory: 2Gi
+  resourceExclusions: |
+    - apiGroups:
+      - tekton.dev
+      clusters:
+      - '*'
+      kinds:
+      - TaskRun
+      - PipelineRun
+    - apiGroups:
+      - '*'
+      kinds:
+      - ProviderConfigUsage
+    - apiGroups:
+      - kyverno.io
+      kinds:
+        - AdmissionReport
+        - BackgroundScanReport
+        - ClusterAdmissionReport
+        - ClusterBackgroundScanReport
+      clusters:
+        - '*'
+  ha:
+    enabled: true
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 250m
+        memory: 128Mi
+  tls:
+    ca: {}
+  redis:
+    autotls: openshift
+    resources:
+      limits:
+        memory: 256Mi
+      requests:
+        cpu: 250m
+        memory: 128Mi
+  controller:
+    annotations:
+      ignore-check.kube-linter.io/unset-cpu-requirements: "no cpu limits"
+    processors: {}
+    resources:
+      limits:
+        memory: 10Gi
+      requests:
+        cpu: 3
+        memory: 5Gi
+    sharding:
+      enabled: true
+      replicas: 3
+    env:
+      - name: ARGOCD_CONTROLLER_SHARDING_ALGORITHM
+        value: round-robin
+      - name: ARGOCD_CLUSTER_CACHE_LIST_PAGE_SIZE
+        value: "2000"
+      - name: ARGOCD_CLUSTER_CACHE_LIST_PAGE_BUFFER_SIZE
+        value: "4"
+    logLevel: debug
