@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argocd-app-reader
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: argocd-app-reader-token
+  annotations:
+    kubernetes.io/service-account.name: argocd-app-reader
+type: kubernetes.io/service-account-token
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kargo-infra-common-argocd-app-reader
+rules:
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - applications
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kargo-infra-common-argocd-app-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kargo-infra-common-argocd-app-reader
+subjects:
+  - kind: ServiceAccount
+    name: argocd-app-reader
+    namespace: kargo-infra-common
