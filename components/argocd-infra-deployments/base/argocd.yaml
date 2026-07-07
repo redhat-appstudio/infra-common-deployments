@@ -3,6 +3,8 @@ kind: ArgoCD
 metadata:
     name: argocd-infra-deployments
     namespace: argocd-infra-deployments
+    annotations:
+      argocd.argoproj.io/sync-wave: "0"
 spec:
   kustomizeBuildOptions: "--enable-helm"
   resourceTrackingMethod: annotation

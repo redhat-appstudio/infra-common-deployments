@@ -21,3 +21,10 @@ spec:
     creationPolicy: Owner
     deletionPolicy: Delete
     name: stg-rh01-secret
+    template:
+      engineVersion: v2
+      mergePolicy: Merge
+      metadata:
+        labels:
+          argocd.argoproj.io/secret-type: cluster
+          appstudio.redhat.com/is-tenant-cluster: "true"
