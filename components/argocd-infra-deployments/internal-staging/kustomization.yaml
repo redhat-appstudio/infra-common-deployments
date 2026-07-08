@@ -4,4 +4,5 @@ namespace: argocd-infra-deployments
 
 resources:
   - ../base
+  - ../all-application-sets/ring-1
   - external-secrets
