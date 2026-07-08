@@ -102,6 +102,9 @@ spec:
         - uses: git-merge-pr
           if: ${{ status('open-pr') != 'Errored' }}
           as: merge-pr
+          retry:
+            timeout: 2h
+            errorThreshold: 240
           config:
             repoURL: ${{ vars.repoURL }}
             prNumber: ${{ outputs['open-pr'].pr.id }}
