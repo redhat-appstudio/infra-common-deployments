@@ -3,11 +3,15 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: argocd-app-reader
+  namespace: kargo-shared-resources
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: argocd-app-reader-token
+  namespace: kargo-shared-resources
+  labels:
+    kargo.akuity.io/cred-type: generic
   annotations:
     kubernetes.io/service-account.name: argocd-app-reader
 type: kubernetes.io/service-account-token
@@ -35,4 +39,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: argocd-app-reader
-    namespace: kargo-infra-common
+    namespace: kargo-shared-resources
