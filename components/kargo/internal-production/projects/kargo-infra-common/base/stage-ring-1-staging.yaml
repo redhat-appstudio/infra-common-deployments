@@ -99,6 +99,12 @@ spec:
               - staging
               - automated-promotion
               - component/${{ vars.component }}
+        - task:
+            name: wait-for-ci
+          as: wait-for-ci
+          vars:
+            - name: commitSHA
+              value: ${{ outputs['push'].commit }}
         - uses: git-merge-pr
           if: ${{ status('open-pr') != 'Errored' }}
           as: merge-pr
