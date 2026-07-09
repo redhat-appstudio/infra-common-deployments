@@ -7,5 +7,6 @@ resources:
   - project-config.yaml
   - rbac
   - external-secrets
+  - promotiontasks
   - stage-ring-1-staging.yaml
   - stage-ring-2-production.yaml
