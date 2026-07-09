@@ -115,6 +115,7 @@ spec:
             repoURL: ${{ vars.repoURL }}
             prNumber: ${{ outputs['open-pr'].pr.id }}
             wait: true
+            mergeMethod: squash
         - uses: http
           if: ${{ status('open-pr') != 'Errored' }}
           as: wait-for-revision
@@ -130,13 +131,11 @@ spec:
             successExpression: |
               response.status == 200 &&
               response.body?.status?.sync?.status == 'Synced' &&
-              response.body?.status?.health?.status == 'Healthy' &&
               any(response.body.status.history, {.revision == '${{ outputs['merge-pr'].commit }}'})
             failureExpression: |
               response.status == 200 &&
               (response.body?.status?.health?.status == 'Degraded' ||
               response.body?.status?.operationState?.phase in ['Failed', 'Error'])
-            timeout: 60s
         - uses: argocd-wait
           if: ${{ status('open-pr') != 'Errored' }}
           as: argocd-wait

@@ -110,13 +110,11 @@ spec:
             successExpression: |
               response.status == 200 &&
               response.body?.status?.sync?.status == 'Synced' &&
-              response.body?.status?.health?.status == 'Healthy' &&
               any(response.body.status.history, {.revision == '${{ outputs['wait-for-pr'].commit }}'})
             failureExpression: |
               response.status == 200 &&
               (response.body?.status?.health?.status == 'Degraded' ||
               response.body?.status?.operationState?.phase in ['Failed', 'Error'])
-            timeout: 60s
         - uses: argocd-wait
           if: ${{ status('open-pr') != 'Errored' }}
           as: argocd-wait
