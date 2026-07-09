@@ -1,0 +1,29 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: kargo-shard-infra-deployments
+spec:
+  generators:
+    - clusters:
+        values:
+          sourceRoot: components/kargo-shard
+          environment: ""
+  template:
+    metadata:
+      name: kargo-shard-infra-deployments-{{nameNormalized}}
+    spec:
+      project: default
+      source:
+        path: '{{values.sourceRoot}}/{{values.environment}}/infra-deployments'
+        repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
+        targetRevision: main
+      destination:
+        namespace: kargo-shard-infra-deployments
+        name: in-cluster
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

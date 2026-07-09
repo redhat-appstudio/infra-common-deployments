@@ -1,0 +1,48 @@
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: kargo-shard-infra-deployments
+name: kargo
+repo: oci://ghcr.io/akuity/kargo-charts
+version: 1.10.7
+namespace: kargo-shard-infra-deployments
+releaseName: kargo-shard-infra-deployments
+valuesInline:
+  image:
+    repository: quay.io/konflux-ci/kargo
+    tag: 1.10-2cd30bc
+  # Controller-only shard: full Kargo on this cluster owns the data plane
+  # (CRDs, ClusterRoles, webhooks, shared namespaces). Avoid SharedResourceWarning.
+  api:
+    enabled: false
+  webhooksServer:
+    enabled: false
+  externalWebhooksServer:
+    enabled: false
+  garbageCollector:
+    enabled: false
+  managementController:
+    enabled: false
+  webhooks:
+    register: false
+  crds:
+    install: false
+  rbac:
+    installClusterRoles: false
+    installClusterRoleBindings: false
+  global:
+    createClusterSecretsNamespace: false
+    systemResources:
+      createNamespace: false
+    sharedResources:
+      createNamespace: false
+  controller:
+    shardName: infra-deployments-staging
+    argocd:
+      integrationEnabled: true
+      namespace: argocd-infra-deployments
+      watchArgocdNamespaceOnly: true
+    rollouts:
+      integrationEnabled: false
+  kubeconfigSecrets:
+    kargo: production-kargo-kubeconfig
