@@ -130,7 +130,8 @@ spec:
             successExpression: |
               response.status == 200 &&
               response.body?.status?.sync?.status == 'Synced' &&
-              response.body?.status?.sync?.revision == '${{ outputs['merge-pr'].commit }}'
+              response.body?.status?.health?.status == 'Healthy' &&
+              any(response.body.status.history, {.revision == '${{ outputs['merge-pr'].commit }}'})
             failureExpression: |
               response.status == 200 &&
               (response.body?.status?.health?.status == 'Degraded' ||
