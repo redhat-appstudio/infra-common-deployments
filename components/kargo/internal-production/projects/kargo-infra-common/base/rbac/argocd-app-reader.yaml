@@ -40,3 +40,32 @@ subjects:
   - kind: ServiceAccount
     name: argocd-app-reader
     namespace: kargo-shared-resources
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kargo-shard-staging-shared-secrets
+  namespace: kargo-shared-resources
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kargo-shard-staging-shared-secrets
+  namespace: kargo-shared-resources
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kargo-shard-staging-shared-secrets
+subjects:
+  - kind: ServiceAccount
+    name: kargo-shard-staging
+    namespace: kargo
