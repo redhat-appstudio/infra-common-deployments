@@ -105,7 +105,7 @@ spec:
             url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/argocd-local/applications/${{ vars.component }}-in-cluster
             headers:
               - name: Authorization
-                value: Bearer ${{ sharedSecret('argocd-app-reader-token').token }}
+                value: Bearer ${{ secret('argocd-app-reader-token').token }}
             insecureSkipTLSVerify: true
             successExpression: |
               response.status == 200 &&
