@@ -1,0 +1,19 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: konflux-operator-promote-ring-0
+spec:
+  vars:
+    - name: srcPath
+  steps:
+    - uses: yaml-update
+      as: update-konflux-operator
+      if: ${{ ctx.targetFreight.origin.name == "konflux-operator" }}
+      config:
+        path: ${{ vars.srcPath }}/components/konflux-operator/rings/ring-0/base/invariant/kustomization.yaml
+        updates:
+          - key: images.0.newTag
+            value: ${{ imageFrom("quay.io/konflux-ci/konflux-operator").Tag }}
+          - key: resources.0
+            value: https://github.com/konflux-ci/konflux-ci/operator/config/default?ref=${{ imageFrom("quay.io/konflux-ci/konflux-operator").Tag }}
