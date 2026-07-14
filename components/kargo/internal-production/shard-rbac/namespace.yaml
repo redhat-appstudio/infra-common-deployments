@@ -3,8 +3,3 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: kargo-shard-staging
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: kargo-shared-resources
