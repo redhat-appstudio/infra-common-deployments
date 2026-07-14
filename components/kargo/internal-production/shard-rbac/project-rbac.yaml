@@ -3,6 +3,36 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: kargo-shard-staging
+  namespace: kargo-shared-resources
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+      - serviceaccounts
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kargo-shard-staging
+  namespace: kargo-shared-resources
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kargo-shard-staging
+subjects:
+  - kind: ServiceAccount
+    name: kargo-shard-staging
+    namespace: kargo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kargo-shard-staging
   namespace: kargo-infra-common
 rules:
   - apiGroups:
