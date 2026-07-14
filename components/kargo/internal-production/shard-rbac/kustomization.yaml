@@ -8,3 +8,4 @@ resources:
   - namespace.yaml
   - lease-rbac.yaml
   - project-rbac.yaml
+  - external-secret.yaml
