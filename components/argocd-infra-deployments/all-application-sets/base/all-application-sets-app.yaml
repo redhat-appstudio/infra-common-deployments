@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: all-application-sets
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    path: argo-cd-apps/overlays/base # To be replaced in ring overlays with patches
+    repoURL: https://github.com/redhat-appstudio/infra-deployments.git
+    targetRevision: main
+  destination:
+    namespace: argocd-infra-deployments
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,7 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: kargo-infra-deployments
+  annotations:
+    kargo.akuity.io/keep-namespace: "true"

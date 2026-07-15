@@ -4,7 +4,7 @@ imageTag: v1.0.3-beta7
 lake:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-backend
-    tag: 54e7a8f0ce1c2717bbdc2485eb321daf81c35729
+    tag: 74d3dcf1f0c5a61ec5cc2126c75745efb8a220a5
   encryptionSecret:
     secretName: konflux-devlake-secrets
     autoCreateSecret: false
@@ -22,7 +22,7 @@ lake:
     LOGGING_DIR: "/tmp"
     LOGGING_LEVEL: "info"
     IN_SECURE_SKIP_VERIFY: "true"
-    PIPELINE_MAX_PARALLEL: "20"
+    PIPELINE_MAX_PARALLEL: "50"
     CORS_ALLOW_ORIGIN: "https://konflux-devlake-ui-konflux-devlake.apps.rosa.kflux-c-prd-i01.7hyu.p3.openshiftapps.com"
 
     # API timeout - increase for large repositories with slow responses
@@ -30,6 +30,9 @@ lake:
 
     # API retry attempts for transient failures
     API_RETRY: "5"
+
+    # Default sync time range for new projects (days back from today)
+    DEFAULT_SYNC_DAYS: "60"
 
     # ===========================================
     # GitHub GraphQL Job Collector (PR #8616)
@@ -52,7 +55,7 @@ mysql:
 grafana:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-dashboards
-    tag: f7aaa0393b9cfe456f866282697649bd2a4d126e
+    tag: 86417e53ccd7b506227b8d276e897168090b78d4
   podSecurityContext: {}
   securityContext:
     fsGroup: null
@@ -83,7 +86,7 @@ grafana:
 ui:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-frontend
-    tag: ef7bd9ac24729adde5112adcbd5b743a3f8b9087
+    tag: 74d3dcf1f0c5a61ec5cc2126c75745efb8a220a5
   securityContext: {}
   containerSecurityContext: {}
   basicAuth:

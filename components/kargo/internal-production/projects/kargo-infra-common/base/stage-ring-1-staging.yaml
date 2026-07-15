@@ -6,6 +6,7 @@ metadata:
   annotations:
     kargo.akuity.io/color: yellow
 spec:
+  shard: staging
   requestedFreight:
     - origin:
         kind: Warehouse
@@ -15,6 +16,11 @@ spec:
     - origin:
         kind: Warehouse
         name: kargo
+      sources:
+        direct: true
+    - origin:
+        kind: Warehouse
+        name: rover-group-sync
       sources:
         direct: true
   promotionTemplate:
@@ -44,6 +50,12 @@ spec:
           vars:
             - name: srcPath
               value: ./src
+        - task:
+            name: rover-group-sync-promote-ring-1
+          as: rover-group-sync-promote
+          vars:
+            - name: srcPath
+              value: ./src
         - uses: git-commit
           as: commit
           config:
@@ -64,14 +76,70 @@ spec:
             sourceBranch: ${{ ctx.project }}/${{ vars.component }}/ring-1-staging
             targetBranch: main
             title: "chore(${{ ctx.stage }}): promote ${{ vars.component }} to staging"
+            description: |
+              ## Automated Promotion — Staging (Ring 1)
+
+              **Component:** `${{ vars.component }}`
+              **Project:** `${{ ctx.project }}`
+              **Stage:** `${{ ctx.stage }}`
+
+              This PR was automatically created by [Kargo](https://kargo.io) as part of the
+              `kargo-infra-common` promotion pipeline.
+
+              ### What changed
+              - Updated `${{ vars.component }}` configuration in the **internal-staging** environment
+                to align with the latest freight from the upstream warehouse.
+
+              ### Merge policy
+              This PR will be automatically merged once all required CI checks pass.
+
+              > **Note:** Do not manually edit this branch — it is force-pushed on each promotion cycle.
             labels:
               - ring-1
               - staging
               - automated-promotion
               - component/${{ vars.component }}
-        - uses: git-wait-for-pr
+        - task:
+            name: wait-for-ci
+          as: wait-for-ci
+          vars:
+            - name: commitSHA
+              value: ${{ outputs['push'].commit }}
+        - uses: git-merge-pr
           if: ${{ status('open-pr') != 'Errored' }}
-          as: wait-for-pr
+          as: merge-pr
+          retry:
+            timeout: 2h
+            errorThreshold: 240
           config:
             repoURL: ${{ vars.repoURL }}
             prNumber: ${{ outputs['open-pr'].pr.id }}
+            wait: true
+            mergeMethod: squash
+        - uses: http
+          if: ${{ status('open-pr') != 'Errored' }}
+          as: wait-for-revision
+          retry:
+            timeout: 15m
+          config:
+            method: GET
+            url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/argocd-local/applications/${{ vars.component }}-in-cluster
+            headers:
+              - name: Authorization
+                value: Bearer ${{ secret('argocd-app-reader-token').token }}
+            insecureSkipTLSVerify: true
+            successExpression: |
+              response.status == 200 &&
+              response.body?.status?.sync?.status == 'Synced' &&
+              any(response.body.status.history, {.revision == '${{ outputs['merge-pr'].commit }}'})
+            failureExpression: |
+              response.status == 200 &&
+              (response.body?.status?.health?.status == 'Degraded' ||
+              response.body?.status?.operationState?.phase in ['Failed', 'Error'])
+        - uses: argocd-wait
+          if: ${{ status('open-pr') != 'Errored' }}
+          as: argocd-wait
+          config:
+            apps:
+              - name: ${{ vars.component }}-in-cluster
+                namespace: argocd-local

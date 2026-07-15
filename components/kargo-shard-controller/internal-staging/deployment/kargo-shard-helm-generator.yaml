@@ -1,0 +1,33 @@
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: kargo-shard-staging
+name: kargo
+repo: oci://ghcr.io/akuity/kargo-charts
+version: 1.10.7
+namespace: kargo-shard-staging
+releaseName: kargo-shard-staging
+valuesInline:
+  image:
+    repository: quay.io/konflux-ci/kargo
+    tag: 1.10-2cd30bc
+  api:
+    enabled: false
+  webhooks:
+    enabled: false
+  garbageCollector:
+    enabled: false
+  managementController:
+    enabled: false
+  dex:
+    enabled: false
+  controller:
+    shardName: staging
+    argocd:
+      integrationEnabled: true
+      namespace: argocd-local
+      watchArgocdNamespaceOnly: true
+    rollouts:
+      integrationEnabled: false
+  kubeconfigSecrets:
+    kargo: production-kargo-kubeconfig

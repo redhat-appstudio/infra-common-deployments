@@ -10,7 +10,7 @@ releaseName: kargo
 valuesInline:
   image:
     repository: quay.io/konflux-ci/kargo
-    tag: 1.10-2cd30bc
+    tag: 1.10-87673ff
   api:
     adminAccount:
       enabled: false
@@ -30,11 +30,15 @@ valuesInline:
           - dedicated-admins
           - konflux-infra
           - konflux-devprod
+      viewers:
+        claims:
+          groups:
+          - system:authenticated
       dex:
         enabled: true
         image:
           repository: quay.io/konflux-ci/dex
-          tag: 57c968485b6888c3ddb5929bff26f19da16d81e1
+          tag: a2998d89e8b064fdada8a40bf7311669b4585b18
         skipApprovalScreen: true
         tls:
           selfSignedCert: false

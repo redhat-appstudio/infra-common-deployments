@@ -1,0 +1,49 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: wait-for-ci
+spec:
+  vars:
+    - name: commitSHA
+    - name: repoOwner
+      value: redhat-appstudio
+    - name: repoName
+      value: infra-common-deployments
+  steps:
+    - uses: http
+      as: wait-for-check-runs
+      retry:
+        timeout: 2h
+        errorThreshold: 240
+      config:
+        method: GET
+        url: https://api.github.com/repos/${{ vars.repoOwner }}/${{ vars.repoName }}/commits/${{ vars.commitSHA }}/check-runs
+        headers:
+          - name: Authorization
+            value: Bearer ${{ secret('kargo-infra-common-secrets').github_pat }}
+          - name: Accept
+            value: application/vnd.github+json
+        successExpression: |
+          response.status == 200 &&
+          len(response.body.check_runs) > 0 &&
+          all(response.body.check_runs, {.conclusion == 'success'})
+        timeout: 30s
+    - uses: http
+      as: wait-for-prow-checks
+      retry:
+        timeout: 2h
+        errorThreshold: 240
+      config:
+        method: GET
+        url: https://api.github.com/repos/${{ vars.repoOwner }}/${{ vars.repoName }}/commits/${{ vars.commitSHA }}/status
+        headers:
+          - name: Authorization
+            value: Bearer ${{ secret('kargo-infra-common-secrets').github_pat }}
+          - name: Accept
+            value: application/vnd.github+json
+        successExpression: |
+          response.status == 200 &&
+          len(filter(response.body.statuses, {.context != 'tide'})) > 0 &&
+          all(filter(response.body.statuses, {.context != 'tide'}), {.state == 'success'})
+        timeout: 30s

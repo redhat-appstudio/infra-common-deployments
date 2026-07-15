@@ -1,0 +1,17 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: rover-group-sync-promote-ring-2
+spec:
+  vars:
+    - name: srcPath
+  steps:
+    - uses: yaml-update
+      as: update-rover-group-sync
+      if: ${{ ctx.targetFreight.origin.name == "rover-group-sync" }}
+      config:
+        path: ${{ vars.srcPath }}/components/rover-group-sync/internal-production/kustomization.yaml
+        updates:
+          - key: images.0.digest
+            value: ${{ imageFrom("quay.io/redhat-user-workloads/konflux-infra-tenant/rover-group-sync").Digest }}
