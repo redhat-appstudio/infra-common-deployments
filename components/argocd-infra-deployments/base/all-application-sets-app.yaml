@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: all-application-sets
+  name: infra-deployments-all-application-sets
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:

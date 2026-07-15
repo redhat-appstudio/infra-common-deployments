@@ -15,4 +15,4 @@ patches:
         group: argoproj.io
         version: v1alpha1
         kind: Application
-        name: all-application-sets
+        name: infra-deployments-all-application-sets
