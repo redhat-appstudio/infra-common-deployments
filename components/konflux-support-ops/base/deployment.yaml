@@ -39,6 +39,11 @@ spec:
             secretKeyRef:
               name: konflux-support-ops-secrets
               key: JIRA_API_KEY
+        - name: JIRA_API_KEY_CKI
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: JIRA_API_KEY_CKI
         - name: JIRA_API_KEY_KONFLUX
           valueFrom:
             secretKeyRef:

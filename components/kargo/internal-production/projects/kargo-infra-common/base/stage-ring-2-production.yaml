@@ -13,6 +13,12 @@ spec:
       sources:
         stages:
           - ring-1-staging
+    - origin:
+        kind: Warehouse
+        name: rover-group-sync
+      sources:
+        stages:
+          - ring-1-staging
   promotionTemplate:
     spec:
       vars:
@@ -31,6 +37,12 @@ spec:
         - task:
             name: kargo-promote-ring-2
           as: kargo-promote
+          vars:
+            - name: srcPath
+              value: ./src
+        - task:
+            name: rover-group-sync-promote-ring-2
+          as: rover-group-sync-promote
           vars:
             - name: srcPath
               value: ./src
@@ -54,6 +66,24 @@ spec:
             sourceBranch: ${{ ctx.project }}/${{ vars.component }}/ring-2-production
             targetBranch: main
             title: "chore(${{ ctx.stage }}): promote ${{ vars.component }} to production"
+            description: |
+              ## Automated Promotion — Production (Ring 2)
+
+              **Component:** `${{ vars.component }}`
+              **Project:** `${{ ctx.project }}`
+              **Stage:** `${{ ctx.stage }}`
+
+              This PR was automatically created by [Kargo](https://kargo.io) as part of the
+              `kargo-infra-common` promotion pipeline.
+
+              ### What changed
+              - Updated `${{ vars.component }}` configuration in the **internal-production** environment
+                to align with freight verified in the staging ring.
+
+              ### Merge policy
+              This PR requires manual approval before merging to production.
+
+              > **Note:** Do not manually edit this branch — it is force-pushed on each promotion cycle.
             labels:
               - ring-2
               - production
@@ -65,3 +95,30 @@ spec:
           config:
             repoURL: ${{ vars.repoURL }}
             prNumber: ${{ outputs['open-pr'].pr.id }}
+        - uses: http
+          if: ${{ status('open-pr') != 'Errored' }}
+          as: wait-for-revision
+          retry:
+            timeout: 15m
+          config:
+            method: GET
+            url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/argocd-local/applications/${{ vars.component }}-in-cluster
+            headers:
+              - name: Authorization
+                value: Bearer ${{ secret('argocd-app-reader-token').token }}
+            insecureSkipTLSVerify: true
+            successExpression: |
+              response.status == 200 &&
+              response.body?.status?.sync?.status == 'Synced' &&
+              any(response.body.status.history, {.revision == '${{ outputs['wait-for-pr'].commit }}'})
+            failureExpression: |
+              response.status == 200 &&
+              (response.body?.status?.health?.status == 'Degraded' ||
+              response.body?.status?.operationState?.phase in ['Failed', 'Error'])
+        - uses: argocd-wait
+          if: ${{ status('open-pr') != 'Errored' }}
+          as: argocd-wait
+          config:
+            apps:
+              - name: ${{ vars.component }}-in-cluster
+                namespace: argocd-local

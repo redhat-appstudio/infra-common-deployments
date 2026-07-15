@@ -8,6 +8,7 @@ resources:
   - base
   - dummy-deployment
   - kargo
+  - rover-group-sync
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

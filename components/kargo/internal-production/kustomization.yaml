@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - deployment
   - projects
+  - shard-rbac
 
 patches:
   - target:
