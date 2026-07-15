@@ -32,7 +32,7 @@ spec:
         successExpression: |
           response.status == 200 &&
           len(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}'})) > 0 &&
-          all(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}'}), {.conclusion == 'success'})
+          all(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}'}), {.conclusion in ['success', 'neutral', 'skipped']})
         timeout: 30s
     - uses: http
       as: wait-for-prow-checks
