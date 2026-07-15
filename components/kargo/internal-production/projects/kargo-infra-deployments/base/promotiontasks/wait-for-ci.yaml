@@ -10,8 +10,12 @@ spec:
       value: redhat-appstudio
     - name: repoName
       value: infra-deployments
-    - name: requiredChecks
+    - name: requiredCheckRuns
       value: ""
+    - name: requiredProwChecks
+      value: ""
+    - name: skipProwChecks
+      value: "false"
   steps:
     - uses: http
       as: wait-for-check-runs
@@ -27,11 +31,12 @@ spec:
             value: application/vnd.github+json
         successExpression: |
           response.status == 200 &&
-          len(filter(response.body.check_runs, {'${{ vars.requiredChecks }}' == '' ? true : (.name matches '${{ vars.requiredChecks }}')})) > 0 &&
-          all(filter(response.body.check_runs, {'${{ vars.requiredChecks }}' == '' ? true : (.name matches '${{ vars.requiredChecks }}')}), {.conclusion == 'success'})
+          len(filter(response.body.check_runs, {'${{ vars.requiredCheckRuns }}' == '' ? true : (.name matches '${{ vars.requiredCheckRuns }}')})) > 0 &&
+          all(filter(response.body.check_runs, {'${{ vars.requiredCheckRuns }}' == '' ? true : (.name matches '${{ vars.requiredCheckRuns }}')}), {.conclusion == 'success'})
         timeout: 30s
     - uses: http
       as: wait-for-prow-checks
+      if: ${{ vars.skipProwChecks != 'true' }}
       retry:
         timeout: 2h30m
       config:
@@ -44,6 +49,6 @@ spec:
             value: application/vnd.github+json
         successExpression: |
           response.status == 200 &&
-          len(filter(response.body.statuses, {.context != 'tide' && ('${{ vars.requiredChecks }}' == '' ? true : (.context matches '${{ vars.requiredChecks }}'))})) > 0 &&
-          all(filter(response.body.statuses, {.context != 'tide' && ('${{ vars.requiredChecks }}' == '' ? true : (.context matches '${{ vars.requiredChecks }}'))}), {.state == 'success'})
+          len(filter(response.body.statuses, {.context != 'tide' && ('${{ vars.requiredProwChecks }}' == '' ? true : (.context matches '${{ vars.requiredProwChecks }}'))})) > 0 &&
+          all(filter(response.body.statuses, {.context != 'tide' && ('${{ vars.requiredProwChecks }}' == '' ? true : (.context matches '${{ vars.requiredProwChecks }}'))}), {.state == 'success'})
         timeout: 30s

@@ -83,6 +83,8 @@ spec:
           vars:
             - name: commitSHA
               value: ${{ outputs['push'].commit }}
+            - name: skipProwChecks
+              value: "true"
         - uses: git-merge-pr
           if: ${{ status('open-pr') != 'Errored' }}
           as: merge-pr
