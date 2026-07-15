@@ -30,6 +30,10 @@ valuesInline:
           - dedicated-admins
           - konflux-infra
           - konflux-devprod
+      viewers:
+        claims:
+          groups:
+          - system:authenticated
       dex:
         enabled: true
         image:

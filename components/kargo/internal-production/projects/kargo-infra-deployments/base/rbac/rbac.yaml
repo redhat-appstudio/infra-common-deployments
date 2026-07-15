@@ -26,30 +26,3 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: kargo-resources-admin
----
-kind: Role
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: kargo-resources-viewer
-rules:
-  - apiGroups:
-      - kargo.akuity.io
-    resources:
-      - "*"
-    verbs:
-      - get
-      - list
-      - watch
----
-kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: kargo-resources-viewer
-subjects:
-  - apiGroup: rbac.authorization.k8s.io
-    kind: Group
-    name: system:authenticated
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: kargo-resources-viewer

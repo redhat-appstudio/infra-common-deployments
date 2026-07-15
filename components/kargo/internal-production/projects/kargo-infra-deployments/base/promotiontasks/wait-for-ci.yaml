@@ -10,12 +10,13 @@ spec:
       value: redhat-appstudio
     - name: repoName
       value: infra-deployments
+    - name: requiredChecks
+      value: ""
   steps:
     - uses: http
       as: wait-for-check-runs
       retry:
-        timeout: 2h
-        errorThreshold: 240
+        timeout: 2h30m
       config:
         method: GET
         url: https://api.github.com/repos/${{ vars.repoOwner }}/${{ vars.repoName }}/commits/${{ vars.commitSHA }}/check-runs
@@ -26,14 +27,13 @@ spec:
             value: application/vnd.github+json
         successExpression: |
           response.status == 200 &&
-          len(response.body.check_runs) > 0 &&
-          all(response.body.check_runs, {.conclusion == 'success'})
+          len(filter(response.body.check_runs, {vars.requiredChecks == '' ? true : (.name matches '${{ vars.requiredChecks }}')})) > 0 &&
+          all(filter(response.body.check_runs, {vars.requiredChecks == '' ? true : (.name matches '${{ vars.requiredChecks }}')}), {.conclusion == 'success'})
         timeout: 30s
     - uses: http
       as: wait-for-prow-checks
       retry:
-        timeout: 2h
-        errorThreshold: 240
+        timeout: 2h30m
       config:
         method: GET
         url: https://api.github.com/repos/${{ vars.repoOwner }}/${{ vars.repoName }}/commits/${{ vars.commitSHA }}/status
@@ -44,6 +44,6 @@ spec:
             value: application/vnd.github+json
         successExpression: |
           response.status == 200 &&
-          len(filter(response.body.statuses, {.context != 'tide'})) > 0 &&
-          all(filter(response.body.statuses, {.context != 'tide'}), {.state == 'success'})
+          len(filter(response.body.statuses, {.context != 'tide' && (vars.requiredChecks == '' ? true : (.context matches '${{ vars.requiredChecks }}'))})) > 0 &&
+          all(filter(response.body.statuses, {.context != 'tide' && (vars.requiredChecks == '' ? true : (.context matches '${{ vars.requiredChecks }}'))}), {.state == 'success'})
         timeout: 30s
