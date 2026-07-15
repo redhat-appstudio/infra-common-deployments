@@ -8,6 +8,7 @@ resources:
   - base
   - dummy-deployment
   - konflux-operator
+  - authentication
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

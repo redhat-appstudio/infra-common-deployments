@@ -1,0 +1,37 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: authentication-manifest-promote
+spec:
+  vars:
+    - name: component
+      value: authentication
+    - name: ring
+    - name: srcPath
+  steps:
+    - uses: yaml-parse
+      as: get-kustomize-resources
+      if: ${{ ctx.targetFreight.origin.name == "authentication-manifest-wh" }}
+      config:
+        path: ./${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
+        outputs:
+        - name: kustomizeResources
+          fromExpression: resources
+
+    - uses: yaml-parse
+      as: get-base-resource-index
+      if: ${{ ctx.targetFreight.origin.name == "authentication-manifest-wh" }}
+      config:
+        path: ./${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
+        outputs:
+        - name: baseResourceIndex
+          fromExpression: "findIndex(${{ task.outputs['get-kustomize-resources'].kustomizeResources }}, # == '../../../base')"
+
+    - uses: yaml-update
+      as: promote-new-base
+      if: ${{ ctx.targetFreight.origin.name == "authentication-manifest-wh" }}
+      config:
+        path: ./${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
+        updates:
+          - key: "resources.${{ task.outputs['get-base-resource-index'].baseResourceIndex }}"
+            value: ../../../new-base
