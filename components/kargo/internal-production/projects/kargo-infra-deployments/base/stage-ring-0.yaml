@@ -65,7 +65,7 @@ spec:
 
               ---
 
-              ${{ outputs[vars.component + '-promote.pr-meta']?.details ?? 'Promotes `' + vars.component + '` to **' + ctx.stage + '**.' }}
+              ${{ (outputs[vars.component + '-promote.pr-meta']?.details) ?? ('Promotes `' + vars.component + '` to **' + ctx.stage + '**.') }}
 
               ---
 
