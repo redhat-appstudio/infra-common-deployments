@@ -82,7 +82,7 @@ spec:
           vars:
             - name: commitSHA
               value: ${{ outputs['push'].commit }}
-            - name: requiredChecks
+            - name: requiredProwChecks
               value: "^appstudio-e2e-tests$"
         - uses: git-merge-pr
           if: ${{ status('open-pr') != 'Errored' }}
