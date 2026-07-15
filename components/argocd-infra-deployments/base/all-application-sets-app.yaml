@@ -7,7 +7,7 @@ metadata:
 spec:
   project: default
   source:
-    path: argo-cd-apps/overlays/base # To be replaced in ring overlays with patches
+    path: argo-cd-apps/overlays/rd-staging
     repoURL: https://github.com/redhat-appstudio/infra-deployments.git
     targetRevision: main
   destination:
