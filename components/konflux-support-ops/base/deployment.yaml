@@ -34,6 +34,11 @@ spec:
             secretKeyRef:
               name: konflux-support-ops-secrets
               key: SLACK_APP_TOKEN
+        - name: SLACK_SIGNING_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: konflux-support-ops-secrets
+              key: SLACK_SIGNING_SECRET
         - name: JIRA_API_KEY
           valueFrom:
             secretKeyRef:
