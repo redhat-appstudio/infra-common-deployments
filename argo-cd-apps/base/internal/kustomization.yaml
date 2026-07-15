@@ -15,3 +15,4 @@ resources:
   - policies
   - rover-group-sync
   - kueue
+  - spre-automations
