@@ -13,12 +13,6 @@ spec:
       sources:
         stages:
           - ring-0-dummy-deployment
-    - origin:
-        kind: Warehouse
-        name: konflux-operator
-      sources:
-        stages:
-          - ring-0-konflux-operator
   promotionTemplate:
     spec:
       vars:
@@ -44,7 +38,6 @@ spec:
           as: commit
           config:
             path: ./src
-            allowEmpty: true
             message: |
               chore(${{ ctx.stage }}): promote ${{ vars.component }}
         - uses: git-push
