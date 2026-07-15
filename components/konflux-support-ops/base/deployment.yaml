@@ -44,25 +44,21 @@ spec:
             secretKeyRef:
               name: konflux-support-ops-secrets
               key: JIRA_API_KEY_KONFLUX
-
         - name: JIRA_API_KEY_SP_RHEL
           valueFrom:
             secretKeyRef:
               name: konflux-support-ops-secrets
               key: JIRA_API_KEY_SP_RHEL
-
         - name: JIRA_API_KEY_OSCI
           valueFrom:
             secretKeyRef:
               name: konflux-support-ops-secrets
               key: JIRA_API_KEY_OSCI
-
         - name: JIRA_API_KEY_OPENSHIFT_PIPELINES
           valueFrom:
             secretKeyRef:
               name: konflux-support-ops-secrets
               key: JIRA_API_KEY_OPENSHIFT_PIPELINES
-
         - name: CONVO_PROD_TOKEN
           valueFrom:
             secretKeyRef:
