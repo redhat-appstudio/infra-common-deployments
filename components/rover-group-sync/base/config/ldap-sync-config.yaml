@@ -20,7 +20,7 @@ rfc2307:
     baseDN: "ou=adhoc,ou=managedGroups,dc=redhat,dc=com"
     derefAliases: never
     scope: sub
-    filter: '(&(objectClass=rhatRoverGroup)(|(cn=konflux-admins)(cn=konflux-build)(cn=konflux-build-admins)(cn=konflux-contributors)(cn=konflux-cost-management-admins)(cn=konflux-devprod)(cn=konflux-ec)(cn=konflux-grafana-viewers)(cn=konflux-infra)(cn=konflux-integration)(cn=konflux-kubearchive)(cn=konflux-migration)(cn=konflux-mintmaker-team)(cn=konflux-o11y)(cn=konflux-o11y-admins)(cn=konflux-performance)(cn=konflux-pipeline-service)(cn=konflux-qe)(cn=konflux-qe-admins)(cn=konflux-release-team)(cn=konflux-sre)(cn=konflux-support)(cn=konflux-support-ops)(cn=konflux-ui)(cn=konflux-vanguard)(cn=ai-konflux-user-support)(cn=plm-poe)(cn=test-platform-ci-admins)))'
+    filter: '(&(objectClass=rhatRoverGroup)(|(cn=konflux-admins)(cn=konflux-build)(cn=konflux-build-admins)(cn=konflux-contributors)(cn=konflux-cost-management-admins)(cn=konflux-devprod)(cn=konflux-ec)(cn=konflux-grafana-viewers)(cn=konflux-infra)(cn=konflux-integration)(cn=konflux-kubearchive)(cn=konflux-migration)(cn=konflux-mintmaker-team)(cn=konflux-o11y)(cn=konflux-o11y-admins)(cn=konflux-performance)(cn=konflux-pipeline-service)(cn=konflux-qe)(cn=konflux-qe-admins)(cn=konflux-release-team)(cn=konflux-sre)(cn=konflux-support)(cn=konflux-support-ops)(cn=konflux-ui)(cn=konflux-vanguard)(cn=ai-konflux-user-support)(cn=plm-poe)(cn=sp-resilience-team)(cn=test-platform-ci-admins)))'
   groupUIDAttribute: dn
   groupNameAttributes:
     - cn
