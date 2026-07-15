@@ -11,9 +11,9 @@ spec:
     - name: repoName
       value: infra-deployments
     - name: requiredCheckRuns
-      value: ""
+      value: ".*"
     - name: requiredProwChecks
-      value: ""
+      value: ".*"
     - name: skipProwChecks
       value: "false"
   steps:
@@ -31,8 +31,8 @@ spec:
             value: application/vnd.github+json
         successExpression: |
           response.status == 200 &&
-          len(filter(response.body.check_runs, {'${{ vars.requiredCheckRuns }}' == '' ? true : (.name matches '${{ vars.requiredCheckRuns }}')})) > 0 &&
-          all(filter(response.body.check_runs, {'${{ vars.requiredCheckRuns }}' == '' ? true : (.name matches '${{ vars.requiredCheckRuns }}')}), {.conclusion == 'success'})
+          len(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}'})) > 0 &&
+          all(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}'}), {.conclusion in ['success', 'neutral', 'skipped']})
         timeout: 30s
     - uses: http
       as: wait-for-prow-checks
@@ -49,6 +49,6 @@ spec:
             value: application/vnd.github+json
         successExpression: |
           response.status == 200 &&
-          len(filter(response.body.statuses, {.context != 'tide' && ('${{ vars.requiredProwChecks }}' == '' ? true : (.context matches '${{ vars.requiredProwChecks }}'))})) > 0 &&
-          all(filter(response.body.statuses, {.context != 'tide' && ('${{ vars.requiredProwChecks }}' == '' ? true : (.context matches '${{ vars.requiredProwChecks }}'))}), {.state == 'success'})
+          len(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')})) > 0 &&
+          all(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')}), {.state == 'success'})
         timeout: 30s
