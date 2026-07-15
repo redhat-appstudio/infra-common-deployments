@@ -8,4 +8,4 @@ resources:
   - rbac
   - external-secrets
   - promotiontasks
-  - stage-ring-0.yaml
+  - stage-ring-1.yaml

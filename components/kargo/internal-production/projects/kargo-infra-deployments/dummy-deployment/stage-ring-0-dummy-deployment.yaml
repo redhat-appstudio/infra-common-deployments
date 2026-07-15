@@ -2,14 +2,14 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: ring-0
+  name: ring-0-dummy-deployment
   annotations:
-    kargo.akuity.io/color: green
+    kargo.akuity.io/color: cyan
 spec:
   requestedFreight:
     - origin:
         kind: Warehouse
-        name: konflux-operator
+        name: dummy-deployment
       sources:
         direct: true
   promotionTemplate:
@@ -28,8 +28,8 @@ spec:
               - branch: main
                 path: ./src
         - task:
-            name: konflux-operator-promote-ring-0
-          as: konflux-operator-promote
+            name: dummy-deployment-promote-ring-0
+          as: dummy-deployment-promote
           vars:
             - name: srcPath
               value: ./src
@@ -82,14 +82,11 @@ spec:
           vars:
             - name: commitSHA
               value: ${{ outputs['push'].commit }}
-            - name: requiredChecks
-              value: "appstudio-operator-overlay-e2e-tests"
         - uses: git-merge-pr
           if: ${{ status('open-pr') != 'Errored' }}
           as: merge-pr
           retry:
             timeout: 2h
-            errorThreshold: 240
           config:
             repoURL: ${{ vars.repoURL }}
             prNumber: ${{ outputs['open-pr'].pr.id }}
