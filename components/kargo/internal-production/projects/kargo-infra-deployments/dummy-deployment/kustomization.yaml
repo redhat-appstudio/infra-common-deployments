@@ -4,4 +4,4 @@ kind: Kustomization
 resources:
   - warehouse.yaml
   - promotiontasks
-  - stage-ring-0-konflux-operator.yaml
+  - stage-ring-0-dummy-deployment.yaml

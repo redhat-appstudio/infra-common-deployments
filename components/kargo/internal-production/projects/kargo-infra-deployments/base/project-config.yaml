@@ -5,5 +5,9 @@ metadata:
   name: kargo-infra-deployments
 spec:
   promotionPolicies:
-    - stage: ring-0
+    - stage: ring-0-konflux-operator
+      autoPromotionEnabled: true
+    - stage: ring-0-dummy-deployment
+      autoPromotionEnabled: true
+    - stage: ring-1
       autoPromotionEnabled: true

@@ -1,0 +1,95 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: ring-1
+  annotations:
+    kargo.akuity.io/color: yellow
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: dummy-deployment
+      sources:
+        stages:
+          - ring-0-dummy-deployment
+  promotionTemplate:
+    spec:
+      vars:
+        - name: repoURL
+          value: https://github.com/redhat-appstudio/infra-deployments.git
+        - name: component
+          value: ${{ ctx.targetFreight.origin.name }}
+      steps:
+        - uses: git-clone
+          as: clone
+          config:
+            repoURL: ${{ vars.repoURL }}
+            checkout:
+              - branch: main
+                path: ./src
+        - task:
+            name: dummy-deployment-promote-ring-1
+          as: dummy-deployment-promote
+          vars:
+            - name: srcPath
+              value: ./src
+        - uses: git-commit
+          as: commit
+          config:
+            path: ./src
+            message: |
+              chore(${{ ctx.stage }}): promote ${{ vars.component }}
+        - uses: git-push
+          as: push
+          config:
+            path: ./src
+            targetBranch: ${{ ctx.project }}/${{ vars.component }}/ring-1
+            force: true
+        - uses: git-open-pr
+          as: open-pr
+          continueOnError: true
+          config:
+            repoURL: ${{ vars.repoURL }}
+            sourceBranch: ${{ ctx.project }}/${{ vars.component }}/ring-1
+            targetBranch: main
+            title: "chore(${{ ctx.stage }}): promote ${{ vars.component }}"
+            description: |
+              ### ${{ ctx.stage }}
+
+              | | |
+              |---|---|
+              | **Component** | `${{ vars.component }}` |
+              | **Project** | `${{ ctx.project }}` |
+              | **Promotion** | `${{ ctx.promotion }}` |
+              | **Freight** | `${{ ctx.targetFreight.alias }}` |
+
+              ---
+
+              ${{ (outputs[vars.component + '-promote.pr-meta']?.details) ?? ('Promotes `' + vars.component + '` to **' + ctx.stage + '**.') }}
+
+              ---
+
+              Auto-merged after CI passes. No manual approval required for Ring 1.
+
+              > Branch is force-pushed each promotion cycle. Do not commit directly.
+            labels:
+              - ring-1
+              - automated-promotion
+              - component/${{ vars.component }}
+        - task:
+            name: wait-for-ci
+          as: wait-for-ci
+          vars:
+            - name: commitSHA
+              value: ${{ outputs['push'].commit }}
+        - uses: git-merge-pr
+          if: ${{ status('open-pr') != 'Errored' }}
+          as: merge-pr
+          retry:
+            timeout: 2h
+          config:
+            repoURL: ${{ vars.repoURL }}
+            prNumber: ${{ outputs['open-pr'].pr.id }}
+            mergeMethod: squash
+            wait: true

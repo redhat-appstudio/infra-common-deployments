@@ -1,0 +1,19 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: dummy-deployment-promote-ring-0
+spec:
+  vars:
+    - name: srcPath
+  steps:
+    - uses: yaml-update
+      as: update-dummy-deployment
+      if: ${{ ctx.targetFreight.origin.name == "dummy-deployment" }}
+      config:
+        path: ${{ vars.srcPath }}/components/dummy-deployment/overlays/development/kustomization.yaml
+        updates:
+          - key: images.0.newTag
+            value: ${{ imageFrom("quay.io/redhat-appstudio-qe/dummy-deployment").Tag }}
+          - key: resources.1
+            value: https://github.com/flacatus/konflux-dummy-deploy//k8s?ref=${{ imageFrom("quay.io/redhat-appstudio-qe/dummy-deployment").Tag }}
