@@ -381,6 +381,17 @@ rules:
       - patch
       - update
       - delete
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - applicationsets
+      - applications
+    verbs:
+      - get
+      - list
+      - watch
+      - delete
+      - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
