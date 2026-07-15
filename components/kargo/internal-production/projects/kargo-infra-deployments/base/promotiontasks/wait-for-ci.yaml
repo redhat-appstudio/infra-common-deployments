@@ -12,6 +12,8 @@ spec:
       value: infra-deployments
     - name: requiredChecks
       value: ""
+    - name: skipProwChecks
+      value: "false"
   steps:
     - uses: http
       as: wait-for-check-runs
@@ -32,6 +34,7 @@ spec:
         timeout: 30s
     - uses: http
       as: wait-for-prow-checks
+      if: ${{ '${{ vars.skipProwChecks }}' != 'true' }}
       retry:
         timeout: 2h30m
       config:
