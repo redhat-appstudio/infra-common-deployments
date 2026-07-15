@@ -34,7 +34,7 @@ spec:
         timeout: 30s
     - uses: http
       as: wait-for-prow-checks
-      if: ${{ '${{ vars.skipProwChecks }}' != 'true' }}
+      if: ${{ vars.skipProwChecks != 'true' }}
       retry:
         timeout: 2h30m
       config:
