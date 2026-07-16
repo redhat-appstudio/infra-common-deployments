@@ -6,7 +6,7 @@ resources:
   - ../../base/all-clusters
   - ../../base/internal
   - dummy-deployment.yaml
-  - kargo-shard-controller.yaml
+  - kargo-shard-infra-common-deployments.yaml
 
 patches:
   - path: environment-patch.yaml

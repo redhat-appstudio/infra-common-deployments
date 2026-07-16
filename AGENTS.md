@@ -64,7 +64,7 @@ kustomize build <path> | kubectl apply --dry-run=client -f -
 
 ## Gotchas
 
-- kube-linter excludes `kargo/` and `konflux-devlake/` (Helm-based).
+- kube-linter excludes `kargo/`, `kargo-shard/`, and `konflux-devlake/` (Helm-based).
 - Chainsaw tests require Kyverno fully rolled out (300s timeout).
 - Environment patches target ApplicationSets by group/version/kind —
   changing ApplicationSet structure may silently break patches.

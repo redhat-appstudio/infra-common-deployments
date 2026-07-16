@@ -2,4 +2,4 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: kargo-shard-staging
+  name: kargo-shard-infra-common-deployments
