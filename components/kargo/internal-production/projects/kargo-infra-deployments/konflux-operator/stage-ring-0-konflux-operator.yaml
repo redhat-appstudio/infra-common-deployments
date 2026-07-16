@@ -83,7 +83,7 @@ spec:
             - name: commitSHA
               value: ${{ outputs['push'].commit }}
             - name: requiredProwChecks
-              value: "appstudio-operator-overlay-e2e-tests"
+              value: "^ci/prow/appstudio-operator-overlay-e2e-tests$"
         - uses: git-merge-pr
           if: ${{ status('open-pr') != 'Errored' }}
           as: merge-pr
