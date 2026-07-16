@@ -38,15 +38,17 @@ spec:
           as: dummy-deployment-promote
           vars:
             - name: srcPath
-              value: ./src
+              value: ${{ vars.srcPath }}
         - task:
             name: authentication-manifest-promote
           as: authentication-manifest-promote
           vars:
-            - name: srcPath
-              value: ./src
             - name: ring
-              value: ring-1
+              value: ${{ vars.ring }}
+            - name: srcPath
+              value: ${{ vars.srcPath }}
+            - name: component
+              value: ${{ vars.component }}
         - uses: git-commit
           as: commit
           config:
