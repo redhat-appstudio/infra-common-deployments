@@ -24,7 +24,7 @@ spec:
         path: ./${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
         outputs:
         - name: baseResourceIndex
-          fromExpression: "findIndex(${{ task.outputs['get-kustomize-resources'].kustomizeResources }}, # == '../../../base')"
+          fromExpression: "quote(findIndex(outputs['get-kustomize-resources'].kustomizeResources, # == '../../../base'))"
 
     - uses: yaml-update
       as: promote-new-base
