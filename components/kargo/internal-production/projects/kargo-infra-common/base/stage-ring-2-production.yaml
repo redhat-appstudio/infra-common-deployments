@@ -99,7 +99,7 @@ spec:
           if: ${{ status('open-pr') != 'Errored' }}
           as: wait-for-revision
           retry:
-            timeout: 15m
+            timeout: 15m0s
           config:
             method: GET
             url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/argocd-local/applications/${{ vars.component }}-in-cluster
