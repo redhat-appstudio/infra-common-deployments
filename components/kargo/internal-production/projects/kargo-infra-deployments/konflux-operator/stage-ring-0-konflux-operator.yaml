@@ -84,14 +84,31 @@ spec:
               value: ${{ outputs['push'].commit }}
             - name: requiredProwChecks
               value: "^ci/prow/appstudio-operator-overlay-e2e-tests$"
+        - uses: http
+          as: find-pr
+          retry:
+            timeout: 5m
+            errorThreshold: 10
+          config:
+            method: GET
+            url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/ring-0&state=open
+            headers:
+              - name: Authorization
+                value: Bearer ${{ secret('kargo-infra-deployments-secrets').github_pat }}
+              - name: Accept
+                value: application/vnd.github+json
+            outputs:
+              - name: prNumber
+                fromExpression: response.body[0].number
+            successExpression: response.status == 200 && len(response.body) > 0
+            timeout: 30s
         - uses: git-merge-pr
-          if: ${{ status('open-pr') != 'Errored' }}
           as: merge-pr
           retry:
             timeout: 2h
             errorThreshold: 240
           config:
             repoURL: ${{ vars.repoURL }}
-            prNumber: ${{ outputs['open-pr'].pr.id }}
+            prNumber: ${{ outputs['find-pr'].prNumber }}
             mergeMethod: squash
             wait: true
