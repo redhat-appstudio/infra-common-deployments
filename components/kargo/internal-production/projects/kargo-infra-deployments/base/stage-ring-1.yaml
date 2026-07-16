@@ -107,7 +107,7 @@ spec:
         - uses: http
           as: find-pr
           retry:
-            timeout: 5m
+            timeout: 5m0s
             errorThreshold: 10
           config:
             method: GET
@@ -125,7 +125,7 @@ spec:
         - uses: git-merge-pr
           as: merge-pr
           retry:
-            timeout: 2h
+            timeout: 2h0m0s
           config:
             repoURL: ${{ vars.repoURL }}
             prNumber: ${{ outputs['find-pr'].prNumber }}
