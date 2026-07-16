@@ -13,6 +13,11 @@ spec:
       sources:
         stages:
           - ring-0-dummy-deployment
+    - origin:
+        kind: Warehouse
+        name: authentication-manifest-wh
+      sources:
+        direct: true
   promotionTemplate:
     spec:
       vars:
@@ -34,12 +39,20 @@ spec:
           vars:
             - name: srcPath
               value: ./src
+        - task:
+            name: authentication-manifest-promote
+          as: authentication-manifest-promote
+          vars:
+            - name: srcPath
+              value: ./src
+            - name: ring
+              value: ring-1
         - uses: git-commit
           as: commit
           config:
             path: ./src
             message: |
-              chore(${{ ctx.stage }}): promote ${{ vars.component }}
+              chore(${{ ctx.stage }}): promote ${{ vars.component }} to ring-1
         - uses: git-push
           as: push
           config:
@@ -53,7 +66,7 @@ spec:
             repoURL: ${{ vars.repoURL }}
             sourceBranch: ${{ ctx.project }}/${{ vars.component }}/ring-1
             targetBranch: main
-            title: "chore(${{ ctx.stage }}): promote ${{ vars.component }}"
+            title: "chore(${{ ctx.stage }}): promote ${{ vars.component }} to ring-1"
             description: |
               ### ${{ ctx.stage }}
 
