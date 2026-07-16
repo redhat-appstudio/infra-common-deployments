@@ -9,22 +9,13 @@ spec:
     - name: srcPath
   steps:
     - uses: yaml-parse
-      as: get-kustomize-resources
-      if: ${{ ctx.targetFreight.origin.name == "authentication-manifest-wh" }}
-      config:
-        path: ./${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
-        outputs:
-        - name: kustomizeResources
-          fromExpression: resources
-
-    - uses: yaml-parse
       as: get-base-resource-index
       if: ${{ ctx.targetFreight.origin.name == "authentication-manifest-wh" }}
       config:
         path: ./${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
         outputs:
         - name: baseResourceIndex
-          fromExpression: "quote(findIndex(outputs['get-kustomize-resources'].kustomizeResources, # == '../../../base'))"
+          fromExpression: "quote(findIndex(outputs.resources, # == '../../../base'))"
 
     - uses: yaml-update
       as: promote-new-base
