@@ -25,6 +25,10 @@ spec:
           value: https://github.com/redhat-appstudio/infra-deployments.git
         - name: component
           value: "${{ hasSuffix(ctx.targetFreight.origin.name, '-image-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-image-wh') : (hasSuffix(ctx.targetFreight.origin.name, '-manifest-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-manifest-wh') : ctx.targetFreight.origin.name) }}"
+        - name: srcPath
+          value: ./src
+        - name: ring
+          value: ring-1
       steps:
         - uses: git-clone
           as: clone
