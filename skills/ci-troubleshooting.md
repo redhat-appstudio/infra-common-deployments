@@ -87,6 +87,7 @@ To reproduce locally (must match CI — build ALL kustomizations, not just one o
 mkdir -p kustomizedfiles
 find argo-cd-apps components -name 'kustomization.yaml' \
   ! -path 'components/kargo/*' \
+  ! -path 'components/kargo-shard/*' \
   ! -path 'components/konflux-devlake/*' \
   | xargs -I {} -n1 -P8 bash -c '
     dir=$(dirname "{}")

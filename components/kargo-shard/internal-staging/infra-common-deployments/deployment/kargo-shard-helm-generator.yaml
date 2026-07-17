@@ -1,12 +1,12 @@
 apiVersion: builtin
 kind: HelmChartInflationGenerator
 metadata:
-  name: kargo-shard-staging
+  name: kargo-shard-infra-common-deployments
 name: kargo
 repo: oci://ghcr.io/akuity/kargo-charts
 version: 1.10.7
-namespace: kargo-shard-staging
-releaseName: kargo-shard-staging
+namespace: kargo-shard-infra-common-deployments
+releaseName: kargo-shard-infra-common-deployments
 valuesInline:
   image:
     repository: quay.io/konflux-ci/kargo
@@ -37,7 +37,7 @@ valuesInline:
     sharedResources:
       createNamespace: false
   controller:
-    shardName: staging
+    shardName: infra-common-deployments-staging
     argocd:
       integrationEnabled: true
       namespace: argocd-local
