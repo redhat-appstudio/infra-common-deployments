@@ -9,3 +9,4 @@ resources:
   - lease-rbac.yaml
   - project-rbac.yaml
   - external-secret.yaml
+  - infra-deployments/staging
