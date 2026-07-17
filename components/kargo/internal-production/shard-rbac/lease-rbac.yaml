@@ -2,8 +2,8 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: kargo-shard-staging-leases
-  namespace: kargo-shard-staging
+  name: kargo-shard-infra-common-deployments-leases
+  namespace: kargo-shard-infra-common-deployments
 rules:
   - apiGroups:
       - coordination.k8s.io
@@ -17,12 +17,12 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: kargo-shard-staging-leases
-  namespace: kargo-shard-staging
+  name: kargo-shard-infra-common-deployments-leases
+  namespace: kargo-shard-infra-common-deployments
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: kargo-shard-staging-leases
+  name: kargo-shard-infra-common-deployments-leases
 subjects:
   - kind: ServiceAccount
     name: kargo-shard-staging
