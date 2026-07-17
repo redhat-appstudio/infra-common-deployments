@@ -1,13 +1,13 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: dummy-deployment
+  name: <COMPONENT_NAME>-image-wh
 spec:
   freightCreationPolicy: Automatic
   interval: 2h0m0s
   subscriptions:
     - image:
-        repoURL: quay.io/redhat-appstudio-qe/dummy-deployment
+        repoURL: <IMAGE_REPO_URL>
         imageSelectionStrategy: NewestBuild
         discoveryLimit: 5
         allowTags: ^[0-9a-f]{40}$

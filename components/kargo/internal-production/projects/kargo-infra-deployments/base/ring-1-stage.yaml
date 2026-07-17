@@ -21,13 +21,13 @@ spec:
   promotionTemplate:
     spec:
       vars:
+        - name: srcPath
+          value: ./src
         - name: repoURL
           value: https://github.com/redhat-appstudio/infra-deployments.git
         - name: component
           value: "${{ hasSuffix(ctx.targetFreight.origin.name, '-image-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-image-wh') : (hasSuffix(ctx.targetFreight.origin.name, '-manifest-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-manifest-wh') : ctx.targetFreight.origin.name) }}"
-        - name: srcPath
-          value: ./src
-        - name: ring
+        - name: targetRing
           value: ring-1
       steps:
         - uses: git-clone
@@ -36,43 +36,47 @@ spec:
             repoURL: ${{ vars.repoURL }}
             checkout:
               - branch: main
-                path: ./src
+                path: ${{ vars.srcPath }}
         - task:
             name: dummy-deployment-promote-ring-1
           as: dummy-deployment-promote
+          if: ${{ vars.component == "dummy-deployment" }}
           vars:
             - name: srcPath
               value: ${{ vars.srcPath }}
         - task:
-            name: authentication-manifest-promote
-          as: authentication-manifest-promote
+            name: promote-authentication-manifests
+          as: authentication-promote
+          if: ${{ vars.component == "authentication" }}
           vars:
-            - name: ring
-              value: ${{ vars.ring }}
             - name: srcPath
               value: ${{ vars.srcPath }}
             - name: component
               value: ${{ vars.component }}
+            - name: prevRing
+              value: base # Authentication does not have a ring 0
+            - name: targetRing
+              value: ${{ vars.targetRing }}
         - uses: git-commit
           as: commit
           config:
-            path: ./src
+            path: ${{ vars.srcPath }}
             message: |
-              chore(${{ ctx.stage }}): promote ${{ vars.component }} to ring-1
+              chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}
         - uses: git-push
           as: push
           config:
-            path: ./src
-            targetBranch: ${{ ctx.project }}/${{ vars.component }}/ring-1
+            path: ${{ vars.srcPath }}
+            targetBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
             force: true
         - uses: git-open-pr
           as: open-pr
           continueOnError: true
           config:
             repoURL: ${{ vars.repoURL }}
-            sourceBranch: ${{ ctx.project }}/${{ vars.component }}/ring-1
+            sourceBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
             targetBranch: main
-            title: "chore(${{ ctx.stage }}): promote ${{ vars.component }} to ring-1"
+            title: "chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}"
             description: |
               ### ${{ ctx.stage }}
 
@@ -93,7 +97,7 @@ spec:
 
               > Branch is force-pushed each promotion cycle. Do not commit directly.
             labels:
-              - ring-1
+              - ${{ vars.targetRing }}
               - automated-promotion
               - component/${{ vars.component }}
         - task:
@@ -111,7 +115,7 @@ spec:
             errorThreshold: 10
           config:
             method: GET
-            url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/ring-1&state=open
+            url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}&state=open
             headers:
               - name: Authorization
                 value: Bearer ${{ secret('kargo-infra-deployments-secrets').github_pat }}
