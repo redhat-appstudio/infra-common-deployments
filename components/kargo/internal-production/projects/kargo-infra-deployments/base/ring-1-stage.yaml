@@ -40,14 +40,12 @@ spec:
         - task:
             name: dummy-deployment-promote-ring-1
           as: dummy-deployment-promote
-          if: ${{ vars.component == "dummy-deployment" }}
           vars:
             - name: srcPath
               value: ${{ vars.srcPath }}
         - task:
             name: promote-authentication-manifests
           as: authentication-promote
-          if: ${{ vars.component == "authentication" }}
           vars:
             - name: srcPath
               value: ${{ vars.srcPath }}
