@@ -26,5 +26,5 @@ spec:
       - name: tekton.dev/pipelineruns
         nominalQuota: '500'
       - name: signing-server-request
-        nominalQuota: '500'
+        nominalQuota: '50'
   stopPolicy: None
