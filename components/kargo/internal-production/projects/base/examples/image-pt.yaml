@@ -1,0 +1,46 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: <COMPONENT_NAME>-promote
+spec:
+  vars:
+    - name: srcPath
+    - name: component
+    - name: ring
+    - name: imageRepoURL
+    - name: externalRepoURL
+
+  steps:
+    # Update an image
+    - uses: kustomize-set-image
+      as: update-image
+      if: ${{ ctx.targetFreight.origin.name == vars.component + "-image-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base
+        images:
+          - image: ${{ vars.imageRepoURL }}
+            tag: ${{ imageFrom(vars.imageRepoURL).Tag }}
+
+    # Update an external repo reference
+    - uses: yaml-parse
+      as: get-external-repo-index
+      if: ${{ ctx.targetFreight.origin.name == vars.component + "-image-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
+        outputs:
+        - name: externalRepoIndex
+          fromExpression: "string(findIndex(resources, # == 'vars.externalRepoURL'))"
+    #-- Ensures the output of the get-external-repo-index task is a valid index (the external repo reference was found)
+    - uses: fail
+      as: external-repo-ref-not-found
+      if: ${{ ctx.targetFreight.origin.name == vars.component + "-image-wh" && !(task.outputs['get-external-repo-index'].externalRepoIndex matches "^[0-9]+$") }}
+      config:
+        message: "Could not find resource '${{ vars.externalRepoURL }}' in resources list of ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml"
+    - uses: yaml-update
+      as: update-external-repo-ref
+      if: ${{ ctx.targetFreight.origin.name == vars.component + "-image-wh" && task.outputs['get-external-repo-index'].externalRepoIndex matches "^[0-9]+$" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
+        updates:
+          - key: "resources.${{ task.outputs['get-external-repo-index'].externalRepoIndex }}"
+            value: "${{ vars.externalRepoURL }}?ref=${{ imageFrom(vars.imageRepoURL).Tag }}"
