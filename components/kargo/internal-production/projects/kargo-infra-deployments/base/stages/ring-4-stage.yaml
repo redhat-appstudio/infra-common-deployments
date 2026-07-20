@@ -2,33 +2,31 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: ring-1
+  name: ring-4
   annotations:
-    kargo.akuity.io/color: yellow
+    kargo.akuity.io/color: red
 spec:
   requestedFreight:
     - origin:
         kind: Warehouse
-        name: dummy-deployment
-      sources:
-        stages:
-          - ring-0-dummy-deployment
-    - origin:
-        kind: Warehouse
         name: authentication-manifest-wh
       sources:
-        direct: true
+        stages:
+          - ring-3
+      requiredSoakTime: 72h
   promotionTemplate:
     spec:
       vars:
-        - name: srcPath
-          value: ./src
         - name: repoURL
           value: https://github.com/redhat-appstudio/infra-deployments.git
         - name: component
           value: "${{ hasSuffix(ctx.targetFreight.origin.name, '-image-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-image-wh') : (hasSuffix(ctx.targetFreight.origin.name, '-manifest-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-manifest-wh') : ctx.targetFreight.origin.name) }}"
+        - name: srcPath
+          value: ./src
+        - name: prevRing
+          value: ring-3
         - name: targetRing
-          value: ring-1
+          value: ring-4
       steps:
         - uses: git-clone
           as: clone
@@ -38,23 +36,17 @@ spec:
               - branch: main
                 path: ${{ vars.srcPath }}
         - task:
-            name: dummy-deployment-promote-ring-1
-          as: dummy-deployment-promote
-          vars:
-            - name: srcPath
-              value: ${{ vars.srcPath }}
-        - task:
             name: promote-authentication-manifests
-          as: authentication-promote
+          as: promote-authentication
           vars:
+            - name: prevRing
+              value: ${{ vars.prevRing }}
+            - name: targetRing
+              value: ${{ vars.targetRing }}
             - name: srcPath
               value: ${{ vars.srcPath }}
             - name: component
               value: ${{ vars.component }}
-            - name: prevRing
-              value: base # Authentication does not have a ring 0
-            - name: targetRing
-              value: ${{ vars.targetRing }}
         - uses: git-commit
           as: commit
           config:
@@ -87,49 +79,14 @@ spec:
 
               ---
 
-              ${{ (outputs[vars.component + '-promote.pr-meta']?.details) ?? ('Promotes `' + vars.component + '` to **' + ctx.stage + '**.') }}
+              ${{ (outputs['promote-' + vars.component + '.pr-meta']?.details) ?? ('Promotes `' + vars.component + '` to **' + ctx.stage + '**.') }}
 
               ---
 
-              Auto-merged after CI passes. No manual approval required for Ring 1.
+              Manual approval required for Ring 4.
 
               > Branch is force-pushed each promotion cycle. Do not commit directly.
             labels:
               - ${{ vars.targetRing }}
               - automated-promotion
               - component/${{ vars.component }}
-        - task:
-            name: wait-for-ci
-          as: wait-for-ci
-          vars:
-            - name: commitSHA
-              value: ${{ outputs['push'].commit }}
-            - name: skipProwChecks
-              value: "true"
-        - uses: http
-          as: find-pr
-          retry:
-            timeout: 5m0s
-            errorThreshold: 10
-          config:
-            method: GET
-            url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}&state=open
-            headers:
-              - name: Authorization
-                value: Bearer ${{ secret('kargo-infra-deployments-secrets').github_pat }}
-              - name: Accept
-                value: application/vnd.github+json
-            outputs:
-              - name: prNumber
-                fromExpression: response.body[0].number
-            successExpression: response.status == 200 && len(response.body) > 0
-            timeout: 30s
-        - uses: git-merge-pr
-          as: merge-pr
-          retry:
-            timeout: 2h0m0s
-          config:
-            repoURL: ${{ vars.repoURL }}
-            prNumber: ${{ outputs['find-pr'].prNumber }}
-            mergeMethod: squash
-            wait: true

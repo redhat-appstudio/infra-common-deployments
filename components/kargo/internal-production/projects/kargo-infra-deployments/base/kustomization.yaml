@@ -7,5 +7,5 @@ resources:
   - project-config.yaml
   - rbac
   - external-secrets
-  - promotiontasks
-  - ring-1-stage.yaml
+  - promotion-tasks
+  - stages
