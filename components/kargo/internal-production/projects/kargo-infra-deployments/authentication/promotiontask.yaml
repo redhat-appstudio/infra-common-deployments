@@ -11,6 +11,13 @@ spec:
     - name: targetRing
 
   steps:
+    # Deletes the target ring's base-snapshot directory, if it exists, to eliminate any orphaned files deleted in the previous ring's base-snapshot directory (or base)
+    - uses: delete
+      as: delete-old-base-snapshot-folder
+      if: ${{ ctx.targetFreight.origin.name == vars.component + "-manifest-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+
     # Copies the tier 1 base directory to the target ring's base-snapshot directory; only happens when promoting from base
     - uses: copy
       as: copy-tier-1-folder
