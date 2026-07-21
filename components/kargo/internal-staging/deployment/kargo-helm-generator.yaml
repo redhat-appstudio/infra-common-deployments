@@ -34,7 +34,7 @@ valuesInline:
         enabled: true
         image:
           repository: quay.io/konflux-ci/dex
-          tag: 63a6f3c81994985f8befc700c0570120a608a22a
+          tag: 75231967b13f1a240fbefba86159244acbd755a3
         skipApprovalScreen: true
         tls:
           selfSignedCert: false
