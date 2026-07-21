@@ -1,0 +1,130 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: ring-3
+  annotations:
+    kargo.akuity.io/color: orange
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: authentication-manifest-wh
+      sources:
+        stages:
+          - ring-2
+        requiredSoakTime: 48h
+  promotionTemplate:
+    spec:
+      vars:
+        - name: repoURL
+          value: https://github.com/redhat-appstudio/infra-deployments.git
+        - name: component
+          value: "${{ hasSuffix(ctx.targetFreight.origin.name, '-image-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-image-wh') : (hasSuffix(ctx.targetFreight.origin.name, '-manifest-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-manifest-wh') : ctx.targetFreight.origin.name) }}"
+        - name: srcPath
+          value: ./src
+        - name: prevRing
+          value: ring-2
+        - name: targetRing
+          value: ring-3
+      steps:
+        - uses: git-clone
+          as: clone
+          config:
+            repoURL: ${{ vars.repoURL }}
+            checkout:
+              - branch: main
+                path: ${{ vars.srcPath }}
+        - task:
+            name: promote-authentication-manifests
+          as: promote-authentication
+          vars:
+            - name: prevRing
+              value: ${{ vars.prevRing }}
+            - name: targetRing
+              value: ${{ vars.targetRing }}
+            - name: srcPath
+              value: ${{ vars.srcPath }}
+            - name: component
+              value: ${{ vars.component }}
+        - uses: git-commit
+          as: commit
+          config:
+            path: ${{ vars.srcPath }}
+            message: |
+              chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}
+        - uses: git-push
+          as: push
+          config:
+            path: ${{ vars.srcPath }}
+            targetBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
+            force: true
+        - uses: git-open-pr
+          as: open-pr
+          continueOnError: true
+          config:
+            repoURL: ${{ vars.repoURL }}
+            sourceBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
+            targetBranch: main
+            title: "chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}"
+            description: |
+              ### ${{ ctx.stage }}
+
+              | | |
+              |---|---|
+              | **Component** | `${{ vars.component }}` |
+              | **Project** | `${{ ctx.project }}` |
+              | **Promotion** | `${{ ctx.promotion }}` |
+              | **Freight** | `${{ ctx.targetFreight.alias }}` |
+
+              ---
+
+              ${{ (outputs['promote-' + vars.component + '.pr-meta']?.details) ?? ('Promotes `' + vars.component + '` to **' + ctx.stage + '**.') }}
+
+              ---
+
+              Manual approval required for Ring 3.
+
+              > Branch is force-pushed each promotion cycle. Do not commit directly.
+            labels:
+              - ${{ vars.targetRing }}
+              - manual-promotion
+              - component/${{ vars.component }}
+        - uses: http
+          as: find-pr
+          retry:
+            timeout: 5m0s
+            errorThreshold: 10
+          config:
+            method: GET
+            url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}&state=open
+            headers:
+              - name: Authorization
+                value: Bearer ${{ secret('kargo-infra-deployments-secrets').github_pat }}
+              - name: Accept
+                value: application/vnd.github+json
+            outputs:
+              - name: prNumber
+                fromExpression: response.body[0].number
+            successExpression: response.status == 200 && len(response.body) > 0
+            timeout: 30s
+        - uses: git-wait-for-pr
+          as: wait-for-pr
+          retry:
+            timeout: 168h0m0s
+          config:
+            repoURL: ${{ vars.repoURL }}
+            prNumber: ${{ outputs['find-pr'].prNumber }}
+        - uses: http
+          as: verify-merged
+          config:
+            method: GET
+            url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls/${{ outputs['find-pr'].prNumber }}
+            headers:
+              - name: Authorization
+                value: Bearer ${{ secret('kargo-infra-deployments-secrets').github_pat }}
+              - name: Accept
+                value: application/vnd.github+json
+            successExpression: response.status == 200 && response.body.merged == true
+            failureExpression: response.status == 200 && response.body.state == 'closed' && response.body.merged == false
+            timeout: 30s
