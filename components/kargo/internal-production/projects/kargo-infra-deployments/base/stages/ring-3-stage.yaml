@@ -88,5 +88,43 @@ spec:
               > Branch is force-pushed each promotion cycle. Do not commit directly.
             labels:
               - ${{ vars.targetRing }}
-              - automated-promotion
+              - manual-promotion
               - component/${{ vars.component }}
+        - uses: http
+          as: find-pr
+          retry:
+            timeout: 5m0s
+            errorThreshold: 10
+          config:
+            method: GET
+            url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}&state=open
+            headers:
+              - name: Authorization
+                value: Bearer ${{ secret('kargo-infra-deployments-secrets').github_pat }}
+              - name: Accept
+                value: application/vnd.github+json
+            outputs:
+              - name: prNumber
+                fromExpression: response.body[0].number
+            successExpression: response.status == 200 && len(response.body) > 0
+            timeout: 30s
+        - uses: git-wait-for-pr
+          as: wait-for-pr
+          retry:
+            timeout: 168h0m0s
+          config:
+            repoURL: ${{ vars.repoURL }}
+            prNumber: ${{ outputs['find-pr'].prNumber }}
+        - uses: http
+          as: verify-merged
+          config:
+            method: GET
+            url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls/${{ outputs['find-pr'].prNumber }}
+            headers:
+              - name: Authorization
+                value: Bearer ${{ secret('kargo-infra-deployments-secrets').github_pat }}
+              - name: Accept
+                value: application/vnd.github+json
+            successExpression: response.status == 200 && response.body.merged == true
+            failureExpression: response.status == 200 && response.body.state == 'closed' && response.body.merged == false
+            timeout: 30s
