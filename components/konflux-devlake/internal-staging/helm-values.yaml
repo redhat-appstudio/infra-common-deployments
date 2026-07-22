@@ -58,9 +58,10 @@ lake:
         items:
           - key: ca-bundle.crt
             path: tls-ca-bundle.pem
+    # File mount only — do not put AWS_RDS_CRTS into envFrom (exceeds 128KiB).
     - name: rds-ca
       secret:
-        secretName: konflux-devlake-secrets
+        secretName: konflux-devlake-rds-ca
         items:
           - key: AWS_RDS_CRTS
             path: rds-ca-bundle.pem
