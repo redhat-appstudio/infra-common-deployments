@@ -1,0 +1,28 @@
+---
+# Large CA bundles must be mounted as files, not injected as env vars.
+# Linux rejects exec when any single env value exceeds MAX_ARG_STRLEN (128KiB);
+# the AWS RDS global bundle is ~165KiB and caused:
+#   exec container process `/usr/bin/tini`: Argument list too long
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: konflux-devlake-rds-ca
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  data:
+    - secretKey: AWS_RDS_CRTS
+      remoteRef:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: staging/qe/konflux-devlake
+        property: AWS_RDS_CRTS
+  refreshInterval: 15m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: appsre-stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: konflux-devlake-rds-ca
