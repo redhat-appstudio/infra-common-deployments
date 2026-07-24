@@ -97,6 +97,20 @@ spec:
             prNumber: ${{ outputs['open-pr'].pr.id }}
         - uses: http
           if: ${{ status('open-pr') != 'Errored' }}
+          as: get-current-revision
+          config:
+            method: GET
+            url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/argocd-local/applications/${{ vars.component }}-in-cluster
+            headers:
+              - name: Authorization
+                value: Bearer ${{ secret('argocd-app-reader-token').token }}
+            insecureSkipTLSVerify: true
+            successExpression: response.status == 200
+            outputs:
+              - name: revision
+                fromExpression: response.body.status.sync.revision
+        - uses: http
+          if: ${{ status('open-pr') != 'Errored' }}
           as: wait-for-revision
           retry:
             timeout: 15m0s
@@ -110,7 +124,10 @@ spec:
             successExpression: |
               response.status == 200 &&
               response.body?.status?.sync?.status == 'Synced' &&
-              any(response.body.status.history, {.revision == '${{ outputs['wait-for-pr'].commit }}'})
+              (
+                any(response.body.status.history, {.revision == '${{ outputs['wait-for-pr'].commit }}'}) ||
+                response.body?.status?.sync?.revision != '${{ outputs['get-current-revision'].revision }}'
+              )
             failureExpression: |
               response.status == 200 &&
               (response.body?.status?.health?.status == 'Degraded' ||
