@@ -11,3 +11,9 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-1
       autoPromotionEnabled: true
+    - stage: ring-2
+      autoPromotionEnabled: true
+    - stage: ring-3
+      autoPromotionEnabled: true
+    - stage: ring-4
+      autoPromotionEnabled: true
