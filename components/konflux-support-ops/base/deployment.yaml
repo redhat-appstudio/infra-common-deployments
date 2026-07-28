@@ -19,7 +19,7 @@ spec:
           defaultMode: 420
       containers:
       - name: support-ops
-        image: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support@sha256:32e9628433fa61f4dfe45d6bc6f3b8817b6c3fc609dc99ac778b6e11130bb2d7
+        image: quay.io/redhat-user-workloads/konflux-user-support-tenant/chat-bot/user-support@sha256:9325cadbf873fefe353295a2691d8850053c0b38aaae45031d93de7e6bdb7377
         imagePullPolicy: Always
         env:
         - name: PYTHONPATH
@@ -101,11 +101,11 @@ spec:
           readOnly: true
         resources:
           limits:
-            cpu: 500m
-            memory: 512Mi
+            cpu: 1000m
+            memory: 1Gi
           requests:
-            cpu: 100m
-            memory: 256Mi
+            cpu: 1000m
+            memory: 1Gi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
