@@ -14,14 +14,14 @@ spec:
     # Deletes the target ring's base-snapshot directory, if it exists, to eliminate any orphaned files deleted in the previous ring's base-snapshot directory (or base)
     - uses: delete
       as: delete-old-base-snapshot-folder
-      if: ${{ ctx.targetFreight.origin.name == vars.component + "-manifest-wh" }}
+      if: ${{ ctx.targetFreight.origin.name == "authentication-manifest-wh" }}
       config:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
 
     # Copies the tier 1 base directory to the target ring's base-snapshot directory; only happens when promoting from base
     - uses: copy
       as: copy-tier-1-folder
-      if: ${{ ctx.targetFreight.origin.name == vars.component + "-manifest-wh" && vars.prevRing == "base" }}
+      if: ${{ ctx.targetFreight.origin.name == "authentication-manifest-wh" && vars.prevRing == "base" }}
       config:
         inPath: ${{ vars.srcPath }}/components/${{ vars.component }}/base
         outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
@@ -29,7 +29,7 @@ spec:
     # Copies the previous ring's base-snapshot directory to the target ring's base-snapshot directory
     - uses: copy
       as: copy-prev-ring-base-snapshot-folder
-      if: ${{ ctx.targetFreight.origin.name == vars.component + "-manifest-wh" && vars.prevRing != "base" }}
+      if: ${{ ctx.targetFreight.origin.name == "authentication-manifest-wh" && vars.prevRing != "base" }}
       config:
         inPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.prevRing }}/base/base-snapshot
         outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot

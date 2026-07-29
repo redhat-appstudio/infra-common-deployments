@@ -14,7 +14,7 @@ spec:
     # Update an image
     - uses: kustomize-set-image
       as: update-image
-      if: ${{ ctx.targetFreight.origin.name == vars.component + "-image-wh" }}
+      if: ${{ ctx.targetFreight.origin.name == "<COMPONENT_NAME>-image-wh" }}
       config:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base
         images:
@@ -24,7 +24,7 @@ spec:
     # Update an external repo reference
     - uses: yaml-parse
       as: get-external-repo-index
-      if: ${{ ctx.targetFreight.origin.name == vars.component + "-image-wh" }}
+      if: ${{ ctx.targetFreight.origin.name == "<COMPONENT_NAME>-image-wh" }}
       config:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
         outputs:
@@ -33,12 +33,12 @@ spec:
     #-- Ensures the output of the get-external-repo-index task is a valid index (the external repo reference was found)
     - uses: fail
       as: external-repo-ref-not-found
-      if: ${{ ctx.targetFreight.origin.name == vars.component + "-image-wh" && !(task.outputs['get-external-repo-index'].externalRepoIndex matches "^[0-9]+$") }}
+      if: ${{ ctx.targetFreight.origin.name == "<COMPONENT_NAME>-image-wh" && !(task.outputs['get-external-repo-index'].externalRepoIndex matches "^[0-9]+$") }}
       config:
         message: "Could not find resource '${{ vars.externalRepoURL }}' in resources list of ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml"
     - uses: yaml-update
       as: update-external-repo-ref
-      if: ${{ ctx.targetFreight.origin.name == vars.component + "-image-wh" && task.outputs['get-external-repo-index'].externalRepoIndex matches "^[0-9]+$" }}
+      if: ${{ ctx.targetFreight.origin.name == "<COMPONENT_NAME>-image-wh" && task.outputs['get-external-repo-index'].externalRepoIndex matches "^[0-9]+$" }}
       config:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
         updates:

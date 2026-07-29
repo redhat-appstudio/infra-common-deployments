@@ -9,6 +9,8 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-0-dummy-deployment
       autoPromotionEnabled: true
+    - stage: ring-0-etcd-shield
+      autoPromotionEnabled: true
     - stage: ring-1
       autoPromotionEnabled: true
     - stage: ring-2

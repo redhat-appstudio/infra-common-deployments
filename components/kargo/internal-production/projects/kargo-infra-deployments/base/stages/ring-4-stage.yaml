@@ -14,6 +14,13 @@ spec:
         stages:
           - ring-3
         requiredSoakTime: 72h
+    - origin:
+        kind: Warehouse
+        name: etcd-shield-manifest-wh
+      sources:
+        stages:
+          - ring-3
+        requiredSoakTime: 72h
   promotionTemplate:
     spec:
       vars:
@@ -38,6 +45,18 @@ spec:
         - task:
             name: promote-authentication-manifests
           as: promote-authentication
+          vars:
+            - name: prevRing
+              value: ${{ vars.prevRing }}
+            - name: targetRing
+              value: ${{ vars.targetRing }}
+            - name: srcPath
+              value: ${{ vars.srcPath }}
+            - name: component
+              value: ${{ vars.component }}
+        - task:
+            name: promote-etcd-shield-manifests
+          as: promote-etcd-shield
           vars:
             - name: prevRing
               value: ${{ vars.prevRing }}
