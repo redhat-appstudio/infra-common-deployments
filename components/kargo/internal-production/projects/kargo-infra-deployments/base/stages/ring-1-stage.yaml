@@ -15,6 +15,12 @@ spec:
           - ring-0-dummy-deployment
     - origin:
         kind: Warehouse
+        name: konflux-operator
+      sources:
+        stages:
+          - ring-0-konflux-operator
+    - origin:
+        kind: Warehouse
         name: authentication-manifest-wh
       sources:
         direct: true
@@ -48,6 +54,12 @@ spec:
         - task:
             name: dummy-deployment-promote-ring-1
           as: promote-dummy-deployment
+          vars:
+            - name: srcPath
+              value: ${{ vars.srcPath }}
+        - task:
+            name: konflux-operator-promote-ring-1
+          as: promote-konflux-operator
           vars:
             - name: srcPath
               value: ${{ vars.srcPath }}
