@@ -27,6 +27,5 @@ spec:
       metadata:
         labels:
           argocd.argoproj.io/secret-type: cluster
-          appstudio.redhat.com/is-tenant-cluster: "true"
           appstudio.redhat.com/cluster-type: tenant
           appstudio.redhat.com/internal-cluster: "true"
