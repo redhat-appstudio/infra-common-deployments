@@ -886,3 +886,69 @@ spec:
     creationPolicy: Owner
     deletionPolicy: Delete
     name: quay-internal-oci
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: cspv2-stage-crt
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/cspv2/stage/cspv2-stage-crt
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: cspv2-stage-crt
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: cspv2-crt-key
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/cspv2/stage/cspv2-crt-key
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: cspv2-crt-key
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: cspj-downloads-stage-rhsm-private-key
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: konflux/release/internal-services/cspv2/stage/cspj-downloads-stage-rhsm-private-key
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: konflux-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: cspj-downloads-stage-rhsm-private-key
