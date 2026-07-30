@@ -8,8 +8,20 @@ spec:
     - name: component
     - name: prevRing
     - name: targetRing
+    - name: imageRepoURL
+      value: quay.io/konflux-ci/etcd-shield
 
   steps:
+     # Updates the image
+    - uses: kustomize-set-image
+      as: update-image
+      if: ${{ ctx.targetFreight.origin.name == "etcd-shield-image-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base
+        images:
+          - image: ${{ vars.imageRepoURL }}
+            tag: ${{ imageFrom(vars.imageRepoURL).Tag }}
+
     # Deletes the target ring's base-snapshot directory, if it exists, to eliminate any orphaned files deleted in the previous ring's base-snapshot directory (or base)
     - uses: delete
       as: delete-old-base-snapshot-folder
