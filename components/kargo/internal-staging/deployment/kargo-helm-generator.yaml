@@ -10,7 +10,7 @@ releaseName: kargo
 valuesInline:
   image:
     repository: quay.io/konflux-ci/kargo
-    tag: 1.10-87673ff
+    tag: 1.10-887a802
   api:
     adminAccount:
       enabled: false
