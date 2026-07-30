@@ -13,14 +13,14 @@ spec:
       sources:
         stages:
           - ring-1
-        requiredSoakTime: 24h
+        requiredSoakTime: 24h0m0s
     - origin:
         kind: Warehouse
         name: etcd-shield-manifest-wh
       sources:
         stages:
           - ring-1
-        requiredSoakTime: 24h
+        requiredSoakTime: 24h0m0s
   promotionTemplate:
     spec:
       vars:
