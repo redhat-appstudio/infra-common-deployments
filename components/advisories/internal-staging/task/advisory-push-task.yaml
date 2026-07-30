@@ -1,0 +1,326 @@
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: advisory-push
+  namespace: advisories
+spec:
+  description: >-
+    Migrated from GitLab CI push jobs (send-message, update-pyxis-advisory-data).
+    Sends new/updated advisory data to UMB and Kafka, and updates Pyxis.
+  params:
+    - name: repo-url
+      type: string
+    - name: revision
+      type: string
+      description: The commit SHA after the push
+    - name: before-revision
+      type: string
+      description: The commit SHA before the push
+    - name: target-branch
+      type: string
+    - name: umb-env
+      type: string
+      description: Environment passed to amq-producer's -e flag (e.g. stage, prod)
+    - name: umb-topic
+      type: string
+    - name: kafka-topic
+      type: string
+    - name: pyxis-advisory-api
+      type: string
+    - name: pyxis-images-api
+      type: string
+  volumes:
+    - name: repo
+      emptyDir: {}
+    - name: umb-cert
+      secret:
+        secretName: advisory-umb-cert
+    - name: kafka-creds
+      secret:
+        secretName: advisory-kafka-creds
+    - name: pyxis-cert
+      secret:
+        secretName: advisory-pyxis-stage-cert
+  steps:
+    - name: clone
+      image: quay.io/konflux-ci/release-service-utils:fb266c6fa1822d0b417380f286fc4bd149be67c0
+      computeResources:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+        limits:
+          memory: 512Mi
+      volumeMounts:
+        - name: repo
+          mountPath: /workspace/repo
+      script: |
+        #!/usr/bin/env bash
+        set -euxo pipefail
+
+        # Partial clone: fetches all commit/tree objects (needed for git log/diff)
+        # but defers blob content until something actually reads a file (git show).
+        # Sparse checkout further limits the materialized working tree to .gitlab/,
+        # since advisory files are read on demand via `git show` instead.
+        git clone --filter=blob:none --no-checkout --single-branch \
+          --branch "$(params.target-branch)" "$(params.repo-url)" /workspace/repo
+        cd /workspace/repo
+        git config --global --add safe.directory /workspace/repo
+        git sparse-checkout init --cone
+        git sparse-checkout set .gitlab
+        git checkout "$(params.revision)"
+
+    - name: send-messages
+      image: quay.io/konflux-ci/release-service-utils:fb266c6fa1822d0b417380f286fc4bd149be67c0
+      onError: continue
+      computeResources:
+        requests:
+          cpu: 250m
+          memory: 256Mi
+        limits:
+          memory: 256Mi
+      volumeMounts:
+        - name: repo
+          mountPath: /workspace/repo
+        - name: umb-cert
+          mountPath: /secrets/umb
+          readOnly: true
+        - name: kafka-creds
+          mountPath: /secrets/kafka
+          readOnly: true
+      env:
+        - name: UMB_ENV
+          value: "$(params.umb-env)"
+        - name: UMB_TOPIC
+          value: "$(params.umb-topic)"
+        - name: UMB_CERT
+          value: /secrets/umb/konflux-release-umb.crt
+        - name: UMB_KEY
+          value: /secrets/umb/konflux-release-umb.key
+        - name: KAFKA_TOPIC
+          value: "$(params.kafka-topic)"
+        - name: KAFKA_USERNAME
+          value: /secrets/kafka/Username
+        - name: KAFKA_PASSWORD
+          value: /secrets/kafka/Password
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: /secrets/kafka/BootstrapServers
+      script: |
+        #!/usr/bin/env bash
+        set -eux
+        set -o pipefail
+
+        cd /workspace/repo
+        git config --global --add safe.directory /workspace/repo
+
+        BEFORE="$(params.before-revision)"
+        AFTER="$(params.revision)"
+
+        echo Installing pyyaml and rhmsg...
+        pip install -q pyyaml
+        pip install -q git+https://gitlab.cee.redhat.com/exd-guild-messaging/rhmsg.git
+
+        NEW_ADVISORIES=$(mktemp)
+        UPDATED_ADVISORIES=$(mktemp)
+
+        echo New advisories:
+        git diff --name-only --diff-filter=A "$BEFORE" "$AFTER" \
+          | { grep '^data/advisories/.*/advisory.yaml' || true; } | tee "$NEW_ADVISORIES"
+
+        echo Updated advisories:
+        git diff --name-only --diff-filter=M "$BEFORE" "$AFTER" \
+          | { grep '^data/advisories/.*/advisory.yaml' || true; } | tee "$UPDATED_ADVISORIES"
+
+        if [ ! -s "$NEW_ADVISORIES" ] && [ ! -s "$UPDATED_ADVISORIES" ]; then
+          echo "No new or updated advisories to process, quitting..."
+          exit 0
+        fi
+
+        echo Sending new advisories...
+        for FILE in $(cat "$NEW_ADVISORIES")
+        do
+          echo "  $FILE"
+
+          # Convert advisory yaml to json and set metadata.updated_date to metadata.ship_date
+          JSON_FILE=$(mktemp)
+          git show "$AFTER:$FILE" | yq eval -o=json - | jq -c '.metadata.updated_date = .metadata.ship_date' > "$JSON_FILE"
+
+          # Send message to UMB
+          /tekton/home/.local/bin/amq-producer -e "$UMB_ENV" --certificate-file "$UMB_CERT" --private-key-file "$UMB_KEY" \
+            --property advisory_state=new \
+            --topic "$UMB_TOPIC" --file "$JSON_FILE"
+
+          # Send message to Kafka
+          /home/kafka/producer.py --username-file "$KAFKA_USERNAME" --password-file "$KAFKA_PASSWORD" \
+            --bootstrap-servers-file "$KAFKA_BOOTSTRAP_SERVERS" --header advisory_state=new \
+            --json-file "$JSON_FILE"
+        done
+
+        echo Sending updated advisories...
+        for FILE in $(cat "$UPDATED_ADVISORIES")
+        do
+          echo "  $FILE"
+
+          # Get the date of the last commit that changed this file in the required format
+          UPDATED_DATE=$(git log -1 --date=format:'%Y-%m-%dT%H:%M:%SZ' \
+            --pretty=format:'%ad' "$AFTER" -- "$FILE")
+
+          # Convert advisory yaml to json and set metadata.updated_date to the last commit date
+          JSON_FILE=$(mktemp)
+          git show "$AFTER:$FILE" | yq eval -o=json - \
+            | jq -c --arg updated_date "$UPDATED_DATE" '.metadata.updated_date = $updated_date' > "$JSON_FILE"
+
+          # Get git log of all changes since the file creation and add it to the json.
+          # This relies on the partial clone's on-demand blob fetch to pull in
+          # historical content for `git log -p`.
+          ORIGINAL_COMMIT=$(git log --diff-filter=A --format='%H' "$AFTER" -- "$FILE" | tail -1)
+          GIT_LOG=$(git log -p --no-merges \
+            --format='%h %ad %an <%ae>' --date=iso \
+            --no-show-signature \
+            "$ORIGINAL_COMMIT".."$AFTER" -- "$FILE" \
+            | sed '/^diff --git/d;/^index/d;/^---/d;/^++/d;/^$/d')
+          jq -c --arg git_log "$GIT_LOG" '.metadata.git_log = $git_log' "$JSON_FILE" > "${JSON_FILE}.tmp" && mv "${JSON_FILE}.tmp" "$JSON_FILE"
+
+          # Send message to UMB
+          /tekton/home/.local/bin/amq-producer -e "$UMB_ENV" --certificate-file "$UMB_CERT" --private-key-file "$UMB_KEY" \
+            --property advisory_state=updated \
+            --topic "$UMB_TOPIC" --file "$JSON_FILE"
+
+          # Send message to Kafka
+          /home/kafka/producer.py --username-file "$KAFKA_USERNAME" --password-file "$KAFKA_PASSWORD" \
+            --bootstrap-servers-file "$KAFKA_BOOTSTRAP_SERVERS" --header advisory_state=updated \
+            --json-file "$JSON_FILE"
+        done
+
+    - name: update-pyxis
+      image: quay.io/konflux-ci/release-service-utils:fb266c6fa1822d0b417380f286fc4bd149be67c0
+      computeResources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          memory: 64Mi
+      volumeMounts:
+        - name: repo
+          mountPath: /workspace/repo
+        - name: pyxis-cert
+          mountPath: /secrets/pyxis
+          readOnly: true
+      env:
+        - name: PYXIS_ADVISORY_API
+          value: "$(params.pyxis-advisory-api)"
+        - name: PYXIS_IMAGES_API
+          value: "$(params.pyxis-images-api)"
+        - name: PYXIS_CERT
+          value: /secrets/pyxis/cert
+        - name: PYXIS_KEY
+          value: /secrets/pyxis/key
+      script: |
+        #!/usr/bin/env bash
+        set -eux
+        set -o pipefail
+
+        cd /workspace/repo
+        git config --global --add safe.directory /workspace/repo
+
+        BEFORE="$(params.before-revision)"
+        AFTER="$(params.revision)"
+
+        # TODO: bake this into a dedicated container image instead of inlining it here.
+        # For now it is a straight port of .gitlab/create_redhatcontaineradvisory.sh,
+        # adapted to take a local file path since advisory files aren't checked out
+        # (sparse-checkout excludes data/advisories; content is fetched via `git show`).
+        create_redhatcontaineradvisory() {
+          FILE=$1
+          ID="$(yq '.spec.type' $FILE)-$(yq '.metadata.name' $FILE)"
+          DESCRIPTION="$(yq '.spec.description' $FILE)"
+          SEVERITY="$(yq '.spec.severity // "None"' $FILE)"
+          SHIP_DATE="$(yq '.metadata.ship_date' $FILE)"
+          SOLUTION="$(yq '.spec.solution' $FILE)"
+          SYNOPSIS="$(yq '.spec.synopsis' $FILE)"
+          TOPIC="$(yq '.spec.topic' $FILE)"
+          TYPE="$(yq '.spec.type' $FILE)"
+
+          cves='[]'
+          for CVE in $(yq '.spec.content.images[].cves.fixed | to_entries | .[].key' $FILE | sort -u) ; do
+            cves=$(jq --arg cve "$CVE" \
+              '. += [{"id": $cve, "url": "https://access.redhat.com/security/cve/\($cve)"}]' <<< "$cves")
+          done
+          CVES=$(jq <<< "$cves")
+
+          issues='[]'
+          ISSUES_JSON="$(yq -o=json -I=0 '.spec.issues.fixed' $FILE)"
+          for ISSUE in "$(jq -c '.[]' <<< "$ISSUES_JSON")" ; do
+            if [ "$(jq -r '.public' <<< "$ISSUE")" == "false" ] ; then
+              continue
+            fi
+            ISSUE_ID=$(jq -r '.id' <<< "$ISSUE")
+            SOURCE=$(jq -r '.source' <<< "$ISSUE")
+            issues=$(jq --arg id "$ISSUE_ID" --arg source "$SOURCE" \
+              '. += [{"id": $id, "issue_tracker": $source}]' <<< "$issues")
+          done
+          ISSUES=$(jq <<< "$issues")
+
+          jq -n \
+            --arg _id "$ID" \
+            --arg content_type "CONTAINER" \
+            --argjson cves "$CVES" \
+            --arg description "$DESCRIPTION" \
+            --argjson issues "$ISSUES" \
+            --arg severity "$SEVERITY" \
+            --arg ship_date "$SHIP_DATE" \
+            --arg solution "$SOLUTION" \
+            --arg synopsis "$SYNOPSIS" \
+            --arg topic "$TOPIC" \
+            --arg type "$TYPE" \
+            '$ARGS.named'
+        }
+
+        MODIFIED_ADVISORIES=$(mktemp)
+
+        echo New/Updated advisories:
+        git diff --name-only --diff-filter=AM "$BEFORE" "$AFTER" \
+          | { grep '^data/advisories/.*/advisory.yaml' || true; } | tee "$MODIFIED_ADVISORIES"
+
+        if ! [ -s "$MODIFIED_ADVISORIES" ]
+        then
+          echo "No new or updated advisories to process, quitting..."
+          exit 0
+        fi
+
+        RC=0
+        for FILE in $(cat "$MODIFIED_ADVISORIES")
+        do
+          echo "Updating pyxis advisory information for $FILE"
+          git show "$AFTER:$FILE" > /tmp/advisory.yaml
+
+          create_redhatcontaineradvisory /tmp/advisory.yaml > /tmp/payload
+          echo "Creating/updating RedHatContainerAdvisory object"
+          cat /tmp/payload
+          ADVISORY_ID="$(yq '._id' /tmp/payload)"
+          if curl --key "$PYXIS_KEY" --cert "$PYXIS_CERT" --fail -X GET "${PYXIS_ADVISORY_API}/id/${ADVISORY_ID}" ; then
+            curl --key "$PYXIS_KEY" --cert "$PYXIS_CERT" -X PATCH -H 'Content-Type: application/json' --data-binary @/tmp/payload "${PYXIS_ADVISORY_API}/id/${ADVISORY_ID}"
+          else
+            curl --key "$PYXIS_KEY" --cert "$PYXIS_CERT" -X POST -H 'Content-Type: application/json' --data-binary @/tmp/payload "${PYXIS_ADVISORY_API}"
+          fi
+
+          NUM_IMAGES=$(yq '.spec.content.images | length' /tmp/advisory.yaml)
+          for ((i = 0; i < NUM_IMAGES; i++)); do
+            IMAGE=$(yq '.spec.content.images['$i'].containerImage' /tmp/advisory.yaml)
+            REPOSITORY=$(yq '.spec.content.images['$i'].repository' /tmp/advisory.yaml)
+            REPOSITORY_PATH="${REPOSITORY#*/}"
+            DIGEST="${IMAGE##*@sha256:}"
+            curl --retry 3 --retry-delay 2 --retry-all-errors --key "$PYXIS_KEY" --cert "$PYXIS_CERT" -X GET "${PYXIS_IMAGES_API}?page_size=1&filter=repositories.manifest_schema2_digest%3D%3D%22sha256%3A${DIGEST}%22%3Bnot%28deleted%3D%3Dtrue%29" | jq '.data[0]' > IMAGE.json
+            IMAGE_ID=$(jq -r '._id' IMAGE.json)
+            if [ "$IMAGE_ID" == "null" ] ; then
+              echo "Failed to retrieve pyxis image entry for image with containerImage value $IMAGE"
+              RC=1
+              continue
+            fi
+            jq --arg id "$ADVISORY_ID" --arg repo "$REPOSITORY_PATH" \
+              '(.repositories[] | select(.registry=="registry.access.redhat.com" and .repository==$repo)).image_advisory_id = $id' IMAGE.json > /tmp/IMAGE.json && mv /tmp/IMAGE.json IMAGE.json
+            curl --retry 3 --retry-delay 2 --retry-all-errors --key "$PYXIS_KEY" --cert "$PYXIS_CERT" -X PATCH -H 'Content-Type: application/json' --data-binary @IMAGE.json "${PYXIS_IMAGES_API}/id/$IMAGE_ID"
+            sleep 0.1
+          done
+        done
+        exit "$RC"
