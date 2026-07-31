@@ -12,6 +12,11 @@ spec:
         name: etcd-shield-manifest-wh
       sources:
         direct: true
+    - origin:
+        kind: Warehouse
+        name: etcd-shield-image-wh
+      sources:
+        direct: true
   promotionTemplate:
     spec:
       vars:

@@ -30,6 +30,12 @@ spec:
       sources:
         stages:
           - ring-0-etcd-shield
+    - origin:
+        kind: Warehouse
+        name: etcd-shield-image-wh
+      sources:
+        stages:
+          - ring-0-etcd-shield
   promotionTemplate:
     spec:
       vars:
