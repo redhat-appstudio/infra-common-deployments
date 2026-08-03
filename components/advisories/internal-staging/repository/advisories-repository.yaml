@@ -1,0 +1,16 @@
+---
+apiVersion: pipelinesascode.tekton.dev/v1alpha1
+kind: Repository
+metadata:
+  name: advisories
+  namespace: advisories
+spec:
+  url: "https://gitlab.cee.redhat.com/redhat-appstudio/advisories"
+  git_provider:
+    url: "https://gitlab.cee.redhat.com"
+    secret:
+      name: gitlab-webhook-config
+      key: provider.token
+    webhook_secret:
+      name: gitlab-webhook-config
+      key: webhook.secret
