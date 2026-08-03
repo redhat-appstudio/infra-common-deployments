@@ -7,21 +7,21 @@ spec:
   resourceSelector:
     matchLabels:
       monitoring.rhobs/stack: appstudio-federate-ms
-  logLevel: debug
+  logLevel: info
   retention: 3h
   alertmanagerConfig:
     disabled: true
   resources:
     requests:
-      cpu: 100m
-      memory: 2Gi
+      cpu: 200m
+      memory: 4Gi
     limits:
-      memory: 2Gi
+      memory: 4Gi
   prometheusConfig:
     externalLabels:
-      source_environment: staging
-      source_cluster: kflux-c-stg-e01
-    replicas: 1
+      source_environment: production
+      source_cluster: kflux-c-prd-e01
+    replicas: 2
     remoteWrite:
     - oauth2:
         clientId:
@@ -32,9 +32,9 @@ spec:
           key: client-secret
           name: rhobs
         endpointParams:
-          audience: observatorium-osd-staging
+          audience: observatorium-osd
         tokenUrl: https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
-      url: https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/rhtap/api/v1/receive
+      url: https://observatorium-mst.api.openshift.com/api/metrics/v1/rhtap/api/v1/receive
       writeRelabelConfigs:
       - action: LabelKeep
         regex: "__name__|source_environment|source_cluster|namespace|app|pod|container|\

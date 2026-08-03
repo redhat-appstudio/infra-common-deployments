@@ -1,0 +1,3 @@
+- op: add
+  path: /spec/endpoints/0/params/match[]/17
+  value: '{__name__="kube_deployment_status_replicas_updated", namespace="tekton-kueue"}'

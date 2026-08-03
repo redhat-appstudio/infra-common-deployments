@@ -19,6 +19,10 @@ Note: The steps below should be handled by Argo CD
 
     Replace `internal-staging` with the appropriate environment overlay.
 
+## Structure
+
+Shared resources (operator, app, patches, RBAC, common dashboards) live in `base/`. Each environment overlay (`external-production`, `external-staging`, `internal-production`, `internal-staging`) contains only a `kustomization.yaml` that references `../base` and optionally includes k-components.
+
 ## Dashboard structure
 
-Team dashboards are maintained in per environment overlays (`internal-staging/dashboards/`, `external-staging/dashboards/`). Each environment references its own dashboard source independently. The `base/dashboards/` directory contains shared dashboard definitions referenced by the overlays.
+Common dashboards (dora-metrics, generic-dashboards, perfscale) are in `base/dashboards/`. Internal-only dashboards (kueue, kyverno, pipeline-service) are in `k-components/internal-dashboards/dashboards/` and are included by the `internal-*` overlays via a Kustomize Component.
