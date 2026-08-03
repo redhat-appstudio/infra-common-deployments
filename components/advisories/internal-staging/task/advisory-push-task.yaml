@@ -297,10 +297,33 @@ spec:
           echo "Creating/updating RedHatContainerAdvisory object"
           cat /tmp/payload
           ADVISORY_ID="$(yq '._id' /tmp/payload)"
-          if curl --retry 3 --retry-delay 2 --key "$PYXIS_KEY" --cert "$PYXIS_CERT" --fail -X GET "${PYXIS_ADVISORY_API}/id/${ADVISORY_ID}" ; then
-            curl --retry 3 --retry-delay 2 --retry-all-errors --key "$PYXIS_KEY" --cert "$PYXIS_CERT" --fail-with-body -X PATCH -H 'Content-Type: application/json' --data-binary @/tmp/payload "${PYXIS_ADVISORY_API}/id/${ADVISORY_ID}"
-          else
-            curl --retry 3 --retry-delay 2 --retry-all-errors --key "$PYXIS_KEY" --cert "$PYXIS_CERT" --fail-with-body -X POST -H 'Content-Type: application/json' --data-binary @/tmp/payload "${PYXIS_ADVISORY_API}"
+
+          # Retry the whole GET-then-branch decision rather than just resending
+          # a single curl request: if a POST/PATCH actually succeeded server-side
+          # but we never saw the response, re-running the GET first will notice
+          # the record now exists and correctly PATCH on the next attempt instead
+          # of blindly resending the same POST.
+          ADVISORY_OK=0
+          for ATTEMPT in 1 2 3; do
+            if curl --key "$PYXIS_KEY" --cert "$PYXIS_CERT" --fail -X GET "${PYXIS_ADVISORY_API}/id/${ADVISORY_ID}" ; then
+              if curl --key "$PYXIS_KEY" --cert "$PYXIS_CERT" --fail-with-body -X PATCH -H 'Content-Type: application/json' --data-binary @/tmp/payload "${PYXIS_ADVISORY_API}/id/${ADVISORY_ID}" ; then
+                ADVISORY_OK=1
+                break
+              fi
+            else
+              if curl --key "$PYXIS_KEY" --cert "$PYXIS_CERT" --fail-with-body -X POST -H 'Content-Type: application/json' --data-binary @/tmp/payload "${PYXIS_ADVISORY_API}" ; then
+                ADVISORY_OK=1
+                break
+              fi
+            fi
+            echo "Attempt $ATTEMPT to create/update advisory $ADVISORY_ID failed, retrying..."
+            sleep 2
+          done
+
+          if [ "$ADVISORY_OK" -ne 1 ]; then
+            echo "Failed to create/update advisory $ADVISORY_ID after 3 attempts"
+            RC=1
+            continue
           fi
 
           NUM_IMAGES=$(yq '.spec.content.images | length' /tmp/advisory.yaml)
