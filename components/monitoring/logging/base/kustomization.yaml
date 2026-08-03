@@ -4,6 +4,16 @@ resources:
 - install-logging-operator.yaml
 - ./configure-logging/
 - ./rbac/
+- ./external-secrets/
+- ./logging-operator-prerequisite/
 
 generatorOptions:
   disableNameSuffixHash: true
+
+patches:
+  - path: configure-logforwarder-compression-patch.yaml
+    target:
+      group: observability.openshift.io
+      version: v1
+      kind: ClusterLogForwarder
+      name: instance
