@@ -4,6 +4,8 @@ kind: Repository
 metadata:
   name: advisories
   namespace: advisories
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   url: "https://gitlab.cee.redhat.com/redhat-appstudio/advisories"
   git_provider:
