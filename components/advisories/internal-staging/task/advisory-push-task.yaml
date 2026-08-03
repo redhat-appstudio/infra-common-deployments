@@ -297,10 +297,10 @@ spec:
           echo "Creating/updating RedHatContainerAdvisory object"
           cat /tmp/payload
           ADVISORY_ID="$(yq '._id' /tmp/payload)"
-          if curl --key "$PYXIS_KEY" --cert "$PYXIS_CERT" --fail -X GET "${PYXIS_ADVISORY_API}/id/${ADVISORY_ID}" ; then
-            curl --key "$PYXIS_KEY" --cert "$PYXIS_CERT" -X PATCH -H 'Content-Type: application/json' --data-binary @/tmp/payload "${PYXIS_ADVISORY_API}/id/${ADVISORY_ID}"
+          if curl --retry 3 --retry-delay 2 --key "$PYXIS_KEY" --cert "$PYXIS_CERT" --fail -X GET "${PYXIS_ADVISORY_API}/id/${ADVISORY_ID}" ; then
+            curl --retry 3 --retry-delay 2 --retry-all-errors --key "$PYXIS_KEY" --cert "$PYXIS_CERT" --fail-with-body -X PATCH -H 'Content-Type: application/json' --data-binary @/tmp/payload "${PYXIS_ADVISORY_API}/id/${ADVISORY_ID}"
           else
-            curl --key "$PYXIS_KEY" --cert "$PYXIS_CERT" -X POST -H 'Content-Type: application/json' --data-binary @/tmp/payload "${PYXIS_ADVISORY_API}"
+            curl --retry 3 --retry-delay 2 --retry-all-errors --key "$PYXIS_KEY" --cert "$PYXIS_CERT" --fail-with-body -X POST -H 'Content-Type: application/json' --data-binary @/tmp/payload "${PYXIS_ADVISORY_API}"
           fi
 
           NUM_IMAGES=$(yq '.spec.content.images | length' /tmp/advisory.yaml)
@@ -318,7 +318,7 @@ spec:
             fi
             jq --arg id "$ADVISORY_ID" --arg repo "$REPOSITORY_PATH" \
               '(.repositories[] | select(.registry=="registry.access.redhat.com" and .repository==$repo)).image_advisory_id = $id' IMAGE.json > /tmp/IMAGE.json && mv /tmp/IMAGE.json IMAGE.json
-            curl --retry 3 --retry-delay 2 --retry-all-errors --key "$PYXIS_KEY" --cert "$PYXIS_CERT" -X PATCH -H 'Content-Type: application/json' --data-binary @IMAGE.json "${PYXIS_IMAGES_API}/id/$IMAGE_ID"
+            curl --retry 3 --retry-delay 2 --retry-all-errors --fail-with-body --key "$PYXIS_KEY" --cert "$PYXIS_CERT" -X PATCH -H 'Content-Type: application/json' --data-binary @IMAGE.json "${PYXIS_IMAGES_API}/id/$IMAGE_ID"
             sleep 0.1
           done
         done
