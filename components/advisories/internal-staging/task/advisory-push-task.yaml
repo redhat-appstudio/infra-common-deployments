@@ -72,7 +72,6 @@ spec:
 
     - name: send-messages
       image: quay.io/konflux-ci/release-service-utils:fb266c6fa1822d0b417380f286fc4bd149be67c0
-      onError: continue
       computeResources:
         requests:
           cpu: 250m
