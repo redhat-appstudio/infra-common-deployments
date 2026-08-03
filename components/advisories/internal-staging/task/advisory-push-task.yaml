@@ -249,7 +249,7 @@ spec:
 
           issues='[]'
           ISSUES_JSON="$(yq -o=json -I=0 '.spec.issues.fixed' $FILE)"
-          for ISSUE in "$(jq -c '.[]' <<< "$ISSUES_JSON")" ; do
+          while IFS= read -r ISSUE ; do
             if [ "$(jq -r '.public' <<< "$ISSUE")" == "false" ] ; then
               continue
             fi
@@ -257,7 +257,7 @@ spec:
             SOURCE=$(jq -r '.source' <<< "$ISSUE")
             issues=$(jq --arg id "$ISSUE_ID" --arg source "$SOURCE" \
               '. += [{"id": $id, "issue_tracker": $source}]' <<< "$issues")
-          done
+          done < <(jq -c '.[]' <<< "$ISSUES_JSON")
           ISSUES=$(jq <<< "$issues")
 
           jq -n \
