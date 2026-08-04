@@ -19,6 +19,9 @@
 # Owners for kargo
 /components/kargo/ @gbenhaim @hugares @enkeefe00
 
+# Owners for monitoring
+/components/monitoring/ @mftb @raks-tt @pacho-rh @martysp21 @TominoFTW @FaisalAl-Rayes @kubasikus @pumahaka @ci-operator
+
 # Owners for openshift-pipelines
 /components/openshift-pipelines/ @scoheb
 
