@@ -29,5 +29,5 @@ roleRef:
   name: analysis-template-manager
 subjects:
   - kind: ServiceAccount
-    name: argocd-application-controller
+    name: argocd-argocd-application-controller
     namespace: argocd-local
