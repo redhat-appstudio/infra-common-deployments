@@ -1,0 +1,107 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: verify-operator-overlay
+spec:
+  # args:
+  #   - name: source-branch
+  #   - name: check-name
+  #   - name: repo-owner
+  #     value: "redhat-appstudio"
+  #   - name: repo-name
+  #     value: "infra-deployments"
+  metrics:
+    - name: github-check-status
+      provider:
+        job:
+          spec:
+            activeDeadlineSeconds: 60
+            template:
+              spec:
+                containers:
+                  - name: verify
+                    image: alpine:3.21
+                    command: ["/bin/sh", "-c"]
+                    args:
+                      - |
+                        echo "verification WIP"
+                        exit 0
+                        # set -eu
+                        # apk add --no-cache curl jq >/dev/null 2>&1
+                        #
+                        # AUTH_HEADER="Authorization: Bearer ${GITHUB_TOKEN}"
+                        # API_BASE="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}"
+                        # ENCODED_BRANCH=$(printf '%s' "$SOURCE_BRANCH" | sed 's|/|%2F|g')
+                        #
+                        # printf 'Resolving branch %s to commit SHA\n' "$SOURCE_BRANCH"
+                        # REF_RESPONSE=$(curl -sf \
+                        #   -H "Accept: application/vnd.github+json" \
+                        #   -H "$AUTH_HEADER" \
+                        #   "${API_BASE}/git/ref/heads/${ENCODED_BRANCH}") || {
+                        #   printf 'Failed to resolve branch ref\n'
+                        #   exit 1
+                        # }
+                        # COMMIT_SHA=$(printf '%s' "$REF_RESPONSE" | jq -r '.object.sha')
+                        # if [ -z "$COMMIT_SHA" ] || [ "$COMMIT_SHA" = "null" ]; then
+                        #   printf 'Could not extract SHA from ref response\n'
+                        #   exit 1
+                        # fi
+                        # printf 'Pinned to commit %s\n' "$COMMIT_SHA"
+                        #
+                        # STATUS_URL="${API_BASE}/commits/${COMMIT_SHA}/statuses?per_page=100"
+                        # MAX_ATTEMPTS=120
+                        # INTERVAL=60
+                        #
+                        # attempt=0
+                        # while [ "$attempt" -lt "$MAX_ATTEMPTS" ]; do
+                        #   attempt=$((attempt + 1))
+                        #   printf '[%d/%d] Checking %s on commit %s\n' \
+                        #     "$attempt" "$MAX_ATTEMPTS" "$CHECK_NAME" "$COMMIT_SHA"
+                        #
+                        #   RESPONSE=$(curl -sf \
+                        #     -H "Accept: application/vnd.github+json" \
+                        #     -H "$AUTH_HEADER" \
+                        #     "$STATUS_URL" 2>/dev/null) || {
+                        #     printf 'GitHub API request failed, retrying in %ds\n' "$INTERVAL"
+                        #     sleep "$INTERVAL"
+                        #     continue
+                        #   }
+                        #
+                        #   STATE=$(printf '%s' "$RESPONSE" | jq -r --arg ctx "$CHECK_NAME" \
+                        #     '[.[] | select(.context == $ctx)] | sort_by(.updated_at) | last | .state // "not-found"')
+                        #
+                        #   case "$STATE" in
+                        #     success)
+                        #       printf 'Check "%s" passed on %s\n' "$CHECK_NAME" "$COMMIT_SHA"
+                        #       exit 0
+                        #       ;;
+                        #     failure|error)
+                        #       printf 'Check "%s" failed with state: %s\n' "$CHECK_NAME" "$STATE"
+                        #       exit 1
+                        #       ;;
+                        #     *)
+                        #       printf 'State: "%s", retrying in %ds\n' "$STATE" "$INTERVAL"
+                        #       sleep "$INTERVAL"
+                        #       ;;
+                        #   esac
+                        # done
+                        #
+                        # printf 'Timed out waiting for "%s" after %d attempts\n' "$CHECK_NAME" "$MAX_ATTEMPTS"
+                        # exit 1
+                    # env:
+                    #   - name: SOURCE_BRANCH
+                    #     value: "{{args.source-branch}}"
+                    #   - name: CHECK_NAME
+                    #     value: "{{args.check-name}}"
+                    #   - name: REPO_OWNER
+                    #     value: "{{args.repo-owner}}"
+                    #   - name: REPO_NAME
+                    #     value: "{{args.repo-name}}"
+                    #   - name: GITHUB_TOKEN
+                    #     valueFrom:
+                    #       secretKeyRef:
+                    #         name: kargo-infra-deployments-secrets
+                    #         key: github_pat
+                restartPolicy: Never
+            backoffLimit: 0

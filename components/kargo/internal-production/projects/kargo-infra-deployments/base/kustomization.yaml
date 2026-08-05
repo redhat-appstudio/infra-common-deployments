@@ -8,4 +8,5 @@ resources:
   - rbac
   - external-secrets
   - promotion-tasks
+  - analysis-templates
   - stages
