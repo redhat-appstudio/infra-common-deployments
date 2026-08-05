@@ -5,6 +5,7 @@ namespace: argocd-local
 resources:
   - ../../base/all-clusters
   - ../../base/internal
+  - argo-rollouts.yaml
   - dummy-deployment.yaml
   - kargo-shard-infra-common-deployments.yaml
   - kargo-shard-infra-deployments.yaml
