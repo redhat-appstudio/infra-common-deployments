@@ -5,3 +5,4 @@ resources:
   - namespace.yaml
   - external-secrets
   - deployment
+  - argocd-app-reader.yaml

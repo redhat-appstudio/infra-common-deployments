@@ -1,0 +1,26 @@
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: argocd-staging-app-reader-token
+  namespace: kargo-infra-common
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: 15m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: appsre-stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: argocd-staging-app-reader-token
+    template:
+      metadata:
+        labels:
+          kargo.akuity.io/cred-type: generic
+  data:
+    - secretKey: token
+      remoteRef:
+        key: production/devprod/kargo-argocd-staging-app-reader-token
+        property: token
