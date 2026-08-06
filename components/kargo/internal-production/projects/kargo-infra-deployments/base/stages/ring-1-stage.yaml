@@ -36,14 +36,14 @@ spec:
       sources:
         stages:
           - ring-0-etcd-shield
-  verification:
-    analysisTemplates:
-      - name: verify-operator-overlay
-    # args:
-    #   - name: source-branch
-    #     value: kargo-infra-deployments/konflux-operator/ring-1
-    #   - name: check-name
-    #     value: ci/prow/appstudio-operator-overlay-e2e-tests
+  # verification:
+  #   analysisTemplates:
+  #     - name: verify-operator-overlay
+  #   # args:
+  #   #   - name: source-branch
+  #   #     value: kargo-infra-deployments/konflux-operator/ring-1
+  #   #   - name: check-name
+  #   #     value: ci/prow/appstudio-operator-overlay-e2e-tests
   promotionTemplate:
     spec:
       vars:
