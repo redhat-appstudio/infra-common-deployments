@@ -1,9 +1,8 @@
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
-  name: rollout-manager-manager
-  namespace: argo-rollouts
+  name: argo-rollouts-manager
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   labels:
@@ -23,16 +22,15 @@ rules:
       - delete
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
-  name: rollout-manager-manager
-  namespace: argo-rollouts
+  name: argo-rollouts-manager
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: rollout-manager-manager
+  kind: ClusterRole
+  name: argo-rollouts-manager
 subjects:
   - kind: ServiceAccount
     name: argocd-argocd-application-controller
