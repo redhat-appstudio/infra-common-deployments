@@ -35,39 +35,48 @@ spec:
                 - |
                   set -o pipefail
                   PATH="/bin:/usr/bin:/usr/local/bin"
-                  PRUNING_CRS_FILE="/var/tmp/crs-to-be-pruned"
-                  KUBECTL_OUTPUT=$(mktemp -p /var/tmp)
                   SECONDS_BACK=$(date -d "${OLDER_THAN}" +%s)
+                  DELETED_COUNT=0
+                  ERROR_COUNT=0
+
+                  echo "INFO: Starting cleanup for ${CR_TYPE} in ${CR_NAMESPACE} older than ${OLDER_THAN}"
+
+                  # Fetch all resources with chunked pagination (handled by kubectl internally)
+                  KUBECTL_OUTPUT=$(mktemp)
+                  KUBECTL_ERR=$(mktemp)
 
                   if ! kubectl get "${CR_TYPE}" -n "${CR_NAMESPACE}" -l "${LABELS}" \
-                  --template '{{range .items}}{{if .status.completionTime}}{{.metadata.name}}{{"\t"}}{{.metadata.namespace}}{{"\t"}}{{.status.completionTime}}{{"\n"}}{{end}}{{end}}' > $KUBECTL_OUTPUT; then
+                       --chunk-size=100 -o json > "$KUBECTL_OUTPUT" 2> "$KUBECTL_ERR"; then
                     echo "ERROR: failed to list ${CR_TYPE} resources"
+                    cat "$KUBECTL_ERR" >&2
+                    rm -f "$KUBECTL_OUTPUT" "$KUBECTL_ERR"
                     exit 1
                   fi
+                  rm -f "$KUBECTL_ERR"
 
-                  awk -v since=${SECONDS_BACK} '{
-                       # parsing the completionTime and converting it to epoch
-                       # so we can compute the precise CRs that should be deleted
-                       gsub("[:\\-TZ]", " ", $3)
-                       t=mktime($3)
-                       completionTime=strftime("%s", t)
-                       #
-                       # completionTime should be smaller than `since` seconds so it can be deleted
-                       if(since > completionTime) {
-                         args="%s:%s\n"
-                         printf(args, $1, $2)
-                       }
-                    }' $KUBECTL_OUTPUT > $PRUNING_CRS_FILE
-
-                  while IFS= read -r line; do
-                    cr=${line%:*}
-                    namespace=${line#*:}
-                    if output=$(kubectl delete "${CR_TYPE}" "${cr}" -n "${namespace}" --wait=false --timeout=30s 2>&1); then
-                      echo "INFO: namespace=${namespace} ${output}"
-                    else
-                      echo "ERROR: namespace=${namespace} ${output}"
+                  # Process each item to minimize memory usage
+                  while IFS=: read -r cr_name cr_namespace completion_time; do
+                    # Convert completionTime to epoch
+                    if ! completion_epoch=$(date -d "${completion_time}" +%s 2>&1); then
+                      echo "ERROR: Unparseable completionTime for ${cr_name} in ${cr_namespace}: ${completion_time}"
+                      ERROR_COUNT=$((ERROR_COUNT + 1))
+                      continue
                     fi
-                  done < $PRUNING_CRS_FILE
+
+                    # Check if old enough to delete
+                    if [ "$SECONDS_BACK" -gt "$completion_epoch" ]; then
+                      if output=$(kubectl delete "${CR_TYPE}" "${cr_name}" -n "${cr_namespace}" --wait=false --timeout=30s 2>&1); then
+                        echo "INFO: namespace=${cr_namespace} ${output}"
+                        DELETED_COUNT=$((DELETED_COUNT + 1))
+                      else
+                        echo "ERROR: namespace=${cr_namespace} ${output}"
+                        ERROR_COUNT=$((ERROR_COUNT + 1))
+                      fi
+                    fi
+                  done < <(jq -r '.items[] | select(.status.completionTime != null) | "\(.metadata.name):\(.metadata.namespace):\(.status.completionTime)"' "$KUBECTL_OUTPUT")
+
+                  rm -f "$KUBECTL_OUTPUT"
+                  echo "INFO: Cleanup complete. Deleted: ${DELETED_COUNT}, Errors: ${ERROR_COUNT}"
               imagePullPolicy: IfNotPresent
               image: quay.io/konflux-ci/release-service-utils:9089cafbf36bb889b4b73d8c2965613810f13736
               volumeMounts:
