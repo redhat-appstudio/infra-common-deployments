@@ -8,6 +8,7 @@ resources:
   - base
   - dummy-deployment
   - konflux-operator
+  - tekton-kueue
   - authentication
   - etcd-shield
 
