@@ -11,4 +11,5 @@ spec:
         repoURL: quay.io/redhat-user-workloads/konflux-infra-tenant/rover-group-sync
         imageSelectionStrategy: NewestBuild
         discoveryLimit: 5
-        allowTags: ^[0-9a-f]{40}$
+        allowTagsRegexes:
+          - ^[0-9a-f]{40}$

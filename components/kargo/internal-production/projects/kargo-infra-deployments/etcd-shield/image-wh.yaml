@@ -10,4 +10,5 @@ spec:
         repoURL: quay.io/konflux-ci/etcd-shield
         imageSelectionStrategy: NewestBuild
         discoveryLimit: 5
-        allowTags: ^[0-9a-f]{40}$
+        allowTagsRegexes:
+          - ^[0-9a-f]{40}$

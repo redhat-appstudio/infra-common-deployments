@@ -11,4 +11,5 @@ spec:
         repoURL: quay.io/redhat-appstudio-qe/dummy-deployment
         imageSelectionStrategy: NewestBuild
         discoveryLimit: 5
-        allowTags: ^[0-9a-f]{40}$
+        allowTagsRegexes:
+          - ^[0-9a-f]{40}$
