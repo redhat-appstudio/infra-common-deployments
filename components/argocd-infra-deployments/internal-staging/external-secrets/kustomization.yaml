@@ -7,3 +7,4 @@ resources:
   - stg-es01-es.yaml
   - stg-p01-es.yaml
   - redhat-appstudio-es.yaml
+  - lightwell-dev-es.yaml
