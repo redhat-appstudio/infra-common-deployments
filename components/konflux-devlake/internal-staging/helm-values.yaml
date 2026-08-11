@@ -90,8 +90,40 @@ grafana:
     runAsUser: null
   initChownData:
     enabled: false
-  envFromSecrets:
-    - name: "konflux-devlake-secrets"
+  envFromSecrets: []
+  envValueFrom:
+    MYSQL_USER:
+      secretKeyRef:
+        name: konflux-devlake-secrets
+        key: MYSQL_USER
+    MYSQL_PASSWORD:
+      secretKeyRef:
+        name: konflux-devlake-secrets
+        key: MYSQL_PASSWORD
+    MYSQL_SERVER:
+      secretKeyRef:
+        name: konflux-devlake-secrets
+        key: MYSQL_SERVER
+    MYSQL_PORT:
+      secretKeyRef:
+        name: konflux-devlake-secrets
+        key: MYSQL_PORT
+    MYSQL_DATABASE:
+      secretKeyRef:
+        name: konflux-devlake-secrets
+        key: MYSQL_DATABASE
+    GF_SERVER_ROOT_URL:
+      secretKeyRef:
+        name: konflux-devlake-secrets
+        key: GF_SERVER_ROOT_URL
+    GF_AUTH_GOOGLE_CLIENT_ID:
+      secretKeyRef:
+        name: konflux-devlake-secrets
+        key: GF_AUTH_GOOGLE_CLIENT_ID
+    GF_AUTH_GOOGLE_CLIENT_SECRET:
+      secretKeyRef:
+        name: konflux-devlake-secrets
+        key: GF_AUTH_GOOGLE_CLIENT_SECRET
   env:
     TZ: "UTC"
     GF_SERVER_SERVE_FROM_SUBPATH: "true"
