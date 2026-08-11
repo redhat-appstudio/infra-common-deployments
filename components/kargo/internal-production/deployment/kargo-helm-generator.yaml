@@ -33,7 +33,7 @@ valuesInline:
       viewers:
         claims:
           groups:
-          - system:authenticated
+          - system:authenticated:oauth
       dex:
         enabled: true
         image:
