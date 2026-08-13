@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   # Base resources
   - ../base
+  - tekton-config.yaml
