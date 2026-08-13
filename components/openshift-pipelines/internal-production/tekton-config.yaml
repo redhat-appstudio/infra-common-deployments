@@ -1,0 +1,27 @@
+---
+apiVersion: operator.tekton.dev/v1alpha1
+kind: TektonConfig
+metadata:
+  name: config
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  pipeline:
+    options:
+      configMaps:
+        config-defaults:
+          data:
+            default-imagepullbackoff-timeout: "15m"
+        bundleresolver-config:
+          data:
+            fetch-timeout: "2m"
+            backoff-duration: "15s"
+            backoff-factor: "2.0"
+            backoff-steps: "10"
+            backoff-cap: "15m"
+        git-resolver-config:
+          data:
+            fetch-timeout: "2m"
+  results:
+    disabled: true
