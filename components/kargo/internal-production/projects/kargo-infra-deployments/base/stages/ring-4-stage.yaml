@@ -20,7 +20,7 @@ spec:
       sources:
         stages:
           - ring-3
-        requiredSoakTime: 72h
+        requiredSoakTime: 72h0m0s
     - origin:
         kind: Warehouse
         name: etcd-shield-image-wh
