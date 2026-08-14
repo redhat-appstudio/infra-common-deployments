@@ -4,5 +4,6 @@ kind: Kustomization
 resources:
   - warehouse.yaml
   - promotiontask.yaml
-  - stage-ring-1.yaml
+  - wait-for-ci.yaml
+  - stage.yaml
   - analysis-templates
