@@ -21,7 +21,7 @@ spec:
         url: https://api.github.com/repos/${{ vars.repoOwner }}/${{ vars.repoName }}/commits/${{ vars.commitSHA }}/check-runs
         headers:
           - name: Authorization
-            value: Bearer ${{ secret('konflux-devprod-poc-secrets').github_pat }}
+            value: Bearer ${{ secret('kargo-common-infra-test-secrets').github_pat }}
           - name: Accept
             value: application/vnd.github+json
         successExpression: |

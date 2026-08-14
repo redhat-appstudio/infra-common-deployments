@@ -2,12 +2,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: kargo-infra-common
+namespace: kargo-common-infra-test
 
 resources:
   - base
-  - kargo
-  - rover-group-sync
+  - dummy-deployment
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
