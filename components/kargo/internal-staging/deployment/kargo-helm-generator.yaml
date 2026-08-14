@@ -15,6 +15,11 @@ valuesInline:
     adminAccount:
       enabled: false
     secretManagementEnabled: false
+    rollouts:
+      integrationEnabled: true
+  controller:
+    rollouts:
+      integrationEnabled: true
     tls:
       selfSignedCert: false
     host: kargo-api-kargo.apps.rosa.kflux-c-stg-i01.qfla.p3.openshiftapps.com
