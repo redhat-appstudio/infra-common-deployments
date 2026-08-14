@@ -11,6 +11,10 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-0-etcd-shield
       autoPromotionEnabled: true
+    - stage: ring-0-artifact-registry-proxy
+      autoPromotionEnabled: true
+    - stage: ring-0-container-image-proxy
+      autoPromotionEnabled: true
     - stage: ring-1
       autoPromotionEnabled: true
     - stage: ring-2
