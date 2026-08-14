@@ -8,6 +8,6 @@ spec:
   interval: 2h0m0s
   subscriptions:
     - chart:
-        repoURL: oci://quay.io/konflux-ci/caching
+        repoURL: oci://quay.io/konflux-ci/caching/caching-helm
         semverConstraint: ^0.1.0
         discoveryLimit: 5
