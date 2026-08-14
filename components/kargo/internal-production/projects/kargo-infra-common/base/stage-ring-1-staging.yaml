@@ -110,7 +110,6 @@ spec:
         - task:
             name: wait-for-argocd-revision
           as: wait-for-revision
-          if: ${{ status('open-pr') != 'Errored' }}
           vars:
             - name: commitSHA
               value: ${{ outputs['merge-pr'].commit }}
