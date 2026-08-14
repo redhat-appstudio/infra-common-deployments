@@ -4,6 +4,7 @@ resources:
   - ../base
   - rbac.yaml
   - external-secrets
+  - dummy-deployment
 
 replacements:
   - source:

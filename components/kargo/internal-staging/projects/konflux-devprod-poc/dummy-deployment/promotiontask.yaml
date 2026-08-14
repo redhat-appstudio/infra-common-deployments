@@ -1,0 +1,36 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: dummy-deployment-promote
+spec:
+  vars:
+    - name: srcPath
+  steps:
+    - uses: kustomize-set-image
+      as: update-image
+      config:
+        path: ${{ vars.srcPath }}/components/dummy-deployment/internal-staging
+        images:
+          - image: quay.io/redhat-appstudio-qe/dummy-deployment
+            tag: ${{ imageFrom("quay.io/redhat-appstudio-qe/dummy-deployment").Tag }}
+    - uses: yaml-parse
+      as: get-external-repo-index
+      config:
+        path: ${{ vars.srcPath }}/components/dummy-deployment/internal-staging/kustomization.yaml
+        outputs:
+          - name: externalRepoIndex
+            fromExpression: "string(findIndex(resources, # startsWith('https://github.com/flacatus/konflux-dummy-deploy')))"
+    - uses: fail
+      as: external-repo-ref-not-found
+      if: ${{ !(task.outputs['get-external-repo-index'].externalRepoIndex matches "^[0-9]+$") }}
+      config:
+        message: "Could not find konflux-dummy-deploy resource in ${{ vars.srcPath }}/components/dummy-deployment/internal-staging/kustomization.yaml"
+    - uses: yaml-update
+      as: update-external-repo-ref
+      if: ${{ task.outputs['get-external-repo-index'].externalRepoIndex matches "^[0-9]+$" }}
+      config:
+        path: ${{ vars.srcPath }}/components/dummy-deployment/internal-staging/kustomization.yaml
+        updates:
+          - key: "resources.${{ task.outputs['get-external-repo-index'].externalRepoIndex }}"
+            value: "https://github.com/flacatus/konflux-dummy-deploy//k8s?ref=${{ imageFrom(\"quay.io/redhat-appstudio-qe/dummy-deployment\").Tag }}"

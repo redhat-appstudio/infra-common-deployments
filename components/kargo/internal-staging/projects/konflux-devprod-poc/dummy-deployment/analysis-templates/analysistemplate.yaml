@@ -1,0 +1,25 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: hello-world
+spec:
+  metrics:
+    - name: hello-world-check
+      provider:
+        job:
+          spec:
+            activeDeadlineSeconds: 60
+            template:
+              spec:
+                containers:
+                  - name: verify
+                    image: registry.access.redhat.com/ubi9/ubi-minimal:9.6
+                    command: ["/bin/sh", "-c"]
+                    args:
+                      - |
+                        echo "Hello World from Kargo verification!"
+                        echo "Dummy deployment verification passed."
+                        exit 0
+                restartPolicy: Never
+            backoffLimit: 0
