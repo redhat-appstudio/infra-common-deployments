@@ -10,6 +10,8 @@ resources:
   - konflux-operator
   - authentication
   - etcd-shield
+  - artifact-registry-proxy
+  - container-image-proxy
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
