@@ -1,0 +1,32 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: wait-for-argocd-revision
+spec:
+  vars:
+    - name: commitSHA
+    - name: tokenSecret
+    - name: appURL
+  steps:
+    # Wait until Argo CD Application history includes commitSHA and sync is
+    # Synced, before argocd-wait (which is not revision-aware).
+    - uses: http
+      as: wait-for-revision
+      retry:
+        timeout: 15m0s
+      config:
+        method: GET
+        url: ${{ vars.appURL }}
+        headers:
+          - name: Authorization
+            value: Bearer ${{ secret(vars.tokenSecret).token }}
+        insecureSkipTLSVerify: true
+        successExpression: |
+          response.status == 200 &&
+          response.body?.status?.sync?.status == 'Synced' &&
+          any(response.body.status.history, {.revision == '${{ vars.commitSHA }}'})
+        failureExpression: |
+          response.status == 200 &&
+          (response.body?.status?.health?.status == 'Degraded' ||
+          response.body?.status?.operationState?.phase in ['Failed', 'Error'])
