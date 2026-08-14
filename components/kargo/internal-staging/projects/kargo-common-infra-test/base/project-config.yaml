@@ -1,0 +1,11 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: kargo-common-infra-test
+spec:
+  promotionPolicies:
+    - stage: ring-1-dummy-deployment
+      autoPromotionEnabled: true
+    - stage: ring-2-dummy-deployment
+      autoPromotionEnabled: true
