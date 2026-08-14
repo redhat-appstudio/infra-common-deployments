@@ -76,7 +76,7 @@ spec:
         - name: repoURL
           value: https://github.com/redhat-appstudio/infra-deployments.git
         - name: component
-          value: "${{ hasSuffix(ctx.targetFreight.origin.name, '-image-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-image-wh') : (hasSuffix(ctx.targetFreight.origin.name, '-manifest-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-manifest-wh') : ctx.targetFreight.origin.name) }}"
+          value: "${{ hasSuffix(ctx.targetFreight.origin.name, '-image-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-image-wh') : (hasSuffix(ctx.targetFreight.origin.name, '-manifest-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-manifest-wh') : (hasSuffix(ctx.targetFreight.origin.name, '-chart-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-chart-wh') : ctx.targetFreight.origin.name)) }}"
         - name: targetRing
           value: ring-1
         - name: prevRing

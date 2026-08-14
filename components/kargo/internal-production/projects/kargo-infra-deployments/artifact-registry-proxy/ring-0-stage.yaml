@@ -25,7 +25,7 @@ spec:
         - name: repoURL
           value: https://github.com/redhat-appstudio/infra-deployments.git
         - name: component
-          value: "${{ trimSuffix(ctx.targetFreight.origin.name, '-manifest-wh') }}"
+          value: "${{ hasSuffix(ctx.targetFreight.origin.name, '-chart-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-chart-wh') : (hasSuffix(ctx.targetFreight.origin.name, '-manifest-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-manifest-wh') : ctx.targetFreight.origin.name) }}"
         - name: targetRing
           value: ring-0
         - name: prevRing
@@ -82,7 +82,7 @@ spec:
 
               ---
 
-              ${{ (outputs['promote-artifact-registry-proxy.pr-meta']?.details) ?? ('Promotes `' + vars.component + '` to **' + ctx.stage + '**.') }}
+              ${{ (outputs['promote-' + vars.component + '.pr-meta']?.details) ?? ('Promotes `' + vars.component + '` to **' + ctx.stage + '**.') }}
 
               ---
 
