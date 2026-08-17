@@ -5,6 +5,7 @@ namespace: argocd-local
 resources:
   - ../../base/all-clusters
   - ../../base/internal
+  - argo-rollouts.yaml
 patches:
   - path: environment-patch.yaml
     target:
