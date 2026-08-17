@@ -7,6 +7,9 @@ spec:
   - rhtap-releng-tenant
   - rh-managed-cnv-fbc-tenant
   - rh-managed-red-hat-acm-tenant
+  allowedGitResolverURLs:
+  - https://github.com/konflux-ci/release-service-catalog
+  - https://github.com/konflux-ci/release-service-catalog.git
   debug: true
   volumeClaim:
     name: pipeline
