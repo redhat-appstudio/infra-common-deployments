@@ -38,8 +38,8 @@ spec:
           key: client_secret
   metrics:
     - name: kanary-up
-      initialDelay: 30m
-      interval: 30m
+      initialDelay: 3m
+      interval: 3m
       consecutiveSuccessLimit: 1
       failureLimit: 1
       successCondition: result[0] == {{args.expected-cluster-count}}
@@ -52,6 +52,8 @@ spec:
               tokenUrl: "{{args.token-url}}"
               clientId: "{{args.oauth-client-id}}"
               clientSecret: "{{args.oauth-client-secret}}"
+              scopes:
+                - profile
           query: |
             count(
               min by (tested_cluster) (
@@ -59,8 +61,8 @@ spec:
               ) == 1
             )
     - name: kanary-error
-      initialDelay: 30m
-      interval: 30m
+      initialDelay: 3m
+      interval: 3m
       consecutiveSuccessLimit: 1
       failureLimit: 1
       successCondition: result[0] == {{args.expected-cluster-count}}
@@ -73,6 +75,8 @@ spec:
               tokenUrl: "{{args.token-url}}"
               clientId: "{{args.oauth-client-id}}"
               clientSecret: "{{args.oauth-client-secret}}"
+              scopes:
+                - profile
           query: |
             count(
               max by (tested_cluster) (
