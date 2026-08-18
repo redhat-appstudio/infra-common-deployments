@@ -8,5 +8,5 @@ resources:
   - rbac
   - external-secrets
   - promotion-tasks
-  # - analysis-templates
+  - analysis-templates
   - stages
