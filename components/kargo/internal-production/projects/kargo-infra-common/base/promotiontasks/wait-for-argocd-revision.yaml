@@ -9,8 +9,30 @@ spec:
     - name: tokenSecret
     - name: appURL
   steps:
-    # Wait until Argo CD Application history includes commitSHA and sync is
-    # Synced, before argocd-wait (which is not revision-aware).
+    # Capture ArgoCD's current revision before the merge lands, so we can
+    # detect forward progress even if ArgoCD skips the exact merge commit.
+    - uses: http
+      as: get-current-revision
+      retry:
+        timeout: 2m0s
+      config:
+        method: GET
+        url: ${{ vars.appURL }}
+        headers:
+          - name: Authorization
+            value: Bearer ${{ secret(vars.tokenSecret).token }}
+        insecureSkipTLSVerify: true
+        successExpression: response.status == 200
+        failureExpression: response.status in [401, 403]
+        outputs:
+          - name: revision
+            fromExpression: response.body?.status?.sync?.revision ?? 'unknown'
+          - name: syncFinishedAt
+            fromExpression: response.body?.status?.operationState?.finishedAt ?? 'unknown'
+    # Wait until ArgoCD has synced past the baseline. Passes if either:
+    # 1. The exact merge commit appears in sync history (normal case), OR
+    # 2. ArgoCD's synced revision has advanced past the baseline (race case —
+    #    another commit landed and ArgoCD skipped the merge commit).
     - uses: http
       as: wait-for-revision
       retry:
@@ -25,8 +47,19 @@ spec:
         successExpression: |
           response.status == 200 &&
           response.body?.status?.sync?.status == 'Synced' &&
-          any(response.body.status.history, {.revision == '${{ vars.commitSHA }}'})
+          (
+            any(response.body.status.history, {.revision == '${{ vars.commitSHA }}'}) ||
+            response.body?.status?.sync?.revision != '${{ task.outputs['get-current-revision'].revision }}'
+          )
         failureExpression: |
-          response.status == 200 &&
+          response.status in [401, 403] ||
+          (response.status == 200 &&
           (response.body?.status?.health?.status == 'Degraded' ||
-          response.body?.status?.operationState?.phase in ['Failed', 'Error'])
+          response.body?.status?.operationState?.phase in ['Failed', 'Error']))
+        outputs:
+          - name: matchType
+            fromExpression: "any(response.body.status.history, {.revision == '${{ vars.commitSHA }}'}) ? 'exact-commit' : 'revision-advanced'"
+          - name: syncedRevision
+            fromExpression: response.body?.status?.sync?.revision ?? 'unknown'
+          - name: syncFinishedAt
+            fromExpression: response.body?.status?.operationState?.finishedAt ?? 'unknown'
