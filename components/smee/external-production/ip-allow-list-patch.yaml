@@ -15,6 +15,7 @@
 # - kflux-ocp-p01
 # - kflux-rhel-p01
 # - kflux-osp-p01
+# - kflux-lw-p01
 - op: add
   path: /metadata/annotations/haproxy.router.openshift.io~1ip_whitelist
   value: >-
@@ -41,3 +42,6 @@
     34.206.181.215
     35.172.93.139
     54.173.112.174
+    150.239.81.114
+    169.63.191.11
+    150.239.221.187
