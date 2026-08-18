@@ -4,7 +4,7 @@ metadata:
   name: kargo
 name: kargo
 repo: oci://ghcr.io/akuity/kargo-charts
-version: 1.11.1
+version: 1.11.2
 namespace: kargo
 releaseName: kargo
 valuesInline:
