@@ -7,4 +7,6 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "0"
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-spec: {}
+spec:
+  extraCommandArgs:
+    - "--controller-instance-id=kargo"
