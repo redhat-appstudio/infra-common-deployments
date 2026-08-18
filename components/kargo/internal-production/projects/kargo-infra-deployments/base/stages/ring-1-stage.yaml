@@ -60,14 +60,14 @@ spec:
       sources:
         stages:
           - ring-0-container-image-proxy
-  # verification:
-  #   analysisTemplates:
-  #     - name: verify-operator-overlay
-  #   # args:
-  #   #   - name: source-branch
-  #   #     value: kargo-infra-deployments/konflux-operator/ring-1
-  #   #   - name: check-name
-  #   #     value: ci/prow/appstudio-operator-overlay-e2e-tests
+  verification:
+    analysisTemplates:
+      - name: verify-kanary
+    args:
+      - name: clusters
+        value: stone-stg-rh01|stone-stage-p01
+      - name: expected-cluster-count
+        value: "2"
   promotionTemplate:
     spec:
       vars:

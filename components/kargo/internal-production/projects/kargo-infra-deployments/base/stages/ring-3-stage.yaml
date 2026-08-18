@@ -28,6 +28,14 @@ spec:
         stages:
           - ring-2
         requiredSoakTime: 48h0m0s
+  verification:
+    analysisTemplates:
+      - name: verify-kanary
+    args:
+      - name: clusters
+        value: stone-prod-p02|stone-prd-rh01
+      - name: expected-cluster-count
+        value: "2"
   promotionTemplate:
     spec:
       vars:

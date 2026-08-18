@@ -28,6 +28,14 @@ spec:
         stages:
           - ring-3
         requiredSoakTime: 72h0m0s
+  verification:
+    analysisTemplates:
+      - name: verify-kanary
+    args:
+      - name: clusters
+        value: kflux-prd-rh02
+      - name: expected-cluster-count
+        value: "1"
   promotionTemplate:
     spec:
       vars:
