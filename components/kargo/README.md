@@ -14,10 +14,11 @@ requests to move those versions through staging and production.
 | **Stage** | An environment step in a pipeline (for example ring-1 staging) |
 | **PromotionTask** | Reusable steps that update files, open PRs, wait for CI, merge |
 | **Shard** | A controller instance that talks to one Argo CD namespace (1:1) |
+| **AnalysisTemplate** | Argo Rollouts CR that defines Stage verification (for example kanary / RHOBS) |
 
 ## Topology
 
-There are three related pieces:
+There are four related pieces:
 
 1. **Production control plane**: the main Kargo instance everything else
    connects to.
@@ -25,15 +26,24 @@ There are three related pieces:
    **ring-1** when promoting new Kargo releases.
 3. **Shards on staging**: controller-only installs that bridge the production
    control plane to Argo CD instances on the staging cluster.
+4. **Argo Rollouts on production**: cluster-scoped `RolloutManager` that
+   provides `AnalysisTemplate` / `AnalysisRun` CRDs. Kargo creates verification
+   runs labeled `controllerInstanceID: kargo` so the default Rollouts controller
+   does not also reconcile them.
 
 ```mermaid
 flowchart LR
   subgraph prodCluster [internal-production cluster]
-    KargoProd[Full Kargo control plane]
-    Projects[Projects and Stages]
-    ShardRBAC[shard-rbac SA and RBAC]
-    KargoProd --> Projects
-    KargoProd --> ShardRBAC
+    subgraph kargoCP [Full Kargo control plane]
+      KargoCore[API and controllers]
+      Verifications[Verifications]
+      Projects[Projects and Stages]
+      ShardRBAC[shard-rbac SA and RBAC]
+      KargoCore --> Projects
+      KargoCore --> ShardRBAC
+    end
+    AR[Argo Rollouts CRDs]
+    AR -->|AnalysisTemplate CRDs| Verifications
   end
 
   subgraph stgCluster [internal-staging cluster]
@@ -49,14 +59,17 @@ flowchart LR
   Vault[AppSRE Vault via appsre-stonesoup-vault]
   GHBot[Konflux Kargo Bot]
   GHApprover[konflux-kargo-approver PAT]
-  Vault -->|git creds and PAT| KargoProd
+  RHOBS[RHOBS]
+  Vault -->|git creds and PAT| KargoCore
   Vault -->|git creds| KargoStg
   Vault -->|kubeconfig| ShardCommon
   Vault -->|kubeconfig| ShardInfra
-  ShardCommon -->|kubeconfigSecrets.kargo| KargoProd
-  ShardInfra -->|kubeconfigSecrets.kargo| KargoProd
-  KargoProd --> GHBot
-  KargoProd -->|wait-for-ci| GHApprover
+  Vault -->|RHOBS OAuth2 client| Verifications
+  ShardCommon -->|kubeconfigSecrets.kargo| KargoCore
+  ShardInfra -->|kubeconfigSecrets.kargo| KargoCore
+  KargoCore --> GHBot
+  KargoCore -->|wait-for-ci| GHApprover
+  Verifications -->|"Kanary Signals"| RHOBS
 ```
 
 | Piece | Cluster / overlay | Role |
@@ -65,6 +78,8 @@ flowchart LR
 | Staging control plane | `internal-staging` | Test bed; ring-1 target for Kargo upgrades |
 | Shard `infra-common-deployments-staging` | staging (`kargo-shard`) | Controllers for production stages → `argocd-local` |
 | Shard `infra-deployments-staging` | staging (`kargo-shard`) | Controllers for production stages → `argocd-infra-deployments` |
+| Argo Rollouts | `internal-production` (`components/argo-rollouts`) | Cluster-scoped `RolloutManager`; owns AnalysisTemplate CRDs |
+| Kanary verification | `kargo-infra-deployments` | `verify-kanary` AnalysisTemplate queries production RHOBS |
 
 Kargo requires a **1:1 relationship** between a Kargo controller (shard) and an
 Argo CD instance/namespace. Shards exist so the production control plane can
@@ -81,6 +96,7 @@ production cluster.
 | [`../../argo-cd-apps/base/internal/kargo/`](../../argo-cd-apps/base/internal/kargo/) | ApplicationSet that deploys `components/kargo` |
 | [`../../argo-cd-apps/overlays/internal-staging/kargo-shard-infra-common-deployments.yaml`](../../argo-cd-apps/overlays/internal-staging/kargo-shard-infra-common-deployments.yaml) | ApplicationSet for the common-deployments shard |
 | [`../../argo-cd-apps/overlays/internal-staging/kargo-shard-infra-deployments.yaml`](../../argo-cd-apps/overlays/internal-staging/kargo-shard-infra-deployments.yaml) | ApplicationSet for the infra-deployments shard |
+| [`../argo-rollouts/internal-production/`](../argo-rollouts/internal-production/) | Production `RolloutManager` that supplies AnalysisTemplate CRDs |
 
 Control-plane layout:
 
@@ -96,6 +112,7 @@ components/kargo/
     └── projects/
         ├── kargo-infra-common/   # Promotes this repo (infra-common-deployments)
         └── kargo-infra-deployments/  # Multi-ring pipeline for infra-deployments
+            └── base/analysis-templates/  # verify-kanary (RHOBS) + stubs
 ```
 
 Shard layout:
@@ -128,6 +145,12 @@ Shared traits:
 - Includes [internal-production/shard-rbac/](internal-production/shard-rbac/) so
   staging shards can authenticate to this cluster
 - Hosts `kargo-infra-common` and `kargo-infra-deployments`
+- Stage verification uses Argo Rollouts `AnalysisTemplate` / `AnalysisRun`
+  CRDs. Those CRDs come from the cluster-scoped
+  [`RolloutManager`](../argo-rollouts/internal-production/rollout-manager.yaml)
+  in `components/argo-rollouts` (Kargo does not ship them). Production Kargo
+  sets `controller.rollouts.controllerInstanceID: kargo` so the default
+  Rollouts controller does not also reconcile Kargo verification runs.
 
 ### Staging (`internal-staging`)
 
@@ -200,6 +223,7 @@ Kargo-related namespaces are allowlisted on that store so ExternalSecrets in tho
 | `production/devprod/kargo-secrets-prod` | `kargo-infra-common-secrets`, `kargo-git-credentials` | Git credentials / bot material and `github_pat` for `kargo-infra-common` |
 | `staging/devprod/kargo-secrets-stage` | `konflux-devprod-poc-secrets` | Staging/test project git credentials |
 | `production/devprod/infra-deployments-bot` | `kargo-infra-deployments-secrets` | Git credentials and `github_pat` for `kargo-infra-deployments` |
+| `production/devprod/kargo-rhobs-production` | `kargo-rhobs-production` | RHOBS OAuth2 client (`client_id`, `client_secret`) for kanary AnalysisTemplates |
 | `staging/devprod/kargo-shard-kubeconfig` | `production-kargo-kubeconfig` (shard namespaces) | Kubeconfig for shard → production host |
 
 Secrets used as Kargo git credentials are labeled
