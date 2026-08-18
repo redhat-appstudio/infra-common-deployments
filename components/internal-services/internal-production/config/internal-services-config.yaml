@@ -10,6 +10,8 @@ spec:
   allowedGitResolverURLs:
   - https://github.com/konflux-ci/release-service-catalog
   - https://github.com/konflux-ci/release-service-catalog.git
+  - https://gitlab.cee.redhat.com/signing/signing.git
+  - https://gitlab.cee.redhat.com/signing/signing
   debug: true
   volumeClaim:
     name: pipeline
