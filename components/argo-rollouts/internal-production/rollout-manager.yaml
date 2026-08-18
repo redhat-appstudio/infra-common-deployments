@@ -9,4 +9,4 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   extraCommandArgs:
-    - "--controller-instance-id=kargo"
+    - "--instance-id=kargo"
