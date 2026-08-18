@@ -36,6 +36,8 @@ spec:
         value: kflux-prd-rh02
       - name: expected-cluster-count
         value: "1"
+      - name: namespace
+        value: konflux-otel
   promotionTemplate:
     spec:
       vars:
