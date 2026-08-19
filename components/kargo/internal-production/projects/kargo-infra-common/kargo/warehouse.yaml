@@ -15,19 +15,20 @@ spec:
         repoURL: quay.io/konflux-ci/kargo
         imageSelectionStrategy: NewestBuild
         discoveryLimit: 5
+        # Release tag {{ oci_version }} = git describe --long (e.g. v1.11.2-0-gabcdef1)
         allowTagsRegexes:
-          - ^1\.(?:1[0-9]+|[2-9][0-9]+)-[0-9a-f]{7}$
+          - ^v?1\.(?:1[0-9]+|[2-9][0-9]+)\.\d+-\d+-g[0-9a-f]+$
     - image:
         repoURL: quay.io/konflux-ci/dex
         imageSelectionStrategy: NewestBuild
         discoveryLimit: 5
         allowTagsRegexes:
           - ^[0-9a-f]{40}$
-  # Compare major.minor of the best-fit chart vs image only (e.g. 1.11.2 vs 1.11-<sha>).
+  # Compare major.minor.patch of the best-fit chart vs image (1.11.2 vs v1.11.2-N-gSHA).
   # Kargo does not search discoveryLimit for a matching pair; if the newest chart and
   # newest image disagree, Freight is skipped until they align (CriteriaSatisfied=False).
   freightCreationCriteria:
     expression: |
-      split(imageFrom('quay.io/konflux-ci/kargo').Tag, '-')[0] ==
-        string(semverParse(chartFrom('oci://ghcr.io/akuity/kargo-charts/kargo').Version).Major()) + '.' +
-        string(semverParse(chartFrom('oci://ghcr.io/akuity/kargo-charts/kargo').Version).Minor())
+      semverParse(imageFrom('quay.io/konflux-ci/kargo').Tag).Major() == semverParse(chartFrom('oci://ghcr.io/akuity/kargo-charts/kargo').Version).Major() &&
+      semverParse(imageFrom('quay.io/konflux-ci/kargo').Tag).Minor() == semverParse(chartFrom('oci://ghcr.io/akuity/kargo-charts/kargo').Version).Minor() &&
+      semverParse(imageFrom('quay.io/konflux-ci/kargo').Tag).Patch() == semverParse(chartFrom('oci://ghcr.io/akuity/kargo-charts/kargo').Version).Patch()
