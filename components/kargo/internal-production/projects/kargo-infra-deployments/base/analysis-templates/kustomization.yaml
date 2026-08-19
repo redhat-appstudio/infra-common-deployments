@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - verify-operator-overlay.yaml
   - verify-kanary.yaml
+  - verify-kanary-staging.yaml

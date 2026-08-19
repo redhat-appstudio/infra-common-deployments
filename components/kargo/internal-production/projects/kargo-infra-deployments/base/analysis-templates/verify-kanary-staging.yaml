@@ -1,19 +1,19 @@
 ---
-# Reusable kanary verification against production Observatorium (RHOBS).
-# Stages pass clusters as a PromQL regex and expected-cluster-count.
+# Kanary verification against staging Observatorium (RHOBS).
+# Used by ring-1 which targets staging clusters.
 #
 # Example Stage spec.verification:
 #   analysisTemplates:
-#     - name: verify-kanary
+#     - name: verify-kanary-staging
 #   args:
 #     - name: clusters
-#       value: kflux-ocp-p01|kflux-prd-rh02
+#       value: stone-stg-rh01|stone-stage-p01
 #     - name: expected-cluster-count
 #       value: "2"
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
-  name: verify-kanary
+  name: verify-kanary-staging
 spec:
   args:
     - name: clusters
@@ -23,18 +23,18 @@ spec:
     - name: types
       value: container-single-arch
     - name: prometheus-address
-      value: https://observatorium-mst.api.openshift.com/api/metrics/v1/rhtap
+      value: https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/rhtap
     - name: token-url
       value: https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
     - name: oauth-client-id
       valueFrom:
         secretKeyRef:
-          name: kargo-rhobs-production
+          name: kargo-rhobs-staging
           key: client_id
     - name: oauth-client-secret
       valueFrom:
         secretKeyRef:
-          name: kargo-rhobs-production
+          name: kargo-rhobs-staging
           key: client_secret
   metrics:
     - name: kanary-up
