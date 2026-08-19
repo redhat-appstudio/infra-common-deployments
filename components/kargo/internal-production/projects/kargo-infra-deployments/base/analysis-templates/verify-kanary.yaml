@@ -42,7 +42,7 @@ spec:
       interval: 40m
       consecutiveSuccessLimit: 1
       failureLimit: 1
-      successCondition: result[0] == {{args.expected-cluster-count}}
+      successCondition: len(result) > 0 && result[0] == {{args.expected-cluster-count}}
       provider:
         prometheus:
           address: "{{args.prometheus-address}}"
@@ -65,7 +65,7 @@ spec:
       interval: 40m
       consecutiveSuccessLimit: 1
       failureLimit: 1
-      successCondition: result[0] == {{args.expected-cluster-count}}
+      successCondition: len(result) > 0 && result[0] == {{args.expected-cluster-count}}
       provider:
         prometheus:
           address: "{{args.prometheus-address}}"
