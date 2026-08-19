@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - kargo-infra-deployments-secrets.yaml
   - kargo-rhobs-production.yaml
+  - kargo-rhobs-staging.yaml

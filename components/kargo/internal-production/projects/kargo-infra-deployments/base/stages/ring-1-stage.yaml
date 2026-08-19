@@ -77,12 +77,12 @@ spec:
       - name: oauth-client-id
         valueFrom:
           secretKeyRef:
-            name: kargo-rhobs-production
+            name: kargo-rhobs-staging
             key: client_id
       - name: oauth-client-secret
         valueFrom:
           secretKeyRef:
-            name: kargo-rhobs-production
+            name: kargo-rhobs-staging
             key: client_secret
   promotionTemplate:
     spec:
