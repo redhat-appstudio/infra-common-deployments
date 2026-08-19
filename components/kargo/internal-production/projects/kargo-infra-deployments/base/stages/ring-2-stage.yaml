@@ -33,9 +33,11 @@ spec:
       - name: verify-kanary
     args:
       - name: clusters
-        value: stone-prod-p01|kflux-ocp-p01|kflux-rhel-p01|kflux-osp-p01|kflux-fedora-01|kflux-prd-rh03|kflux-prd-es01
+        value: stone-prod-p01|kflux-fedora-01|kflux-prd-rh03
       - name: expected-cluster-count
-        value: "7"
+        value: "3"
+      - name: namespace
+        value: konflux-otel
   promotionTemplate:
     spec:
       vars:

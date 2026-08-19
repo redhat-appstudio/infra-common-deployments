@@ -38,8 +38,8 @@ spec:
           key: client_secret
   metrics:
     - name: kanary-up
-      initialDelay: 3m
-      interval: 3m
+      initialDelay: 40m
+      interval: 40m
       consecutiveSuccessLimit: 1
       failureLimit: 1
       successCondition: result[0] == {{args.expected-cluster-count}}
@@ -61,8 +61,8 @@ spec:
               ) == 1
             )
     - name: kanary-error
-      initialDelay: 3m
-      interval: 3m
+      initialDelay: 40m
+      interval: 40m
       consecutiveSuccessLimit: 1
       failureLimit: 1
       successCondition: result[0] == {{args.expected-cluster-count}}

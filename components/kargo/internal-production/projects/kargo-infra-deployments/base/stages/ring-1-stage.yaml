@@ -68,6 +68,22 @@ spec:
         value: stone-stg-rh01|stone-stage-p01
       - name: expected-cluster-count
         value: "2"
+      - name: namespace
+        value: konflux-otel
+      - name: types
+        value: container-single-arch
+      - name: prometheus-address
+        value: https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/rhtap
+      - name: oauth-client-id
+        valueFrom:
+          secretKeyRef:
+            name: kargo-rhobs-staging
+            key: client_id
+      - name: oauth-client-secret
+        valueFrom:
+          secretKeyRef:
+            name: kargo-rhobs-staging
+            key: client_secret
   promotionTemplate:
     spec:
       vars:
