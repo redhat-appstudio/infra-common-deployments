@@ -23,3 +23,11 @@ spec:
         discoveryLimit: 5
         allowTagsRegexes:
           - ^[0-9a-f]{40}$
+  # Compare major.minor of the best-fit chart vs image only (e.g. 1.11.2 vs 1.11-<sha>).
+  # Kargo does not search discoveryLimit for a matching pair; if the newest chart and
+  # newest image disagree, Freight is skipped until they align (CriteriaSatisfied=False).
+  freightCreationCriteria:
+    expression: |
+      split(imageFrom('quay.io/konflux-ci/kargo').Tag, '-')[0] ==
+        string(semverParse(chartFrom('oci://ghcr.io/akuity/kargo-charts/kargo').Version).Major()) + '.' +
+        string(semverParse(chartFrom('oci://ghcr.io/akuity/kargo-charts/kargo').Version).Minor())
