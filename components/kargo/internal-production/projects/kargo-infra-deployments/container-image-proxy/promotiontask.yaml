@@ -19,7 +19,7 @@ spec:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/caching-helm-generator.yaml
         updates:
           - key: version
-            value: ${{ chartFrom("oci://quay.io/konflux-ci/caching/caching-helm").Version }}
+            value: ${{ chartFrom("oci://quay.io/konflux-ci/caching/caching-helm", warehouse("container-image-proxy-chart-wh")).Version }}
 
     # Deletes the target ring's base-snapshot directory when triggered by manifest-wh
     - uses: delete
