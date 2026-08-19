@@ -243,3 +243,13 @@ spec:
             prNumber: ${{ outputs['find-pr'].prNumber }}
             mergeMethod: squash
             wait: true
+        - task:
+            name: wait-for-infra-deployments-argocd-sync
+          as: wait-for-sync
+          vars:
+            - name: commitSHA
+              value: ${{ outputs['merge-pr'].commit }}
+            - name: component
+              value: ${{ vars.component }}
+            - name: clusters
+              value: "stone-stg-rh01|stone-stage-p01"
