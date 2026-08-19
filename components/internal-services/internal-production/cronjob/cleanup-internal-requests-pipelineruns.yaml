@@ -69,7 +69,7 @@ spec:
                     fi
                   done < $PRUNING_CRS_FILE
               imagePullPolicy: IfNotPresent
-              image: quay.io/konflux-ci/release-service-utils:9089cafbf36bb889b4b73d8c2965613810f13736
+              image: quay.io/konflux-ci/release-service-utils:2712a94e7790df8b66e6b391687653edea97155107211ac28f1a1d083be56ebe
               volumeMounts:
                 - mountPath: /var/tmp
                   name: temp-directory
