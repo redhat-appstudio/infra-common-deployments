@@ -74,16 +74,6 @@ spec:
         value: container-single-arch
       - name: prometheus-address
         value: https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/rhtap
-      - name: oauth-client-id
-        valueFrom:
-          secretKeyRef:
-            name: kargo-rhobs-staging
-            key: client_id
-      - name: oauth-client-secret
-        valueFrom:
-          secretKeyRef:
-            name: kargo-rhobs-staging
-            key: client_secret
   promotionTemplate:
     spec:
       vars:
