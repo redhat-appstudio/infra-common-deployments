@@ -10,3 +10,4 @@ resources:
   - project-rbac.yaml
   - external-secret.yaml
   - infra-deployments/staging
+  - infra-deployments/production

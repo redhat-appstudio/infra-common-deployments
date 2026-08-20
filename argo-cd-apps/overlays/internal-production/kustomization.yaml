@@ -6,6 +6,7 @@ resources:
   - ../../base/all-clusters
   - ../../base/internal
   - argo-rollouts.yaml
+  - kargo-shard-infra-deployments.yaml
 patches:
   - path: environment-patch.yaml
     target:
