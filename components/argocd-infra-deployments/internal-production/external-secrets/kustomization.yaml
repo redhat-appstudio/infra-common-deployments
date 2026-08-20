@@ -13,4 +13,5 @@ resources:
   - rhel-p01-es.yaml
   - osp-p01-es.yaml
   - fedora-01-es.yaml
+  - lw-p01-es.yaml
   - redhat-appstudio-es.yaml
