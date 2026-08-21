@@ -165,7 +165,8 @@ Shared traits:
   CRDs. Those CRDs come from the cluster-scoped
   [`RolloutManager`](../argo-rollouts/internal-production/rollout-manager.yaml)
   in `components/argo-rollouts` (Kargo does not ship them). Production Kargo
-  sets `controller.rollouts.controllerInstanceID: kargo` so the default
+  and the `infra-deployments-*` shards set
+  `controller.rollouts.controllerInstanceID: kargo` so the default
   Rollouts controller does not also reconcile Kargo verification runs.
 
 ### Staging (`internal-staging`)
@@ -188,6 +189,10 @@ controller-only Helm install:
   plane)
 - `controller.shardName` identifies the shard
 - `controller.argocd` points at exactly one Argo CD namespace
+- `infra-deployments-*` shards enable `controller.rollouts` with
+  `controllerInstanceID: kargo` so Stage `verification.analysisTemplates`
+  (kanary) still create AnalysisRuns on the host, labeled for the production
+  RolloutManager
 - `kubeconfigSecrets.kargo` names the secret that holds kubeconfig for the
   **host** (production) control plane
 
@@ -221,7 +226,8 @@ provides:
 
 - ServiceAccount `kargo-shard-staging` (and token secret)
 - RoleBindings into project/shared namespaces such as `kargo-shared-resources`,
-  `kargo-infra-common`, and `kargo-infra-deployments`
+  `kargo-infra-common`, and `kargo-infra-deployments` (the latter also allows
+  AnalysisTemplate/AnalysisRun for shard-run verifications)
 - Lease Roles in each shard namespace (including
   `kargo-shard-infra-deployments-production`)
 - Git credentials ExternalSecret in `kargo-shared-resources`
@@ -364,6 +370,7 @@ Note: CI kube-linter excludes `components/kargo/` and `components/kargo-shard/`
 | Symptom | Likely area |
 |---|---|
 | Shard cannot reach host Kargo | ExternalSecret `production-kargo-kubeconfig`, Vault path `staging/devprod/kargo-shard-kubeconfig`, production `shard-rbac` |
+| Sharded Stage verification never creates AnalysisRuns | Shard `controller.rollouts.integrationEnabled`, `controllerInstanceID: kargo`, and `shard-rbac` AnalysisRun/AnalysisTemplate rules in `kargo-infra-deployments` |
 | Stage promotions never affect expected Argo CD apps | Wrong `spec.shard` / `shardName`, or Argo CD namespace mismatch (1:1 rule) |
 | Git clone / open-PR / merge failures | Vault git / Konflux Kargo Bot material; ExternalSecret sync for `kargo.akuity.io/cred-type: git` secrets |
 | Promotion stuck in `wait-for-ci` | Expired or rotated `konflux-kargo-approver` PAT in Vault; ExternalSecret sync of `github_pat`; GitHub API rate/auth errors |

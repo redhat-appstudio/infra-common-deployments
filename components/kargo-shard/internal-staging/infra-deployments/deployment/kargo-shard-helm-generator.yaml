@@ -43,6 +43,9 @@ valuesInline:
       namespace: argocd-infra-deployments
       watchArgocdNamespaceOnly: true
     rollouts:
-      integrationEnabled: false
+      integrationEnabled: true
+      # Same isolation as the production control plane: AnalysisRuns are
+      # labeled for the RolloutManager with --instance-id=kargo.
+      controllerInstanceID: kargo
   kubeconfigSecrets:
     kargo: production-kargo-kubeconfig
