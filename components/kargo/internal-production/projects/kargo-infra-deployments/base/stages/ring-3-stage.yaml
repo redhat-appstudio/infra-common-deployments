@@ -6,6 +6,7 @@ metadata:
   annotations:
     kargo.akuity.io/color: orange
 spec:
+  shard: infra-deployments-production
   requestedFreight:
     - origin:
         kind: Warehouse

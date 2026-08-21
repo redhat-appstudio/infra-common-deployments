@@ -18,7 +18,7 @@ requests to move those versions through staging and production.
 
 ## Topology
 
-There are four related pieces:
+There are five related pieces:
 
 1. **Production control plane**: the main Kargo instance everything else
    connects to.
@@ -26,7 +26,11 @@ There are four related pieces:
    **ring-1** when promoting new Kargo releases.
 3. **Shards on staging**: controller-only installs that bridge the production
    control plane to Argo CD instances on the staging cluster.
-4. **Argo Rollouts on production**: cluster-scoped `RolloutManager` that
+4. **Shard on production**: a controller-only install on the same cluster as
+   the control plane, watching production `argocd-infra-deployments` (Kargo is
+   1:1 controller-to-Argo CD namespace; the default controller already watches
+   `argocd-local`).
+5. **Argo Rollouts on production**: cluster-scoped `RolloutManager` that
    provides `AnalysisTemplate` / `AnalysisRun` CRDs. Kargo creates verification
    runs labeled `controllerInstanceID: kargo` so the default Rollouts controller
    does not also reconcile them.
@@ -43,7 +47,10 @@ flowchart LR
       KargoCore --> ShardRBAC
     end
     AR[Argo Rollouts CRDs]
+    ShardInfraProd[Shard infra-deployments-production]
+    ArgoInfraProd[argocd-infra-deployments]
     AR -->|AnalysisTemplate CRDs| Verifications
+    ShardInfraProd --> ArgoInfraProd
   end
 
   subgraph stgCluster [internal-staging cluster]
@@ -64,9 +71,11 @@ flowchart LR
   Vault -->|git creds| KargoStg
   Vault -->|kubeconfig| ShardCommon
   Vault -->|kubeconfig| ShardInfra
+  Vault -->|kubeconfig| ShardInfraProd
   Vault -->|RHOBS OAuth2 client| Verifications
   ShardCommon -->|kubeconfigSecrets.kargo| KargoCore
   ShardInfra -->|kubeconfigSecrets.kargo| KargoCore
+  ShardInfraProd -->|kubeconfigSecrets.kargo| KargoCore
   KargoCore --> GHBot
   KargoCore -->|wait-for-ci| GHApprover
   Verifications -->|"Kanary Signals"| RHOBS
@@ -76,26 +85,29 @@ flowchart LR
 |---|---|---|
 | Production control plane | `internal-production` | Primary API, projects, stages, shard RBAC |
 | Staging control plane | `internal-staging` | Test bed; ring-1 target for Kargo upgrades |
-| Shard `infra-common-deployments-staging` | staging (`kargo-shard`) | Controllers for production stages → `argocd-local` |
-| Shard `infra-deployments-staging` | staging (`kargo-shard`) | Controllers for production stages → `argocd-infra-deployments` |
+| Shard `infra-common-deployments-staging` | staging (`kargo-shard`) | Controllers for production stages → staging `argocd-local` |
+| Shard `infra-deployments-staging` | staging (`kargo-shard`) | Controllers for production stages → staging `argocd-infra-deployments` |
+| Shard `infra-deployments-production` | production (`kargo-shard`) | Controllers for production stages → production `argocd-infra-deployments` |
 | Argo Rollouts | `internal-production` (`components/argo-rollouts`) | Cluster-scoped `RolloutManager`; owns AnalysisTemplate CRDs |
 | Kanary verification | `kargo-infra-deployments` | `verify-kanary` AnalysisTemplate queries production RHOBS |
 
 Kargo requires a **1:1 relationship** between a Kargo controller (shard) and an
-Argo CD instance/namespace. Shards exist so the production control plane can
-drive Argo CD that runs on staging without colocating those controllers on the
-production cluster.
+Argo CD instance/namespace. Staging shards exist so the production control
+plane can drive Argo CD that runs on staging. The production
+`infra-deployments-production` shard exists because the default controller
+already watches `argocd-local` on the same cluster.
 
 ## Repository layout
 
 | Path | Purpose |
 |---|---|
 | [`.`](.) (`components/kargo/`) | Full control-plane overlays (`base/`, `internal-staging/`, `internal-production/`) |
-| [`../kargo-shard/`](../kargo-shard/) | Controller-only shard overlays (staging) |
+| [`../kargo-shard/`](../kargo-shard/) | Controller-only shard overlays (staging and production) |
 | [`../cluster-secret-store/base/appsre-stonesoup-vault-secret-store.yaml`](../cluster-secret-store/base/appsre-stonesoup-vault-secret-store.yaml) | ClusterSecretStore for AppSRE Vault |
 | [`../../argo-cd-apps/base/internal/kargo/`](../../argo-cd-apps/base/internal/kargo/) | ApplicationSet that deploys `components/kargo` |
 | [`../../argo-cd-apps/overlays/internal-staging/kargo-shard-infra-common-deployments.yaml`](../../argo-cd-apps/overlays/internal-staging/kargo-shard-infra-common-deployments.yaml) | ApplicationSet for the common-deployments shard |
-| [`../../argo-cd-apps/overlays/internal-staging/kargo-shard-infra-deployments.yaml`](../../argo-cd-apps/overlays/internal-staging/kargo-shard-infra-deployments.yaml) | ApplicationSet for the infra-deployments shard |
+| [`../../argo-cd-apps/overlays/internal-staging/kargo-shard-infra-deployments.yaml`](../../argo-cd-apps/overlays/internal-staging/kargo-shard-infra-deployments.yaml) | ApplicationSet for the staging infra-deployments shard |
+| [`../../argo-cd-apps/overlays/internal-production/kargo-shard-infra-deployments.yaml`](../../argo-cd-apps/overlays/internal-production/kargo-shard-infra-deployments.yaml) | ApplicationSet for the production infra-deployments shard |
 | [`../argo-rollouts/internal-production/`](../argo-rollouts/internal-production/) | Production `RolloutManager` that supplies AnalysisTemplate CRDs |
 
 Control-plane layout:
@@ -118,9 +130,12 @@ components/kargo/
 Shard layout:
 
 ```text
-components/kargo-shard/internal-staging/
-├── infra-common-deployments/     # shardName: infra-common-deployments-staging
-└── infra-deployments/            # shardName: infra-deployments-staging
+components/kargo-shard/
+├── internal-staging/
+│   ├── infra-common-deployments/     # shardName: infra-common-deployments-staging
+│   └── infra-deployments/            # shardName: infra-deployments-staging
+└── internal-production/
+    └── infra-deployments/            # shardName: infra-deployments-production
 ```
 
 ## Control planes
@@ -143,13 +158,15 @@ Shared traits:
 
 - Main control plane for real promotion projects
 - Includes [internal-production/shard-rbac/](internal-production/shard-rbac/) so
-  staging shards can authenticate to this cluster
+  shards (staging remote and the colocated production shard) can authenticate
+  as `kargo-shard-staging`
 - Hosts `kargo-infra-common` and `kargo-infra-deployments`
 - Stage verification uses Argo Rollouts `AnalysisTemplate` / `AnalysisRun`
   CRDs. Those CRDs come from the cluster-scoped
   [`RolloutManager`](../argo-rollouts/internal-production/rollout-manager.yaml)
   in `components/argo-rollouts` (Kargo does not ship them). Production Kargo
-  sets `controller.rollouts.controllerInstanceID: kargo` so the default
+  and the `infra-deployments-*` shards set
+  `controller.rollouts.controllerInstanceID: kargo` so the default
   Rollouts controller does not also reconcile Kargo verification runs.
 
 ### Staging (`internal-staging`)
@@ -172,6 +189,10 @@ controller-only Helm install:
   plane)
 - `controller.shardName` identifies the shard
 - `controller.argocd` points at exactly one Argo CD namespace
+- `infra-deployments-*` shards enable `controller.rollouts` with
+  `controllerInstanceID: kargo` so Stage `verification.analysisTemplates`
+  (kanary) still create AnalysisRuns on the host, labeled for the production
+  RolloutManager
 - `kubeconfigSecrets.kargo` names the secret that holds kubeconfig for the
   **host** (production) control plane
 
@@ -179,17 +200,24 @@ controller-only Helm install:
 |---|---|---|---|
 | `infra-common-deployments-staging` | `kargo-shard-infra-common-deployments` | `argocd-local` | [kargo-shard-helm-generator.yaml](../kargo-shard/internal-staging/infra-common-deployments/deployment/kargo-shard-helm-generator.yaml) |
 | `infra-deployments-staging` | `kargo-shard-infra-deployments` | `argocd-infra-deployments` | [kargo-shard-helm-generator.yaml](../kargo-shard/internal-staging/infra-deployments/deployment/kargo-shard-helm-generator.yaml) |
+| `infra-deployments-production` | `kargo-shard-infra-deployments-production` | `argocd-infra-deployments` | [kargo-shard-helm-generator.yaml](../kargo-shard/internal-production/infra-deployments/deployment/kargo-shard-helm-generator.yaml) |
+
+The production shard uses a **distinct namespace** (`kargo-shard-infra-deployments-production`) so it does not collide with the staging remote shard’s lease namespace (`kargo-shard-infra-deployments`) on the same cluster. Both authenticate as `kargo-shard-staging`.
 
 Stages on the production control plane select a shard with `spec.shard` (for
-example `ring-1-staging` uses `infra-common-deployments-staging`). The matching
-controller on staging executes those promotions against its Argo CD namespace.
+example `kargo-infra-common` `ring-1-staging` uses
+`infra-common-deployments-staging`; `kargo-infra-deployments` `ring-1` uses
+`infra-deployments-staging` and `ring-2`/`ring-3`/`ring-4` use
+`infra-deployments-production`). The matching controller executes those
+promotions against its Argo CD namespace. `ring-0` is unsharded.
 
 ### Host connection (kubeconfig)
 
 Shards pull a kubeconfig from AppSRE Vault via ExternalSecret
 `production-kargo-kubeconfig` (Vault path `staging/devprod/kargo-shard-kubeconfig`).
-Helm maps that secret through `kubeconfigSecrets.kargo` so the shard controller
-can reach the production Kargo API/cluster.
+The production `infra-deployments` shard reuses this same kubeconfig; do not
+create a second one. Helm maps that secret through `kubeconfigSecrets.kargo`
+so the shard controller can reach the production Kargo API/cluster.
 
 ### Production shard RBAC
 
@@ -197,12 +225,15 @@ On the production cluster, [internal-production/shard-rbac/](internal-production
 provides:
 
 - ServiceAccount `kargo-shard-staging` (and token secret)
-- RoleBindings into project/shared namespaces such as `kargo-shared-resources`
-  and `kargo-infra-common`
+- RoleBindings into project/shared namespaces such as `kargo-shared-resources`,
+  `kargo-infra-common`, and `kargo-infra-deployments` (the latter also allows
+  AnalysisTemplate/AnalysisRun for shard-run verifications)
+- Lease Roles in each shard namespace (including
+  `kargo-shard-infra-deployments-production`)
 - Git credentials ExternalSecret in `kargo-shared-resources`
 
-Without this RBAC, remote shard controllers cannot operate on host-cluster
-resources needed for promotions.
+Without this RBAC, shard controllers cannot operate on host-cluster resources
+needed for promotions.
 
 ## Secrets and Vault
 
@@ -289,6 +320,15 @@ stage model (`ring-0` … `ring-4` under
 Same general warehouse → freight → stage → PR → `wait-for-ci` pattern, with
 credentials from `kargo-infra-deployments-secrets`.
 
+| Stage | `spec.shard` | Notes |
+|---|---|---|
+| `ring-0` | (none) | Default production controller; not Argo CD |
+| `ring-1` | `infra-deployments-staging` | Staging `argocd-infra-deployments` |
+| `ring-2` / `ring-3` / `ring-4` | `infra-deployments-production` | Production `argocd-infra-deployments` |
+
+Argo CD revision wait (`wait-for-argocd-revision` / `argocd-wait`) is not
+wired on these stages yet.
+
 ### Staging control-plane projects
 
 `internal-staging/projects/` holds test/PoC projects (for example
@@ -317,7 +357,9 @@ kustomize build --enable-helm components/kargo/internal-staging/
 kustomize build --enable-helm components/kargo/internal-production/
 kustomize build --enable-helm components/kargo-shard/internal-staging/infra-common-deployments/
 kustomize build --enable-helm components/kargo-shard/internal-staging/infra-deployments/
+kustomize build --enable-helm components/kargo-shard/internal-production/infra-deployments/
 kustomize build components/kargo/internal-production/projects/kargo-infra-common/
+kustomize build components/kargo/internal-production/projects/kargo-infra-deployments/
 ```
 
 Note: CI kube-linter excludes `components/kargo/` and `components/kargo-shard/`
@@ -328,6 +370,7 @@ Note: CI kube-linter excludes `components/kargo/` and `components/kargo-shard/`
 | Symptom | Likely area |
 |---|---|
 | Shard cannot reach host Kargo | ExternalSecret `production-kargo-kubeconfig`, Vault path `staging/devprod/kargo-shard-kubeconfig`, production `shard-rbac` |
+| Sharded Stage verification never creates AnalysisRuns | Shard `controller.rollouts.integrationEnabled`, `controllerInstanceID: kargo`, and `shard-rbac` AnalysisRun/AnalysisTemplate rules in `kargo-infra-deployments` |
 | Stage promotions never affect expected Argo CD apps | Wrong `spec.shard` / `shardName`, or Argo CD namespace mismatch (1:1 rule) |
 | Git clone / open-PR / merge failures | Vault git / Konflux Kargo Bot material; ExternalSecret sync for `kargo.akuity.io/cred-type: git` secrets |
 | Promotion stuck in `wait-for-ci` | Expired or rotated `konflux-kargo-approver` PAT in Vault; ExternalSecret sync of `github_pat`; GitHub API rate/auth errors |
