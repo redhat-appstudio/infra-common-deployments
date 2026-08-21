@@ -11,3 +11,18 @@ subjects:
   - kind: ServiceAccount
     name: kargo-shard-staging
     namespace: kargo
+---
+# The controller lists AnalysisTemplates at cluster scope on startup to
+# confirm Rollouts CRDs exist. A namespaced Role is not enough.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kargo-shard-staging-rollouts
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kargo-controller-rollouts
+subjects:
+  - kind: ServiceAccount
+    name: kargo-shard-staging
+    namespace: kargo
