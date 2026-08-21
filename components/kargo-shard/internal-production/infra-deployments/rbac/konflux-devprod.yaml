@@ -1,0 +1,35 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: konflux-devprod-kargo-admin
+  namespace: kargo-shard-infra-deployments
+rules:
+  - apiGroups:
+      - kargo.akuity.io
+    resources:
+      - "*"
+    verbs:
+      - "*"
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: konflux-devprod-kargo-admin
+  namespace: kargo-shard-infra-deployments
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: konflux-devprod
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: konflux-devprod-kargo-admin

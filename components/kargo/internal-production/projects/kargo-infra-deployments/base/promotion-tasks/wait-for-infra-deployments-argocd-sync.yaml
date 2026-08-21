@@ -11,7 +11,6 @@ spec:
     - name: appsNamespace
       value: argocd-infra-deployments
     - name: tokenSecret
-      value: argocd-app-reader-token
 
   steps:
     - uses: http
