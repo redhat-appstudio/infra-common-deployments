@@ -88,25 +88,6 @@ rules:
     verbs:
       - create
       - patch
-  - apiGroups:
-      - argoproj.io
-    resources:
-      - analysistemplates
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - argoproj.io
-    resources:
-      - analysisruns
-    verbs:
-      - create
-      - get
-      - list
-      - patch
-      - watch
-      - deletecollection
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
