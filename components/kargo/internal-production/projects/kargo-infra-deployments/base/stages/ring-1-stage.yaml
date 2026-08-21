@@ -238,3 +238,5 @@ spec:
               value: ${{ vars.component }}
             - name: clusters
               value: "stone-stg-rh01|stone-stage-p01"
+            - name: tokenSecret
+              value: kargo-infra-deployments-argocd-app-reader-token-staging

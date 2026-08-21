@@ -1,6 +1,6 @@
 ---
 # SA used by ring-1 promotions (via Vault → control-plane ExternalSecret) to
-# GET Argo CD Applications from the staging apiserver (kubernetes.default.svc).
+# get/list Argo CD Applications from the staging apiserver (kubernetes.default.svc).
 # Role is namespaced to argocd-local (least privilege). Explicit metadata.namespace
 # is set so Argo CD does not fall back to the Application destination namespace.
 apiVersion: v1
@@ -30,6 +30,7 @@ rules:
       - applications
     verbs:
       - get
+      - list
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
