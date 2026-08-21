@@ -1,0 +1,12 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: development-tekton-kueue
+spec:
+  subscriptions:
+  - git:
+      repoURL: https://github.com/redhat-appstudio/infra-deployments
+      branch: main
+      includePaths:
+      - components/kueue/development/tekton-kueue

@@ -1,0 +1,67 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-component-with-copy
+spec:
+  vars:
+  - name: repoURL
+    value: https://github.com/redhat-appstudio/infra-deployments
+  - name: branch
+    value: main
+  - name: srcKustomization
+  - name: destKustomization
+  - name: commitMessage
+
+  steps:
+  # Clone the Git repository that contains the Kustomize configuration
+  # to the ./src directory, and the environment configuration to ./out.
+  - uses: git-clone
+    as: git-clone
+    config:
+      repoURL: ${{ vars.repoURL }}
+      checkout:
+      - commit: ${{ commitFrom(vars.repoURL, warehouse(ctx.targetFreight.origin.name)).ID }}
+        path: ./src
+        as: src
+      - branch: ${{ vars.branch }}
+        path: ./main
+        as: main
+
+  - uses: delete
+    config:
+      path: ./main/${{ vars.destKustomization }}
+
+  - uses: copy
+    as: update-component
+    config:
+      inPath: ./src/${{ vars.srcKustomization }}
+      outPath: ./main/${{ vars.destKustomization }}
+
+  # Commit the changes to the Git repository.
+  - uses: git-commit
+    as: commit
+    config:
+      path: ./main
+      message: ${{ vars.commitMessage }}
+
+  # Push the changes to the Git repository.
+  - uses: git-push
+    as: push
+    config:
+      path: ./main
+      generateTargetBranch: true
+
+  - uses: git-open-pr
+    as: open-pr
+    config:
+      repoURL: ${{ vars.repoURL }}
+      createTargetBranch: true
+      sourceBranch: ${{ task.outputs.push.branch }}
+      targetBranch: main
+
+  - uses: git-wait-for-pr
+    as: wait-for-pr
+    config:
+      repoURL: ${{ vars.repoURL }}
+      prNumber: ${{ task.outputs['open-pr'].pr.id }}

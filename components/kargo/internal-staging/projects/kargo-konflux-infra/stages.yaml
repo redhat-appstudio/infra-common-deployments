@@ -1,0 +1,27 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: staging-promote
+  annotations:
+    kargo.akuity.io/color: yellow
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: development-tekton-kueue
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      # promote tekton-kueue to staging
+      - task:
+          name: promote-component-with-copy
+        vars:
+          - name: srcKustomization
+            value: components/kueue/development/tekton-kueue
+          - name: destKustomization
+            value: components/kueue/staging/base/tekton-kueue
+          - name: commitMessage
+            value: "Promote tekton-kueue to staging"
