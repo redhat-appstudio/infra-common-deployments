@@ -8,6 +8,7 @@ spec:
       zones:
         - da25t2kw06rcd06cftd0.vpe.private.us-east.containers.cloud.ibm.com
       forwardPlugin:
+        policy: Random
         upstreams:
           - 10.2.32.1
           - 10.11.5.19
