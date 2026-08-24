@@ -4,6 +4,7 @@ resources:
   - project.yaml
   - ns.yaml
   - rbac.yaml
+  - konflux-e2e-external-secrets.yaml
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
