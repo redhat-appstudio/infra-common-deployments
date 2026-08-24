@@ -29,6 +29,13 @@ spec:
         stages:
           - ring-1
         requiredSoakTime: 24h0m0s
+    - origin:
+        kind: Warehouse
+        name: konflux-operator
+      sources:
+        stages:
+          - ring-1
+        requiredSoakTime: 24h0m0s
   verification:
     analysisTemplates:
       - name: verify-kanary
@@ -84,6 +91,12 @@ spec:
               value: ${{ vars.srcPath }}
             - name: component
               value: ${{ vars.component }}
+        - task:
+            name: konflux-operator-promote-ring-2
+          as: promote-konflux-operator
+          vars:
+            - name: srcPath
+              value: ${{ vars.srcPath }}
         - uses: git-commit
           as: commit
           config:
