@@ -13,5 +13,8 @@ resources:
   - artifact-registry-proxy
   - container-image-proxy
 
+components:
+  - ../../e2e-secrets
+
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

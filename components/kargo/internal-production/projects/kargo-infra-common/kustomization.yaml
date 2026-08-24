@@ -9,5 +9,8 @@ resources:
   - kargo
   - rover-group-sync
 
+components:
+  - ../../e2e-secrets
+
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
