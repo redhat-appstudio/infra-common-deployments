@@ -6,6 +6,5 @@ resources:
 - ../base
 - eso
 - es
-- task
 - repository
 - extra
