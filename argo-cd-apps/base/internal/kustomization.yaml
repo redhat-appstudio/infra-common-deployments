@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - advisories
   - argocd-infra-deployments
+  - argocd-internal-appsre
   - internal-services
   - openshift-pipelines
   - kargo
