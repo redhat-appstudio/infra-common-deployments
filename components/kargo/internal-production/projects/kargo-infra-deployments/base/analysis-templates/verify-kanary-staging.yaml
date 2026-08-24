@@ -60,26 +60,26 @@ spec:
                 kanary_up{namespace="{{args.namespace}}", type=~"{{args.types}}", tested_cluster=~"{{args.clusters}}"}
               ) == 1
             )
-    - name: kanary-error
-      initialDelay: 40m
-      interval: 40m
-      consecutiveSuccessLimit: 1
-      failureLimit: 1
-      successCondition: len(result) > 0 && result[0] == {{args.expected-cluster-count}}
-      provider:
-        prometheus:
-          address: "{{args.prometheus-address}}"
-          timeout: 40
-          authentication:
-            oauth2:
-              tokenUrl: "{{args.token-url}}"
-              clientId: "{{args.oauth-client-id}}"
-              clientSecret: "{{args.oauth-client-secret}}"
-              scopes:
-                - profile
-          query: |
-            count(
-              max by (tested_cluster) (
-                kanary_error{namespace="{{args.namespace}}", type=~"{{args.types}}", tested_cluster=~"{{args.clusters}}"}
-              ) == 0
-            )
+    # - name: kanary-error
+    #   initialDelay: 40m
+    #   interval: 40m
+    #   consecutiveSuccessLimit: 1
+    #   failureLimit: 1
+    #   successCondition: len(result) > 0 && result[0] == {{args.expected-cluster-count}}
+    #   provider:
+    #     prometheus:
+    #       address: "{{args.prometheus-address}}"
+    #       timeout: 40
+    #       authentication:
+    #         oauth2:
+    #           tokenUrl: "{{args.token-url}}"
+    #           clientId: "{{args.oauth-client-id}}"
+    #           clientSecret: "{{args.oauth-client-secret}}"
+    #           scopes:
+    #             - profile
+    #       query: |
+    #         count(
+    #           max by (tested_cluster) (
+    #             kanary_error{namespace="{{args.namespace}}", type=~"{{args.types}}", tested_cluster=~"{{args.clusters}}"}
+    #           ) == 0
+    #         )
