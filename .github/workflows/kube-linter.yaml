@@ -39,7 +39,7 @@ jobs:
       - name: Run kustomize build
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          find argo-cd-apps components -name 'kustomization.yaml' \
+          find argo-cd-apps components configs -name 'kustomization.yaml' \
             ! -path 'components/kargo/*' \
             ! -path 'components/kargo-shard/*' \
             ! -path 'components/konflux-devlake/*' \
