@@ -8,5 +8,6 @@ resources:
   - rbac
   - external-secrets
   - promotiontasks
+  - analysis-templates
   - stage-ring-1-staging.yaml
   - stage-ring-2-production.yaml

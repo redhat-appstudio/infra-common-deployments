@@ -1,0 +1,145 @@
+---
+# Runs Konflux conformance tests against a staging cluster after promotion.
+# The job connects to the target cluster via a ServiceAccount token pulled
+# from Vault (ExternalSecret), clones the test source, compiles the binary,
+# and runs the full Ginkgo suite.
+#
+# Example Stage spec.verification:
+#   analysisTemplates:
+#     - name: conformance-konflux-e2e
+#   args:
+#     - name: cluster-url
+#       value: "https://api.stone-stage-p01.hpmt.p1.openshiftapps.com:6443"
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: conformance-konflux-e2e
+spec:
+  args:
+    - name: cluster-url
+    - name: namespace
+      value: konflux-conformance-tests
+    - name: managed-namespace
+      value: konflux-managed-tests
+    - name: token-secret
+      value: konflux-conformance-sa
+    - name: github-token-secret
+      value: konflux-conformance-tests-credentials
+    - name: github-org
+      value: konflux-ci
+    - name: e2e-repo
+      value: testrepo-private
+    - name: e2e-its-repo
+      value: testrepo
+    - name: git-repo
+      value: https://github.com/konflux-ci/konflux-ci.git
+    - name: git-revision
+      value: main
+  metrics:
+    - name: conformance-tests
+      initialDelay: 2m
+      consecutiveSuccessLimit: 1
+      failureLimit: 0
+      provider:
+        job:
+          spec:
+            backoffLimit: 0
+            activeDeadlineSeconds: 2400
+            template:
+              spec:
+                restartPolicy: Never
+                containers:
+                  - name: conformance
+                    image: registry.access.redhat.com/ubi9/go-toolset:1.26
+                    securityContext:
+                      runAsUser: 0
+                    resources:
+                      requests:
+                        memory: "4Gi"
+                        cpu: "2"
+                      limits:
+                        memory: "8Gi"
+                        cpu: "4"
+                    env:
+                      - name: BEARER_TOKEN
+                        valueFrom:
+                          secretKeyRef:
+                            name: "{{args.token-secret}}"
+                            key: token
+                      - name: CLUSTER_URL
+                        value: "{{args.cluster-url}}"
+                      - name: E2E_APPLICATIONS_NAMESPACE
+                        value: "{{args.namespace}}"
+                      - name: E2E_MANAGED_NAMESPACE
+                        value: "{{args.managed-namespace}}"
+                      - name: MY_GITHUB_ORG
+                        value: "{{args.github-org}}"
+                      - name: E2E_REPO
+                        value: "{{args.e2e-repo}}"
+                      - name: E2E_ITS_REPO
+                        value: "{{args.e2e-its-repo}}"
+                      - name: GITHUB_TOKEN
+                        valueFrom:
+                          secretKeyRef:
+                            name: "{{args.github-token-secret}}"
+                            key: github_pat
+                      - name: TEST_ENVIRONMENT
+                        value: upstream
+                      - name: GOFLAGS
+                        value: "-count=1"
+                      - name: GOPATH
+                        value: /tmp/gopath
+                      - name: HOME
+                        value: /tmp
+                      - name: GOMAXPROCS
+                        value: "4"
+                    command:
+                      - /bin/bash
+                      - -c
+                      - |
+                        set -euo pipefail
+
+                        curl -sSL "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz" \
+                          -o /tmp/oc.tar.gz
+                        tar xzf /tmp/oc.tar.gz -C /usr/local/bin oc kubectl
+                        rm /tmp/oc.tar.gz
+
+                        curl -sSL "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64" \
+                          -o /usr/local/bin/jq
+                        chmod +x /usr/local/bin/jq
+
+                        mkdir -p /tmp/.kube
+                        cat > /tmp/.kube/config << KUBECONFIG
+                        apiVersion: v1
+                        kind: Config
+                        clusters:
+                        - cluster:
+                            server: ${CLUSTER_URL}
+                            insecure-skip-tls-verify: true
+                          name: target
+                        contexts:
+                        - context:
+                            cluster: target
+                            user: conformance-sa
+                            namespace: ${E2E_APPLICATIONS_NAMESPACE}
+                          name: default
+                        current-context: default
+                        users:
+                        - name: conformance-sa
+                          user:
+                            token: ${BEARER_TOKEN}
+                        KUBECONFIG
+                        export KUBECONFIG=/tmp/.kube/config
+
+                        echo "Connected as: $(oc whoami)"
+
+                        git clone --depth=1 --branch="{{args.git-revision}}" \
+                          "{{args.git-repo}}" /tmp/src
+                        cd /tmp/src/test/go-tests
+
+                        CUSTOM_DOCKER_BUILD_OCI_TA_MIN_PIPELINE_BUNDLE=$(grep -A1 'name: docker-build-oci-ta-min' \
+                          /tmp/src/operator/pkg/manifests/build-service/manifests.yaml \
+                          | grep 'bundle:' | sed 's/.*bundle: *//' | tr -d ' \r')
+                        export CUSTOM_DOCKER_BUILD_OCI_TA_MIN_PIPELINE_BUNDLE
+
+                        go test -v -timeout 30m -count=1 -p 1 ./tests/conformance/...
