@@ -20,7 +20,7 @@ spec:
         repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
         targetRevision: main
       destination:
-        namespace: argocd-internal-appsre
+        namespace: argocd-staging
         name: in-cluster
       syncPolicy:
         automated:
