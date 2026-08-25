@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1beta1
 kind: ArgoCD
 metadata:
-    name: argocd-internal-appsre
+    name: argocd
     namespace: argocd-staging
     annotations:
       argocd.argoproj.io/sync-wave: "0"
