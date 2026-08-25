@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1beta1
 kind: ArgoCD
 metadata:
     name: argocd-internal-appsre
-    namespace: argocd-internal-appsre
+    namespace: argocd-staging
     annotations:
       argocd.argoproj.io/sync-wave: "0"
 # Copied from: https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/resources/stonesoup/argocd-control-plane/argocd-stage.yml
