@@ -3,5 +3,6 @@ kind: Kustomization
 namespace: argocd-staging
 
 resources:
-  - stg-p01-es.yaml
+  - lightwell-dev-es.yaml
   - redhat-appstudio-es.yaml
+  - stg-p01-es.yaml
