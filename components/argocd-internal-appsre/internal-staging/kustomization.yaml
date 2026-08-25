@@ -4,4 +4,5 @@ namespace: argocd-internal-appsre
 
 resources:
   - ../base
+  - all-application-sets-app.yaml
   - external-secrets
