@@ -15,7 +15,7 @@ patches:
       version: v1beta1
       kind: ArgoCD
       name: argocd
-  - path: argocd-loglevel-patch.yaml
+  - path: argocd-controller-loglevel-patch.yaml
     target:
       group: argoproj.io
       version: v1beta1
