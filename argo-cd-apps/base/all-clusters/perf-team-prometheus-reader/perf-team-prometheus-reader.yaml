@@ -1,0 +1,33 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: perf-team-prometheus-reader
+spec:
+  generators:
+    - clusters:
+        values:
+          sourceRoot: components/perf-team-prometheus-reader
+          environment: ""
+  template:
+    metadata:
+      name: perf-team-prometheus-reader-{{nameNormalized}}
+    spec:
+      project: default
+      source:
+        path: '{{values.sourceRoot}}/{{values.environment}}'
+        repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
+        targetRevision: main
+      destination:
+        namespace: perf-team-prometheus-reader
+        name: in-cluster
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: 50
+          backoff:
+            duration: 15s
