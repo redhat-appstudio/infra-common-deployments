@@ -27,5 +27,8 @@ spec:
       metadata:
         labels:
           argocd.argoproj.io/secret-type: cluster
-          appstudio.redhat.com/cluster-type: tenant
-          appstudio.redhat.com/internal-cluster: "true"
+          appstudio.redhat.com/host-cluster: 'true'
+          appstudio.redhat.com/member-cluster: 'true'
+          appstudio.redhat.com/backup: 'true'
+          appstudio.redhat.com/internal-member-cluster: "true"
+          appstudio.redhat.com/toolchain-member: 'true'
