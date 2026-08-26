@@ -1,0 +1,47 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: tekton-kueue-promote-ring-0
+spec:
+  vars:
+    - name: srcPath
+  steps:
+    - uses: http
+      as: fetch-index
+      if: ${{ ctx.targetFreight.origin.name == "tekton-kueue" }}
+      config:
+        method: GET
+        url: https://quay.io/v2/openshift-pipeline/pipelines-scheduler-rhel10/manifests/${{ imageFrom("quay.io/openshift-pipeline/pipelines-scheduler-rhel10").Digest }}
+        headers:
+          - name: Accept
+            value: application/vnd.oci.image.index.v1+json
+        successExpression: response.status == 200
+        outputs:
+          - name: amd64Digest
+            fromExpression: filter(response.body.manifests, {.platform.architecture == 'amd64' && .platform.os == 'linux'})[0].digest
+        timeout: 30s
+    - uses: http
+      as: fetch-manifest
+      if: ${{ ctx.targetFreight.origin.name == "tekton-kueue" }}
+      config:
+        method: GET
+        url: https://quay.io/v2/openshift-pipeline/pipelines-scheduler-rhel10/manifests/${{ outputs['fetch-index'].amd64Digest }}
+        headers:
+          - name: Accept
+            value: application/vnd.oci.image.manifest.v1+json
+        successExpression: response.status == 200
+        outputs:
+          - name: revision
+            fromExpression: response.body.annotations["org.opencontainers.image.revision"]
+        timeout: 30s
+    - uses: yaml-update
+      as: update-tekton-kueue
+      if: ${{ ctx.targetFreight.origin.name == "tekton-kueue" }}
+      config:
+        path: ${{ vars.srcPath }}/components/kueue/rings/ring-0/tekton-kueue/kustomization.yaml
+        updates:
+          - key: images.0.digest
+            value: ${{ imageFrom("quay.io/openshift-pipeline/pipelines-scheduler-rhel10").Digest }}
+          - key: resources.0
+            value: https://github.com/openshift-pipelines/tekton-kueue/upstream/config/default?ref=${{ outputs['fetch-manifest'].revision }}
