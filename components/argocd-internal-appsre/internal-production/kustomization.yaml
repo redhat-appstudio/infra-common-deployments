@@ -1,4 +1,20 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: argocd-production
 
-resources: [] # Not yet deployed to production
+resources:
+  - ../base
+  - external-secrets
+
+patches:
+  - path: patches/argocd-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd
+  - path: patches/ns-patch.yaml
+    target:
+      version: v1
+      kind: Namespace
+      name: argocd-staging

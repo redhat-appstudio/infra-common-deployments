@@ -4,5 +4,6 @@ kind: Kustomization
 resources:
   - argocd.yaml
   - ns.yaml
-  # Wait until we have stopped the sync in ALL AppSRE-hosted Argo CD instances
-  # - all-application-sets-app.yaml
+  # all-application-sets-app.yaml lives in overlays, not here, so production
+  # does not inherit it via ../base. Staging opts in via
+  # internal-staging/all-application-sets-app.yaml.

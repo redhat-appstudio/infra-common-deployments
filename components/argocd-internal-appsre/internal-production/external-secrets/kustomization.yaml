@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: argocd-production
+
+resources:
+  - stone-prod-p01.yaml
+  - stone-prod-p02.yaml
+  - kflux-ocp-p01.yaml
+  - kflux-rhel-p01.yaml
+  - kflux-osp-p01.yaml
+  - kflux-lw-p01.yaml
+  - redhat-appstudio.yaml
