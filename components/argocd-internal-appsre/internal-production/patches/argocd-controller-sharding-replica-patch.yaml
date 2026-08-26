@@ -1,0 +1,3 @@
+- op: replace
+  path: /spec/controller/sharding/replica
+  value: 5

@@ -1,0 +1,5 @@
+- op: replace
+  path: /spec/repo/resources/requests
+  value:
+    memory: 4Gi
+    cpu: 2000m

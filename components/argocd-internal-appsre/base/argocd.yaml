@@ -312,8 +312,3 @@ spec:
     env:
       - name: ARGOCD_CONTROLLER_SHARDING_ALGORITHM
         value: round-robin
-      - name: ARGOCD_CLUSTER_CACHE_LIST_PAGE_SIZE
-        value: "2000"
-      - name: ARGOCD_CLUSTER_CACHE_LIST_PAGE_BUFFER_SIZE
-        value: "4"
-    logLevel: debug

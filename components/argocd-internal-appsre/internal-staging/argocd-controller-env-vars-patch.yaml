@@ -1,0 +1,7 @@
+- op: add
+  path: /spec/controller/env/-
+  value:
+    - name: ARGOCD_CLUSTER_CACHE_LIST_PAGE_SIZE
+      value: "2000"
+    - name: ARGOCD_CLUSTER_CACHE_LIST_PAGE_BUFFER_SIZE
+      value: "4"

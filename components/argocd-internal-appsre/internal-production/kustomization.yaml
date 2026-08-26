@@ -1,20 +1,57 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: argocd-production
+namespace: argocd
 
 resources:
   - ../base
+  - ns.yaml
   - external-secrets
 
 patches:
-  - path: patches/argocd-patch.yaml
+  - path: patches/argocd-controller-memory-limit-patch.yaml
     target:
       group: argoproj.io
       version: v1beta1
       kind: ArgoCD
       name: argocd
-  - path: patches/ns-patch.yaml
+  - path: patches/argocd-controller-memory-request-patch.yaml
     target:
-      version: v1
-      kind: Namespace
-      name: argocd-staging
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd
+  - path: patches/argocd-controller-sharding-replica-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+  - path: patches/argocd-disable-ha-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd
+  - path: patches/argocd-namespace-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd
+  - path: patches/argocd-repo-memory-limit-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd
+  - path: patches/argocd-repo-requests-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd
+  - path: patches/argocd-server-memory-limit-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd
