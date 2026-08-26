@@ -4,7 +4,7 @@
 #
 # Example Stage spec.verification:
 #   analysisTemplates:
-#     - name: verify-kanary
+#     - name: kanary-production
 #   args:
 #     - name: clusters
 #       value: kflux-ocp-p01|kflux-prd-rh02
@@ -13,7 +13,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
-  name: verify-kanary
+  name: kanary-production
 spec:
   args:
     - name: clusters

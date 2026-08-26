@@ -2,14 +2,17 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: kargo-infra-deployments
+namespace: kargo-konflux-vanguard
 
 resources:
   - base
-  - dummy-deployment
+  - components/artifact-registry-proxy
+  - components/container-image-proxy
 
 components:
   - ../../kargo-shared-secrets
+  - ../../kargo-shared-promotion-tasks
+  - ../../kargo-shared-verifications
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

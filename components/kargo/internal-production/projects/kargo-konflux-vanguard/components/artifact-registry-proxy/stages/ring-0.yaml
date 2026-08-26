@@ -2,26 +2,23 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: ring-1
+  name: ring-0-artifact-registry-proxy
+  labels:
+    konflux-environment: development
   annotations:
-    kargo.akuity.io/color: green
+    kargo.akuity.io/color: blue
 spec:
-  shard: infra-deployments-staging
   requestedFreight:
     - origin:
         kind: Warehouse
-        name: dummy-deployment
+        name: artifact-registry-proxy-manifest-wh
       sources:
-        stages:
-          - ring-0-dummy-deployment
-  verification:
-    analysisTemplates:
-      - name: kanary-staging
-    args:
-      - name: clusters
-        value: stone-stg-rh01|stone-stage-p01
-      - name: expected-cluster-count
-        value: "2"
+        direct: true
+    - origin:
+        kind: Warehouse
+        name: artifact-registry-proxy-chart-wh
+      sources:
+        direct: true
   promotionTemplate:
     spec:
       vars:
@@ -30,11 +27,11 @@ spec:
         - name: repoURL
           value: https://github.com/redhat-appstudio/infra-deployments.git
         - name: component
-          value: "${{ hasSuffix(ctx.targetFreight.origin.name, '-image-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-image-wh') : (hasSuffix(ctx.targetFreight.origin.name, '-manifest-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-manifest-wh') : (hasSuffix(ctx.targetFreight.origin.name, '-chart-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-chart-wh') : ctx.targetFreight.origin.name)) }}"
+          value: artifact-registry-proxy
         - name: targetRing
-          value: ring-1
-        - name: prevRing
           value: ring-0
+        - name: prevRing
+          value: base
       steps:
         - uses: git-clone
           as: clone
@@ -44,11 +41,17 @@ spec:
               - branch: main
                 path: ${{ vars.srcPath }}
         - task:
-            name: dummy-deployment-promote-ring-1
-          as: promote-dummy-deployment
+            name: promote-artifact-registry-proxy-manifests
+          as: promote-artifact-registry-proxy
           vars:
             - name: srcPath
               value: ${{ vars.srcPath }}
+            - name: component
+              value: ${{ vars.component }}
+            - name: prevRing
+              value: ${{ vars.prevRing }}
+            - name: targetRing
+              value: ${{ vars.targetRing }}
         - uses: git-commit
           as: commit
           config:
@@ -85,11 +88,11 @@ spec:
 
               ---
 
-              Auto-merged after CI passes. No manual approval required for Ring 1.
+              Auto-merged after CI passes. No manual approval required for Ring 0.
 
               > Branch is force-pushed each promotion cycle. Do not commit directly.
             labels:
-              - ${{ vars.targetRing }}
+              - ring-0
               - automated-promotion
               - component/${{ vars.component }}
         - task:
@@ -98,8 +101,10 @@ spec:
           vars:
             - name: commitSHA
               value: ${{ outputs['push'].commit }}
+            - name: requiredProwChecks
+              value: "^ci/prow/appstudio-e2e-tests$"
             - name: skipProwChecks
-              value: "true"
+              value: "false"
         - uses: http
           as: find-pr
           retry:
@@ -110,7 +115,7 @@ spec:
             url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}&state=open
             headers:
               - name: Authorization
-                value: Bearer ${{ secret('kargo-infra-deployments-secrets').github_pat }}
+                value: Bearer ${{ secret('kargo-promotion-credentials').github_pat }}
               - name: Accept
                 value: application/vnd.github+json
             outputs:
@@ -127,15 +132,3 @@ spec:
             prNumber: ${{ outputs['find-pr'].prNumber }}
             mergeMethod: squash
             wait: true
-        - task:
-            name: wait-for-infra-deployments-argocd-sync
-          as: wait-for-sync
-          vars:
-            - name: commitSHA
-              value: ${{ outputs['merge-pr'].commit }}
-            - name: component
-              value: ${{ vars.component }}
-            - name: clusters
-              value: "stone-stg-rh01|stone-stage-p01"
-            - name: tokenSecret
-              value: kargo-infra-deployments-argocd-app-reader-token-staging

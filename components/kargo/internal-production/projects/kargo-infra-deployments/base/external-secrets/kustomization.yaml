@@ -4,5 +4,3 @@ kind: Kustomization
 resources:
   - kargo-infra-deployments-secrets.yaml
   - kargo-infra-deployments-argocd-app-reader-token-staging.yaml
-  - kargo-rhobs-production.yaml
-  - kargo-rhobs-staging.yaml

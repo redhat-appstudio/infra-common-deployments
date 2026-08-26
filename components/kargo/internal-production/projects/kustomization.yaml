@@ -3,6 +3,10 @@ kind: Kustomization
 resources:
   - kargo-infra-common
   - kargo-infra-deployments
+  - kargo-konflux-core
+  - kargo-konflux-infrastructure
+  - kargo-konflux-monitoring
+  - kargo-konflux-vanguard
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

@@ -1,19 +1,19 @@
 ---
-# Kanary verification against staging Observatorium (RHOBS).
-# Used by ring-1 which targets staging clusters.
+# Reusable kanary verification against production Observatorium (RHOBS).
+# Stages pass clusters as a PromQL regex and expected-cluster-count.
 #
 # Example Stage spec.verification:
 #   analysisTemplates:
-#     - name: kanary-staging
+#     - name: kanary-production
 #   args:
 #     - name: clusters
-#       value: stone-stg-rh01|stone-stage-p01
+#       value: kflux-ocp-p01|kflux-prd-rh02
 #     - name: expected-cluster-count
 #       value: "2"
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
-  name: kanary-staging
+  name: kanary-production
 spec:
   args:
     - name: clusters
@@ -23,18 +23,18 @@ spec:
     - name: types
       value: container-single-arch
     - name: prometheus-address
-      value: https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/rhtap
+      value: https://observatorium-mst.api.openshift.com/api/metrics/v1/rhtap
     - name: token-url
       value: https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
     - name: oauth-client-id
       valueFrom:
         secretKeyRef:
-          name: kargo-rhobs-staging
+          name: kargo-rhobs-production
           key: client_id
     - name: oauth-client-secret
       valueFrom:
         secretKeyRef:
-          name: kargo-rhobs-staging
+          name: kargo-rhobs-production
           key: client_secret
   metrics:
     - name: kanary-up
@@ -60,26 +60,3 @@ spec:
                 kanary_up{namespace="{{args.namespace}}", type=~"{{args.types}}", tested_cluster=~"{{args.clusters}}"}
               ) == 1
             )
-    # - name: kanary-error
-    #   initialDelay: 40m
-    #   interval: 40m
-    #   consecutiveSuccessLimit: 1
-    #   failureLimit: 1
-    #   successCondition: len(result) > 0 && result[0] == {{args.expected-cluster-count}}
-    #   provider:
-    #     prometheus:
-    #       address: "{{args.prometheus-address}}"
-    #       timeout: 40
-    #       authentication:
-    #         oauth2:
-    #           tokenUrl: "{{args.token-url}}"
-    #           clientId: "{{args.oauth-client-id}}"
-    #           clientSecret: "{{args.oauth-client-secret}}"
-    #           scopes:
-    #             - profile
-    #       query: |
-    #         count(
-    #           max by (tested_cluster) (
-    #             kanary_error{namespace="{{args.namespace}}", type=~"{{args.types}}", tested_cluster=~"{{args.clusters}}"}
-    #           ) == 0
-    #         )

@@ -1,0 +1,25 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: kargo-konflux-infrastructure
+spec:
+  promotionPolicies:
+    - stage: ring-1-authentication
+      autoPromotionEnabled: true
+    - stage: ring-2-authentication
+      autoPromotionEnabled: true
+    - stage: ring-3-authentication
+      autoPromotionEnabled: true
+    - stage: ring-4-authentication
+      autoPromotionEnabled: true
+    - stage: ring-0-etcd-shield
+      autoPromotionEnabled: true
+    - stage: ring-1-etcd-shield
+      autoPromotionEnabled: true
+    - stage: ring-2-etcd-shield
+      autoPromotionEnabled: true
+    - stage: ring-3-etcd-shield
+      autoPromotionEnabled: true
+    - stage: ring-4-etcd-shield
+      autoPromotionEnabled: true
