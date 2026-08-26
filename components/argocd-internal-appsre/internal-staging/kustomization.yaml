@@ -5,4 +5,19 @@ namespace: argocd-staging
 resources:
   - ../base
   - all-application-sets-app.yaml
+  - ns.yaml
   - external-secrets
+
+patches:
+  - path: argocd-controller-env-vars-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd
+  - path: argocd-loglevel-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd
