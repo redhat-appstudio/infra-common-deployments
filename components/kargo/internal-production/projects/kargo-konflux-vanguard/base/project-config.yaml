@@ -1,0 +1,15 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: kargo-konflux-vanguard
+spec:
+  promotionPolicies:
+    - stage: ring-0-artifact-registry-proxy
+      autoPromotionEnabled: true
+    - stage: ring-1-artifact-registry-proxy
+      autoPromotionEnabled: true
+    - stage: ring-0-container-image-proxy
+      autoPromotionEnabled: true
+    - stage: ring-1-container-image-proxy
+      autoPromotionEnabled: true

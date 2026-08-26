@@ -2,10 +2,10 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: ProjectConfig
 metadata:
-  name: kargo-infra-deployments
+  name: kargo-konflux-core
 spec:
   promotionPolicies:
-    - stage: ring-0-dummy-deployment
+    - stage: ring-0-konflux-operator
       autoPromotionEnabled: true
-    - stage: ring-1
+    - stage: ring-1-konflux-operator
       autoPromotionEnabled: true

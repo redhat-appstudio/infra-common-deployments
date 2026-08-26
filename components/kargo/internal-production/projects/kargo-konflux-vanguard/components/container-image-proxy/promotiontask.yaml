@@ -1,0 +1,41 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-container-image-proxy-manifests
+spec:
+  vars:
+    - name: srcPath
+    - name: component
+    - name: prevRing
+    - name: targetRing
+
+  steps:
+    - uses: yaml-update
+      as: update-chart-version
+      if: ${{ ctx.targetFreight.origin.name == "container-image-proxy-chart-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/caching-helm-generator.yaml
+        updates:
+          - key: version
+            value: ${{ chartFrom("oci://quay.io/konflux-ci/caching/caching-helm", warehouse("container-image-proxy-chart-wh")).Version }}
+
+    - uses: delete
+      as: delete-old-base-snapshot-folder
+      if: ${{ ctx.targetFreight.origin.name == "container-image-proxy-manifest-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+
+    - uses: copy
+      as: copy-tier-1-folder
+      if: ${{ ctx.targetFreight.origin.name == "container-image-proxy-manifest-wh" && vars.prevRing == "base" }}
+      config:
+        inPath: ${{ vars.srcPath }}/components/${{ vars.component }}/base
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+
+    - uses: copy
+      as: copy-prev-ring-base-snapshot-folder
+      if: ${{ ctx.targetFreight.origin.name == "container-image-proxy-manifest-wh" && vars.prevRing != "base" }}
+      config:
+        inPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.prevRing }}/base/base-snapshot
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot

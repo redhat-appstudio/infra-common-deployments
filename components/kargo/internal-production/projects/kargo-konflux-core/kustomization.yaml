@@ -2,14 +2,16 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: kargo-infra-deployments
+namespace: kargo-konflux-core
 
 resources:
   - base
-  - dummy-deployment
+  - components/konflux-operator
 
 components:
   - ../../kargo-shared-secrets
+  - ../../kargo-shared-promotion-tasks
+  - ../../kargo-shared-verifications
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

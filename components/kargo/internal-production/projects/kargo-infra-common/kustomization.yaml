@@ -10,7 +10,7 @@ resources:
   - rover-group-sync
 
 components:
-  - ../../e2e-secrets
+  - ../../kargo-shared-secrets
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

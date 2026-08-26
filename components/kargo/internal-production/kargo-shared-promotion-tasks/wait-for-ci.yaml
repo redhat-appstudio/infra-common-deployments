@@ -1,0 +1,79 @@
+---
+# wait-for-ci
+#
+# Only applies to components using Ring Deployments via the
+# redhat-appstudio/infra-deployments repository.
+#
+# Polls the GitHub API until all CI checks pass for a given commit.
+# Used during Kargo promotions to gate ring advancement on green CI.
+#
+# Two-phase check:
+#   1. GitHub Check Runs (Actions workflows) — polls /check-runs endpoint
+#   2. Prow status checks — polls /status endpoint (skippable via vars)
+#
+# Both phases retry for up to 2h30m, polling every 30s.
+# Authentication uses the shared kargo-promotion-credentials secret (GitHub PAT).
+#
+# Vars:
+#   commitSHA (required)       — git commit to check
+#   repoOwner                  — GitHub org (default: redhat-appstudio)
+#   repoName                   — GitHub repo (default: infra-deployments)
+#   requiredCheckRuns           — regex filter for check-run names (default: .*)
+#   requiredProwChecks          — regex filter for prow context names (default: .*)
+#   skipProwChecks              — set "true" to skip prow phase entirely
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: wait-for-ci
+spec:
+  vars:
+    - name: commitSHA
+    - name: repoOwner
+      value: redhat-appstudio
+    - name: repoName
+      value: infra-deployments
+    - name: requiredCheckRuns
+      value: ".*"
+    - name: requiredProwChecks
+      value: ".*"
+    - name: skipProwChecks
+      value: "false"
+  steps:
+    # Phase 1: Wait for GitHub Actions check runs to complete and pass
+    - uses: http
+      as: wait-for-check-runs
+      retry:
+        timeout: 2h30m
+      config:
+        method: GET
+        url: https://api.github.com/repos/${{ vars.repoOwner }}/${{ vars.repoName }}/commits/${{ vars.commitSHA }}/check-runs
+        headers:
+          - name: Authorization
+            value: Bearer ${{ secret('kargo-promotion-credentials').github_pat }}
+          - name: Accept
+            value: application/vnd.github+json
+        successExpression: |
+          response.status == 200 &&
+          len(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}'})) > 0 &&
+          all(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}'}), {.conclusion in ['success', 'neutral', 'skipped']})
+        timeout: 30s
+    # Phase 2: Wait for Prow status checks (skipped when skipProwChecks=true)
+    # Filters out the 'tide' context since it reflects merge state, not test results
+    - uses: http
+      as: wait-for-prow-checks
+      if: ${{ vars.skipProwChecks != 'true' }}
+      retry:
+        timeout: 2h30m
+      config:
+        method: GET
+        url: https://api.github.com/repos/${{ vars.repoOwner }}/${{ vars.repoName }}/commits/${{ vars.commitSHA }}/status
+        headers:
+          - name: Authorization
+            value: Bearer ${{ secret('kargo-promotion-credentials').github_pat }}
+          - name: Accept
+            value: application/vnd.github+json
+        successExpression: |
+          response.status == 200 &&
+          len(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')})) > 0 &&
+          all(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')}), {.state == 'success'})
+        timeout: 30s
