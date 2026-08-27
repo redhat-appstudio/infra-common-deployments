@@ -32,3 +32,4 @@ spec:
           appstudio.redhat.com/backup: 'true'
           appstudio.redhat.com/internal-member-cluster: "true"
           appstudio.redhat.com/toolchain-member: 'true'
+          appstudio.redhat.com/rh-member-cluster: 'true'
