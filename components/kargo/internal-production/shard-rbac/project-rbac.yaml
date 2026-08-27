@@ -27,7 +27,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: kargo-shard-staging
+  name: kargo-shard-staging-project-access
   namespace: kargo-shared-resources
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -42,7 +42,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: kargo-shard-staging
+  name: kargo-shard-staging-project-access
   namespace: kargo-infra-common
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -57,7 +57,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: kargo-shard-staging
+  name: kargo-shard-staging-project-access
   namespace: kargo-infra-deployments
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -72,7 +72,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: kargo-shard-staging
+  name: kargo-shard-staging-project-access
   namespace: kargo-konflux-core
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -87,7 +87,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: kargo-shard-staging
+  name: kargo-shard-staging-project-access
   namespace: kargo-konflux-infrastructure
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -102,7 +102,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: kargo-shard-staging
+  name: kargo-shard-staging-project-access
   namespace: kargo-konflux-vanguard
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -117,7 +117,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: kargo-shard-staging
+  name: kargo-shard-staging-project-access
   namespace: kargo-konflux-monitoring
 roleRef:
   apiGroup: rbac.authorization.k8s.io
