@@ -6,6 +6,7 @@ resources:
   - ../base
   - ns.yaml
   - external-secrets
+  - all-application-sets-application.yaml
 
 patches:
   - path: patches/argocd-controller-memory-limit-patch.yaml
