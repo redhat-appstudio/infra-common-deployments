@@ -43,6 +43,7 @@ valuesInline:
       namespace: argocd-local
       watchArgocdNamespaceOnly: true
     rollouts:
-      integrationEnabled: false
+      integrationEnabled: true
+      controllerInstanceID: kargo
   kubeconfigSecrets:
     kargo: production-kargo-kubeconfig
