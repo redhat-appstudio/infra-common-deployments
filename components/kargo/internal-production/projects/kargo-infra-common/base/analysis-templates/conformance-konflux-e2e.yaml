@@ -23,6 +23,8 @@ spec:
       value: konflux-managed-tests
     - name: token-secret
       value: konflux-conformance-sa
+    - name: token-key
+      value: token
     - name: github-token-secret
       value: konflux-conformance-tests-credentials
     - name: github-org
@@ -65,7 +67,7 @@ spec:
                         valueFrom:
                           secretKeyRef:
                             name: "{{args.token-secret}}"
-                            key: token
+                            key: "{{args.token-key}}"
                       - name: CLUSTER_URL
                         value: "{{args.cluster-url}}"
                       - name: E2E_APPLICATIONS_NAMESPACE

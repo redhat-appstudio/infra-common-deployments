@@ -24,6 +24,8 @@ spec:
     args:
       - name: cluster-url
         value: "https://api.stone-stage-p01.hpmt.p1.openshiftapps.com:6443"
+      - name: token-key
+        value: konflux-conformance-stone-stage-p01
   promotionTemplate:
     spec:
       vars:

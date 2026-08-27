@@ -58,10 +58,6 @@ spec:
               .status?.health?.status == 'Healthy' &&
               (
                 .status?.sync?.revision == '${{ vars.commitSHA }}' ||
-                # History fallback: ArgoCD may auto-advance past the merged commit when
-                # another PR lands concurrently. Accepting history membership confirms the
-                # promoted commit was deployed at least once, which satisfies the gate.
-                # A genuine rollback bypasses Kargo anyway (manual ArgoCD operation).
                 any(.status?.history ?? [], {.revision == '${{ vars.commitSHA }}'})
               )
             }
