@@ -6,7 +6,7 @@ spec:
   servers:
     - name: kflux-lw-p01-forwarder
       zones:
-        - da25t2kw06rcd06cftd0.vpe.private.us-east.containers.cloud.ibm.com
+        - vpe.private.us-east.containers.cloud.ibm.com
       forwardPlugin:
         policy: Random
         upstreams:
