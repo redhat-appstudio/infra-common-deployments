@@ -1,15 +1,12 @@
 ---
 # Runs Konflux conformance tests against a staging cluster after promotion.
-# The job connects to the target cluster via a ServiceAccount token pulled
-# from Vault (ExternalSecret), clones the test source, compiles the binary,
-# and runs the full Ginkgo suite.
 #
-# Example Stage spec.verification:
-#   analysisTemplates:
-#     - name: conformance-konflux-e2e
-#   args:
-#     - name: cluster-url
-#       value: "https://api.stone-stage-p01.hpmt.p1.openshiftapps.com:6443"
+# Credentials are read from the konflux-conformance-sa secret (mounted as
+# a volume). The cluster-specific JSON blob (ca.crt + token) is resolved
+# by convention: konflux-conformance-<cluster-name>. GitHub credentials
+# live under the fixed key konflux-conformance-tests-credentials.
+#
+# Required args: cluster-url, cluster-name
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -17,26 +14,7 @@ metadata:
 spec:
   args:
     - name: cluster-url
-    - name: namespace
-      value: konflux-conformance-tests
-    - name: managed-namespace
-      value: konflux-managed-tests
-    - name: token-secret
-      value: konflux-conformance-sa
-    - name: token-key
-      value: token
-    - name: github-token-secret
-      value: konflux-conformance-tests-credentials
-    - name: github-org
-      value: konflux-ci
-    - name: e2e-repo
-      value: testrepo-private
-    - name: e2e-its-repo
-      value: testrepo
-    - name: git-repo
-      value: https://github.com/konflux-ci/konflux-ci.git
-    - name: git-revision
-      value: main
+    - name: cluster-name
   metrics:
     - name: conformance-tests
       initialDelay: 2m
@@ -50,6 +28,10 @@ spec:
             template:
               spec:
                 restartPolicy: Never
+                volumes:
+                  - name: credentials
+                    secret:
+                      secretName: konflux-conformance-sa
                 containers:
                   - name: conformance
                     image: registry.access.redhat.com/ubi9/go-toolset:1.26
@@ -62,29 +44,25 @@ spec:
                       limits:
                         memory: "8Gi"
                         cpu: "4"
+                    volumeMounts:
+                      - name: credentials
+                        mountPath: /credentials
+                        readOnly: true
                     env:
-                      - name: BEARER_TOKEN
-                        valueFrom:
-                          secretKeyRef:
-                            name: "{{args.token-secret}}"
-                            key: "{{args.token-key}}"
                       - name: CLUSTER_URL
                         value: "{{args.cluster-url}}"
+                      - name: CLUSTER_NAME
+                        value: "{{args.cluster-name}}"
                       - name: E2E_APPLICATIONS_NAMESPACE
-                        value: "{{args.namespace}}"
+                        value: konflux-conformance-tests
                       - name: E2E_MANAGED_NAMESPACE
-                        value: "{{args.managed-namespace}}"
+                        value: konflux-managed-tests
                       - name: MY_GITHUB_ORG
-                        value: "{{args.github-org}}"
+                        value: konflux-ci
                       - name: E2E_REPO
-                        value: "{{args.e2e-repo}}"
+                        value: testrepo-private
                       - name: E2E_ITS_REPO
-                        value: "{{args.e2e-its-repo}}"
-                      - name: GITHUB_TOKEN
-                        valueFrom:
-                          secretKeyRef:
-                            name: "{{args.github-token-secret}}"
-                            key: github_pat
+                        value: testrepo
                       - name: TEST_ENVIRONMENT
                         value: upstream
                       - name: GOFLAGS
@@ -113,6 +91,11 @@ spec:
                           -o /tmp/bin/jq
                         chmod +x /tmp/bin/jq
 
+                        cluster_creds="/credentials/konflux-conformance-${CLUSTER_NAME}"
+                        BEARER_TOKEN=$(jq -r '.token' "${cluster_creds}")
+                        jq -r '.["ca.crt"]' "${cluster_creds}" > /tmp/ca.crt
+                        export GITHUB_TOKEN=$(jq -r '.github_pat' /credentials/konflux-conformance-tests-credentials)
+
                         mkdir -p /tmp/.kube
                         cat > /tmp/.kube/config << KUBECONFIG
                         apiVersion: v1
@@ -120,7 +103,7 @@ spec:
                         clusters:
                         - cluster:
                             server: ${CLUSTER_URL}
-                            insecure-skip-tls-verify: true
+                            certificate-authority: /tmp/ca.crt
                           name: target
                         contexts:
                         - context:
@@ -138,8 +121,8 @@ spec:
 
                         echo "Connected as: $(oc whoami)"
 
-                        git clone --depth=1 --branch="{{args.git-revision}}" \
-                          "{{args.git-repo}}" /tmp/src
+                        git clone --depth=1 --branch=main \
+                          https://github.com/konflux-ci/konflux-ci.git /tmp/src
                         cd /tmp/src/test/go-tests
 
                         CUSTOM_DOCKER_BUILD_OCI_TA_MIN_PIPELINE_BUNDLE=$(grep -A1 'name: docker-build-oci-ta-min' \
