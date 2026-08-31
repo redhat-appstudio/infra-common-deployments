@@ -24,11 +24,13 @@ spec:
         discoveryLimit: 5
         allowTagsRegexes:
           - ^[0-9a-f]{40}$
-  # Compare major.minor.patch of the best-fit chart vs image (1.11.2 vs v1.11.2-N-gSHA).
+  # Compare major.minor.patch of the best-fit chart vs image (1.10.10 vs v1.10.10-N-gSHA).
+  # Warehouse criteria only expose imageFrom/chartFrom/commitFrom — not semverParse.
   # Kargo does not search discoveryLimit for a matching pair; if the newest chart and
   # newest image disagree, Freight is skipped until they align (CriteriaSatisfied=False).
   freightCreationCriteria:
     expression: |
-      semverParse(imageFrom('quay.io/konflux-ci/kargo').Tag).Major() == semverParse(chartFrom('oci://ghcr.io/akuity/kargo-charts/kargo').Version).Major() &&
-      semverParse(imageFrom('quay.io/konflux-ci/kargo').Tag).Minor() == semverParse(chartFrom('oci://ghcr.io/akuity/kargo-charts/kargo').Version).Minor() &&
-      semverParse(imageFrom('quay.io/konflux-ci/kargo').Tag).Patch() == semverParse(chartFrom('oci://ghcr.io/akuity/kargo-charts/kargo').Version).Patch()
+      imageFrom('quay.io/konflux-ci/kargo') != nil &&
+      chartFrom('oci://ghcr.io/akuity/kargo-charts/kargo') != nil &&
+      split(replace(imageFrom('quay.io/konflux-ci/kargo').Tag, 'v', ''), '-')[0] ==
+        chartFrom('oci://ghcr.io/akuity/kargo-charts/kargo').Version
