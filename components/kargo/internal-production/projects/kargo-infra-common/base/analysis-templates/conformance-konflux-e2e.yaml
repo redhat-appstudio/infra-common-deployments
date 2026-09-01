@@ -9,7 +9,6 @@
 #   AnalysisRun (Kargo cluster)
 #     └─ Launcher Job (ubi-minimal)
 #          ├─ reads credentials from vault-synced secret
-#          ├─ creates a short-lived token for conformance-test-runner SA
 #          ├─ creates a Tekton PipelineRun on the target cluster
 #          └─ polls the PipelineRun until completion
 #
@@ -115,13 +114,9 @@ spec:
                         echo " App NS:     ${APP_NAMESPACE}"
                         echo "──────────────────────────────────────────────────"
 
-                        # ── create a short-lived token for the test runner SA
-                        RUNNER_TOKEN=$(kubectl create token conformance-test-runner \
-                          -n "${RUNNER_NAMESPACE}" --duration=2h)
-                        echo "[launcher] created 2h token for conformance-test-runner"
-
                         # ── create PipelineRun from template ─────────────
-                        RUN_ID="conformance-${CLUSTER_NAME}-$(date +%s | tail -c 5)"
+                        SUFFIX=$(head -c 4 /dev/urandom | od -An -tx1 | tr -d ' \n')
+                        RUN_ID="conformance-${CLUSTER_NAME}-${SUFFIX}"
                         echo "[launcher] creating PipelineRun ${RUN_ID}"
 
                         sed \
@@ -129,11 +124,7 @@ spec:
                           -e "s|__RUNNER_NS__|${RUNNER_NAMESPACE}|g" \
                           -e "s|__APP_NS__|${APP_NAMESPACE}|g" \
                           -e "s|__GITHUB_TOKEN__|${GITHUB_TOKEN}|g" \
-                          -e "s|__CLUSTER_URL__|${CLUSTER_URL}|g" \
-                          -e "s|__BEARER_TOKEN__|${RUNNER_TOKEN}|g" \
-                          /template/template.yaml > /tmp/pipelinerun.yaml
-
-                        kubectl create -f /tmp/pipelinerun.yaml
+                          /template/template.yaml | kubectl create -f -
 
                         # ── poll until PipelineRun completes ─────────────
                         echo "[launcher] polling every ${POLL_INTERVAL}s"
@@ -148,12 +139,15 @@ spec:
                             echo "──────────────────────────────────────────────────"
                             echo " PASSED"
                             echo "──────────────────────────────────────────────────"
+                            kubectl delete pipelinerun "${RUN_ID}" -n "${RUNNER_NAMESPACE}" --ignore-not-found || true
                             exit 0
                           fi
                           if [ "${STATUS}" = "False" ]; then
                             echo "──────────────────────────────────────────────────"
                             echo " FAILED (${REASON})"
                             echo "──────────────────────────────────────────────────"
+                            kubectl logs -n "${RUNNER_NAMESPACE}" -l "tekton.dev/pipelineRun=${RUN_ID}" --tail=50 || true
+                            kubectl delete pipelinerun "${RUN_ID}" -n "${RUNNER_NAMESPACE}" --ignore-not-found || true
                             exit 1
                           fi
 

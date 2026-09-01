@@ -2,12 +2,10 @@
 # PipelineRun template for conformance-konflux-e2e AnalysisTemplate.
 #
 # The launcher Job reads this ConfigMap and replaces placeholders:
-#   __RUN_ID__        → unique run identifier (e.g. conformance-264515)
+#   __RUN_ID__        → unique run identifier (e.g. conformance-stone-stage-p01-a3f1bc09)
 #   __RUNNER_NS__     → namespace where PipelineRun executes and SA lives
 #   __APP_NS__        → namespace where test applications are created
 #   __GITHUB_TOKEN__  → GitHub PAT for private test repos
-#   __CLUSTER_URL__   → target cluster API server URL
-#   __BEARER_TOKEN__  → long-lived SA token for API authentication
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -66,14 +64,6 @@ data:
                 value: "4"
               - name: GITHUB_TOKEN
                 value: __GITHUB_TOKEN__
-              - name: CLUSTER_URL
-                value: __CLUSTER_URL__
-              - name: BEARER_TOKEN
-                value: __BEARER_TOKEN__
-              - name: KUBERNETES_SERVICE_HOST
-                value: ""
-              - name: KUBERNETES_SERVICE_PORT
-                value: ""
               script: |
                 #!/bin/bash
                 set -euo pipefail
@@ -85,11 +75,6 @@ data:
                 chmod +x /tmp/bin/oc /tmp/bin/kubectl
                 curl -sSL "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64" \
                   -o /tmp/bin/jq && chmod +x /tmp/bin/jq
-
-                # ── build kubeconfig from injected token ─────────
-                printf 'apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    server: %s\n    insecure-skip-tls-verify: true\n  name: target\ncontexts:\n- context:\n    cluster: target\n    user: runner\n    namespace: %s\n  name: default\ncurrent-context: default\nusers:\n- name: runner\n  user:\n    token: %s\n' \
-                  "${CLUSTER_URL}" "${E2E_APPLICATIONS_NAMESPACE}" "${BEARER_TOKEN}" > /tmp/kubeconfig
-                export KUBECONFIG=/tmp/kubeconfig
 
                 echo "──────────────────────────────────────────────────"
                 echo " Conformance Test Runner"
