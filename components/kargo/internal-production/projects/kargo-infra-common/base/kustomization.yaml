@@ -1,8 +1,6 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-components:
-  - ../../../kargo-shared-secrets/konflux-verifications-credentials
 resources:
   - namespace.yaml
   - project.yaml
