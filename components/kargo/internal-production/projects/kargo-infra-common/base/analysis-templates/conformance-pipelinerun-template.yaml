@@ -1,0 +1,111 @@
+---
+# PipelineRun template for conformance-konflux-e2e AnalysisTemplate.
+#
+# The launcher Job reads this ConfigMap and replaces placeholders:
+#   __RUN_ID__        → unique run identifier (e.g. conformance-264515)
+#   __RUNNER_NS__     → namespace where PipelineRun executes and SA lives
+#   __APP_NS__        → namespace where test applications are created
+#   __GITHUB_TOKEN__  → GitHub PAT for private test repos
+#   __CLUSTER_URL__   → target cluster API server URL
+#   __BEARER_TOKEN__  → long-lived SA token for API authentication
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: conformance-pipelinerun-template
+data:
+  template.yaml: |
+    apiVersion: tekton.dev/v1
+    kind: PipelineRun
+    metadata:
+      name: __RUN_ID__
+      namespace: __RUNNER_NS__
+      labels:
+        app.kubernetes.io/part-of: kargo-conformance
+        kargo.akuity.io/verification: "true"
+    spec:
+      timeouts:
+        pipeline: 30m
+      taskRunTemplate:
+        serviceAccountName: conformance-test-runner
+      pipelineSpec:
+        tasks:
+        - name: run-conformance-tests
+          taskSpec:
+            steps:
+            - name: tests
+              image: registry.access.redhat.com/ubi9/go-toolset:1.26
+              securityContext:
+                allowPrivilegeEscalation: false
+              computeResources:
+                requests:
+                  memory: 4Gi
+                  cpu: "2"
+                limits:
+                  memory: 8Gi
+                  cpu: "4"
+              env:
+              - name: E2E_APPLICATIONS_NAMESPACE
+                value: __APP_NS__
+              - name: E2E_MANAGED_NAMESPACE
+                value: __RUNNER_NS__
+              - name: MY_GITHUB_ORG
+                value: konflux-ci
+              - name: E2E_REPO
+                value: testrepo-private
+              - name: E2E_ITS_REPO
+                value: testrepo
+              - name: TEST_ENVIRONMENT
+                value: upstream
+              - name: GOFLAGS
+                value: "-count=1"
+              - name: GOPATH
+                value: /tmp/gopath
+              - name: HOME
+                value: /tmp
+              - name: GOMAXPROCS
+                value: "4"
+              - name: GITHUB_TOKEN
+                value: __GITHUB_TOKEN__
+              - name: CLUSTER_URL
+                value: __CLUSTER_URL__
+              - name: BEARER_TOKEN
+                value: __BEARER_TOKEN__
+              - name: KUBERNETES_SERVICE_HOST
+                value: ""
+              - name: KUBERNETES_SERVICE_PORT
+                value: ""
+              script: |
+                #!/bin/bash
+                set -euo pipefail
+
+                # ── install CLI tools ────────────────────────────
+                mkdir -p /tmp/bin && export PATH="/tmp/bin:${PATH}"
+                curl -sSL "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz" \
+                  | tar xz -C /tmp/bin oc kubectl
+                chmod +x /tmp/bin/oc /tmp/bin/kubectl
+                curl -sSL "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64" \
+                  -o /tmp/bin/jq && chmod +x /tmp/bin/jq
+
+                # ── build kubeconfig from injected token ─────────
+                printf 'apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    server: %s\n    insecure-skip-tls-verify: true\n  name: target\ncontexts:\n- context:\n    cluster: target\n    user: runner\n    namespace: %s\n  name: default\ncurrent-context: default\nusers:\n- name: runner\n  user:\n    token: %s\n' \
+                  "${CLUSTER_URL}" "${E2E_APPLICATIONS_NAMESPACE}" "${BEARER_TOKEN}" > /tmp/kubeconfig
+                export KUBECONFIG=/tmp/kubeconfig
+
+                echo "──────────────────────────────────────────────────"
+                echo " Conformance Test Runner"
+                echo " Identity:  $(kubectl auth whoami 2>/dev/null | grep Username | awk '{print $2}' || echo unknown)"
+                echo " App NS:    ${E2E_APPLICATIONS_NAMESPACE}"
+                echo " Managed NS: ${E2E_MANAGED_NAMESPACE}"
+                echo "──────────────────────────────────────────────────"
+
+                # ── clone test source and run ────────────────────
+                git clone --depth=1 --branch=fix_kubeconfig_e2e \
+                  https://github.com/flacatus/konflux-ci.git /tmp/src
+                cd /tmp/src/test/go-tests
+
+                CUSTOM_DOCKER_BUILD_OCI_TA_MIN_PIPELINE_BUNDLE=$(grep -A1 'name: docker-build-oci-ta-min' \
+                  /tmp/src/operator/pkg/manifests/build-service/manifests.yaml \
+                  | grep 'bundle:' | sed 's/.*bundle: *//' | tr -d ' \r')
+                export CUSTOM_DOCKER_BUILD_OCI_TA_MIN_PIPELINE_BUNDLE
+
+                go test -v -timeout 25m -count=1 -p 1 ./tests/conformance/...
