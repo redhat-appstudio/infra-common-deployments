@@ -11,6 +11,7 @@ resources:
 
 components:
   - ../../kargo-shared-secrets
+  - ../../kargo-shared-verifications
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

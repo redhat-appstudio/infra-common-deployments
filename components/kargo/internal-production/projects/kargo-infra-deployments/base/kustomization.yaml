@@ -9,4 +9,5 @@ resources:
   - external-secrets
   - promotion-tasks
   - analysis-templates
+  - ../../../kargo-shared-verifications/konflux-conformance-tests
   - stages

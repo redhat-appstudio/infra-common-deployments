@@ -1,37 +1,9 @@
 ---
-# conformance-konflux-e2e
-#
-# Post-promotion verification: runs the Konflux conformance test suite
-# against a target cluster to validate platform health after promotion.
-#
-# Architecture:
-#
-#   AnalysisRun (Kargo cluster)
-#     └─ Launcher Job (ubi-minimal)
-#          ├─ reads credentials from vault-synced secret
-#          ├─ creates a Tekton PipelineRun on the target cluster
-#          └─ polls the PipelineRun until completion
-#
-#   PipelineRun (target cluster, konflux-managed-tests)
-#     └─ conformance-test-runner SA (konflux-admin-user-actions)
-#          └─ clones konflux-ci, runs: go test ./tests/conformance/...
-#
-# Required args (set by Kargo Stage verification):
-#   cluster-url   — API server URL of the target cluster
-#   cluster-name  — key suffix for credential lookup in the vault secret
-#
-# Secrets (mounted from konflux-conformance-sa):
-#   konflux-conformance-<cluster-name>     — {"token": "<bot SA token>"}
-#   konflux-conformance-tests-credentials  — {"github_pat": "<PAT>"}
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
-  name: conformance-konflux-e2e
+  name: konflux-conformance-tests-stone-stage-p01
 spec:
-  args:
-    - name: cluster-url
-    - name: cluster-name
-
   metrics:
     - name: conformance-tests
       initialDelay: 2m
@@ -74,9 +46,9 @@ spec:
                         readOnly: true
                     env:
                       - name: CLUSTER_URL
-                        value: "{{args.cluster-url}}"
+                        value: "https://api.stone-stage-p01.hpmt.p1.openshiftapps.com:6443"
                       - name: CLUSTER_NAME
-                        value: "{{args.cluster-name}}"
+                        value: stone-stage-p01
                       - name: RUNNER_NAMESPACE
                         value: konflux-managed-tests
                       - name: APP_NAMESPACE
@@ -89,7 +61,6 @@ spec:
                       - |
                         set -euo pipefail
 
-                        # ── install CLI tools ────────────────────────────
                         # ── read credentials from vault secret ───────────
                         CREDENTIAL_FILE="/credentials/konflux-conformance-${CLUSTER_NAME}"
                         BOT_TOKEN=$(jq -r '.token' "${CREDENTIAL_FILE}")
