@@ -1,12 +1,29 @@
 ---
-# Runs Konflux conformance tests against a staging cluster after promotion.
+# conformance-konflux-e2e
 #
-# Credentials are read from the konflux-conformance-sa secret (mounted as
-# a volume). The cluster-specific JSON blob (ca.crt + token) is resolved
-# by convention: konflux-conformance-<cluster-name>. GitHub credentials
-# live under the fixed key konflux-conformance-tests-credentials.
+# Post-promotion verification: runs the Konflux conformance test suite
+# against a target cluster to validate platform health after promotion.
 #
-# Required args: cluster-url, cluster-name
+# Architecture:
+#
+#   AnalysisRun (Kargo cluster)
+#     └─ Launcher Job (ubi-minimal)
+#          ├─ reads credentials from vault-synced secret
+#          ├─ creates a short-lived token for conformance-test-runner SA
+#          ├─ creates a Tekton PipelineRun on the target cluster
+#          └─ polls the PipelineRun until completion
+#
+#   PipelineRun (target cluster, konflux-managed-tests)
+#     └─ conformance-test-runner SA (konflux-admin-user-actions)
+#          └─ clones konflux-ci, runs: go test ./tests/conformance/...
+#
+# Required args (set by Kargo Stage verification):
+#   cluster-url   — API server URL of the target cluster
+#   cluster-name  — key suffix for credential lookup in the vault secret
+#
+# Secrets (mounted from konflux-conformance-sa):
+#   konflux-conformance-<cluster-name>     — {"token": "<bot SA token>"}
+#   konflux-conformance-tests-credentials  — {"github_pat": "<PAT>"}
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -15,6 +32,7 @@ spec:
   args:
     - name: cluster-url
     - name: cluster-name
+
   metrics:
     - name: conformance-tests
       initialDelay: 2m
@@ -24,7 +42,7 @@ spec:
         job:
           spec:
             backoffLimit: 0
-            activeDeadlineSeconds: 2400
+            activeDeadlineSeconds: 3600
             template:
               spec:
                 restartPolicy: Never
@@ -32,102 +50,112 @@ spec:
                   - name: credentials
                     secret:
                       secretName: konflux-conformance-sa
+                  - name: pipelinerun-template
+                    configMap:
+                      name: conformance-pipelinerun-template
+
                 containers:
-                  - name: conformance
-                    image: registry.access.redhat.com/ubi9/go-toolset:1.26
+                  - name: launcher
+                    image: registry.access.redhat.com/ubi9/ubi-minimal:latest
                     securityContext:
                       allowPrivilegeEscalation: false
                     resources:
                       requests:
-                        memory: "4Gi"
-                        cpu: "2"
+                        memory: 256Mi
+                        cpu: 200m
                       limits:
-                        memory: "8Gi"
-                        cpu: "4"
+                        memory: 512Mi
+                        cpu: 500m
                     volumeMounts:
                       - name: credentials
                         mountPath: /credentials
+                        readOnly: true
+                      - name: pipelinerun-template
+                        mountPath: /template
                         readOnly: true
                     env:
                       - name: CLUSTER_URL
                         value: "{{args.cluster-url}}"
                       - name: CLUSTER_NAME
                         value: "{{args.cluster-name}}"
-                      - name: E2E_APPLICATIONS_NAMESPACE
-                        value: konflux-conformance-tests
-                      - name: E2E_MANAGED_NAMESPACE
+                      - name: RUNNER_NAMESPACE
                         value: konflux-managed-tests
-                      - name: MY_GITHUB_ORG
-                        value: konflux-ci
-                      - name: E2E_REPO
-                        value: testrepo-private
-                      - name: E2E_ITS_REPO
-                        value: testrepo
-                      - name: TEST_ENVIRONMENT
-                        value: upstream
-                      - name: GOFLAGS
-                        value: "-count=1"
-                      - name: GOPATH
-                        value: /tmp/gopath
-                      - name: HOME
-                        value: /tmp
-                      - name: GOMAXPROCS
-                        value: "4"
+                      - name: APP_NAMESPACE
+                        value: konflux-conformance-tests
+                      - name: POLL_INTERVAL
+                        value: "30"
                     command:
                       - /bin/bash
                       - -c
                       - |
                         set -euo pipefail
 
-                        mkdir -p /tmp/bin
-                        export PATH="/tmp/bin:${PATH}"
-
+                        # ── install CLI tools ────────────────────────────
+                        microdnf install -y jq tar gzip >/dev/null 2>&1
+                        mkdir -p /tmp/bin && export PATH="/tmp/bin:${PATH}"
                         curl -sSL "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz" \
-                          -o /tmp/oc.tar.gz
-                        tar xzf /tmp/oc.tar.gz -C /tmp/bin oc kubectl
-                        rm /tmp/oc.tar.gz
+                          | tar xz -C /tmp/bin oc kubectl
+                        chmod +x /tmp/bin/oc /tmp/bin/kubectl
 
-                        curl -sSL "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64" \
-                          -o /tmp/bin/jq
-                        chmod +x /tmp/bin/jq
+                        # ── read credentials from vault secret ───────────
+                        CREDENTIAL_FILE="/credentials/konflux-conformance-${CLUSTER_NAME}"
+                        BOT_TOKEN=$(jq -r '.token' "${CREDENTIAL_FILE}")
+                        GITHUB_TOKEN=$(jq -r '.github_pat' /credentials/konflux-conformance-tests-credentials)
 
-                        cluster_creds="/credentials/konflux-conformance-${CLUSTER_NAME}"
-                        BEARER_TOKEN=$(jq -r '.token' "${cluster_creds}")
-                        jq -r '.["ca.crt"]' "${cluster_creds}" > /tmp/ca.crt
-                        export GITHUB_TOKEN=$(jq -r '.github_pat' /credentials/konflux-conformance-tests-credentials)
+                        # ── build kubeconfig for target cluster ──────────
+                        printf 'apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    server: %s\n    insecure-skip-tls-verify: true\n  name: target\ncontexts:\n- context:\n    cluster: target\n    user: bot\n    namespace: %s\n  name: default\ncurrent-context: default\nusers:\n- name: bot\n  user:\n    token: %s\n' \
+                          "${CLUSTER_URL}" "${RUNNER_NAMESPACE}" "${BOT_TOKEN}" > /tmp/kubeconfig
+                        export KUBECONFIG=/tmp/kubeconfig
 
-                        mkdir -p /tmp/.kube
-                        cat > /tmp/.kube/config << KUBECONFIG
-                        apiVersion: v1
-                        kind: Config
-                        clusters:
-                        - cluster:
-                            server: ${CLUSTER_URL}
-                            certificate-authority: /tmp/ca.crt
-                          name: target
-                        contexts:
-                        - context:
-                            cluster: target
-                            user: conformance-sa
-                            namespace: ${E2E_APPLICATIONS_NAMESPACE}
-                          name: default
-                        current-context: default
-                        users:
-                        - name: conformance-sa
-                          user:
-                            token: ${BEARER_TOKEN}
-                        KUBECONFIG
-                        export KUBECONFIG=/tmp/.kube/config
+                        echo "──────────────────────────────────────────────────"
+                        echo " Launcher"
+                        echo " Identity:   $(kubectl auth whoami 2>/dev/null | grep Username | awk '{print $2}')"
+                        echo " Cluster:    ${CLUSTER_URL}"
+                        echo " Runner NS:  ${RUNNER_NAMESPACE}"
+                        echo " App NS:     ${APP_NAMESPACE}"
+                        echo "──────────────────────────────────────────────────"
 
-                        echo "Connected as: $(oc whoami)"
+                        # ── create a short-lived token for the test runner SA
+                        RUNNER_TOKEN=$(kubectl create token conformance-test-runner \
+                          -n "${RUNNER_NAMESPACE}" --duration=2h)
+                        echo "[launcher] created 2h token for conformance-test-runner"
 
-                        git clone --depth=1 --branch=main \
-                          https://github.com/konflux-ci/konflux-ci.git /tmp/src
-                        cd /tmp/src/test/go-tests
+                        # ── create PipelineRun from template ─────────────
+                        RUN_ID="conformance-${CLUSTER_NAME}-$(date +%s | tail -c 5)"
+                        echo "[launcher] creating PipelineRun ${RUN_ID}"
 
-                        CUSTOM_DOCKER_BUILD_OCI_TA_MIN_PIPELINE_BUNDLE=$(grep -A1 'name: docker-build-oci-ta-min' \
-                          /tmp/src/operator/pkg/manifests/build-service/manifests.yaml \
-                          | grep 'bundle:' | sed 's/.*bundle: *//' | tr -d ' \r')
-                        export CUSTOM_DOCKER_BUILD_OCI_TA_MIN_PIPELINE_BUNDLE
+                        sed \
+                          -e "s|__RUN_ID__|${RUN_ID}|g" \
+                          -e "s|__RUNNER_NS__|${RUNNER_NAMESPACE}|g" \
+                          -e "s|__APP_NS__|${APP_NAMESPACE}|g" \
+                          -e "s|__GITHUB_TOKEN__|${GITHUB_TOKEN}|g" \
+                          -e "s|__CLUSTER_URL__|${CLUSTER_URL}|g" \
+                          -e "s|__BEARER_TOKEN__|${RUNNER_TOKEN}|g" \
+                          /template/template.yaml > /tmp/pipelinerun.yaml
 
-                        go test -v -timeout 30m -count=1 -p 1 ./tests/conformance/...
+                        kubectl create -f /tmp/pipelinerun.yaml
+
+                        # ── poll until PipelineRun completes ─────────────
+                        echo "[launcher] polling every ${POLL_INTERVAL}s"
+                        while true; do
+                          STATUS=$(kubectl get pipelinerun "${RUN_ID}" -n "${RUNNER_NAMESPACE}" \
+                            -o jsonpath='{.status.conditions[0].status}' 2>/dev/null || echo "Unknown")
+                          REASON=$(kubectl get pipelinerun "${RUN_ID}" -n "${RUNNER_NAMESPACE}" \
+                            -o jsonpath='{.status.conditions[0].reason}' 2>/dev/null || echo "Pending")
+                          echo "[launcher] $(date +%H:%M:%S) status=${STATUS} reason=${REASON}"
+
+                          if [ "${STATUS}" = "True" ] && [ "${REASON}" = "Succeeded" ]; then
+                            echo "──────────────────────────────────────────────────"
+                            echo " PASSED"
+                            echo "──────────────────────────────────────────────────"
+                            exit 0
+                          fi
+                          if [ "${STATUS}" = "False" ]; then
+                            echo "──────────────────────────────────────────────────"
+                            echo " FAILED (${REASON})"
+                            echo "──────────────────────────────────────────────────"
+                            exit 1
+                          fi
+
+                          sleep "${POLL_INTERVAL}"
+                        done
