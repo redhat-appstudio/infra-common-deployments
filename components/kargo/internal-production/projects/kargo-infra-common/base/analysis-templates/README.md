@@ -15,10 +15,10 @@ Kargo Cluster                          Target Cluster (e.g. stone-stage-p01)
 │                      │  kubectl      │  └─ PipelineRun                  │
 │     1. Read vault    │──create──────▶│     └─ go test ./conformance/... │
 │        credentials   │               │                                   │
-│     2. Create token  │               │  konflux-conformance-tests (apps) │
-│        for runner SA │               │  ├─ Application                   │
-│     3. Create PLR    │               │  ├─ Component                     │
-│     4. Poll status   │               │  ├─ IntegrationTestScenario       │
+│     2. Create PLR    │               │  konflux-conformance-tests (apps) │
+│     3. Poll status   │               │  ├─ Application                   │
+│                      │               │  ├─ Component                     │
+│                      │               │  ├─ IntegrationTestScenario       │
 │                      │               │  └─ PipelineRun (build)           │
 └──────────────────────┘               └───────────────────────────────────┘
 ```
@@ -41,7 +41,7 @@ Kargo Cluster                          Target Cluster (e.g. stone-stage-p01)
 
 | SA | Namespace | Permissions | Purpose |
 |----|-----------|-------------|---------|
-| `konflux-bot-0` | `konflux-managed-tests` | `konflux-builder-bot-actions` | Launcher authenticates as this SA to create PipelineRuns and tokens |
+| `konflux-bot-0` | `konflux-managed-tests` | `konflux-builder-bot-actions` | Launcher authenticates as this SA to create PipelineRuns |
 | `conformance-test-runner` | `konflux-managed-tests` | `konflux-admin-user-actions` (both ns) + extra RBAC | Runs the actual conformance tests inside the PipelineRun |
 
 ## Secrets
@@ -59,12 +59,10 @@ The launcher replaces these in the ConfigMap template before creating the Pipeli
 
 | Placeholder | Source | Example |
 |-------------|--------|---------|
-| `__RUN_ID__` | Generated at runtime | `conformance-stone-stage-p01-64515` |
+| `__RUN_ID__` | Generated at runtime | `conformance-stone-stage-p01-a3f1bc09` |
 | `__RUNNER_NS__` | `RUNNER_NAMESPACE` env | `konflux-managed-tests` |
 | `__APP_NS__` | `APP_NAMESPACE` env | `konflux-conformance-tests` |
 | `__GITHUB_TOKEN__` | Vault secret | `ghp_...` |
-| `__CLUSTER_URL__` | Kargo stage arg | `https://api.stone-stage-p01....:6443` |
-| `__BEARER_TOKEN__` | Created by launcher | Short-lived (2h) token for `conformance-test-runner` SA |
 
 ## RBAC Requirements (infra-deployments)
 
