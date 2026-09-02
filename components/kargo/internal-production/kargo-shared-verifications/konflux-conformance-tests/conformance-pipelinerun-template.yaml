@@ -84,7 +84,7 @@ data:
                 echo "──────────────────────────────────────────────────"
 
                 # ── clone test source and run ────────────────────
-                git clone --depth=1 --branch=fix_kubeconfig_e2e \
+                git clone --depth=1 --branch=main \
                   https://github.com/konflux-ci/konflux-ci.git /tmp/src
                 cd /tmp/src/test/go-tests
 
