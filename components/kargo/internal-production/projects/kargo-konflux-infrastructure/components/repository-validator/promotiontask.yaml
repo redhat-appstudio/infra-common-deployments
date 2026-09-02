@@ -1,0 +1,44 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-repository-validator-manifests
+spec:
+  vars:
+    - name: srcPath
+    - name: component
+      value: repository-validator-rd
+    - name: prevRing
+    - name: targetRing
+
+  steps:
+    # manifest-wh: copy base-snapshot from Tier 1 or previous ring
+    - uses: delete
+      as: delete-old-base-snapshot-folder
+      if: ${{ ctx.targetFreight.origin.name == "repository-validator-manifest-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+
+    - uses: copy
+      as: copy-tier-1-folder
+      if: ${{ ctx.targetFreight.origin.name == "repository-validator-manifest-wh" && vars.prevRing == "base" }}
+      config:
+        inPath: ${{ vars.srcPath }}/components/${{ vars.component }}/base
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+
+    - uses: copy
+      as: copy-prev-ring-base-snapshot-folder
+      if: ${{ ctx.targetFreight.origin.name == "repository-validator-manifest-wh" && vars.prevRing != "base" }}
+      config:
+        inPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.prevRing }}/base/base-snapshot
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+
+    # git-wh: update external repo ref from internal-infra-deployments
+    - uses: yaml-update
+      as: update-external-ref
+      if: ${{ ctx.targetFreight.origin.name == "repository-validator-git-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        updates:
+          - key: resources.0
+            value: https://github.com/redhat-appstudio/internal-infra-deployments/components/repository-validator/staging?ref=${{ commitFrom("https://github.com/redhat-appstudio/internal-infra-deployments.git", warehouse("repository-validator-git-wh")).ID }}

@@ -1,0 +1,147 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: ring-1-repository-validator
+  labels:
+    konflux-environment: staging
+  annotations:
+    kargo.akuity.io/color: yellow
+spec:
+  shard: infra-deployments-staging
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: repository-validator-manifest-wh
+      sources:
+        stages:
+          - ring-0-repository-validator
+    - origin:
+        kind: Warehouse
+        name: repository-validator-git-wh
+      sources:
+        stages:
+          - ring-0-repository-validator
+  verification:
+    analysisTemplates:
+      - name: kanary-staging
+    args:
+      - name: clusters
+        value: stone-stg-rh01|stone-stage-p01
+      - name: expected-cluster-count
+        value: "2"
+  promotionTemplate:
+    spec:
+      vars:
+        - name: srcPath
+          value: ./src
+        - name: repoURL
+          value: https://github.com/redhat-appstudio/infra-deployments.git
+        - name: targetRing
+          value: ring-1
+        - name: prevRing
+          value: ring-0
+      steps:
+        - uses: git-clone
+          as: clone
+          config:
+            repoURL: ${{ vars.repoURL }}
+            checkout:
+              - branch: main
+                path: ${{ vars.srcPath }}
+        - task:
+            name: promote-repository-validator-manifests
+          as: promote-repository-validator
+          vars:
+            - name: srcPath
+              value: ${{ vars.srcPath }}
+            - name: prevRing
+              value: ${{ vars.prevRing }}
+            - name: targetRing
+              value: ${{ vars.targetRing }}
+        - uses: git-commit
+          as: commit
+          config:
+            path: ${{ vars.srcPath }}
+            message: |
+              chore(${{ ctx.stage }}): promote repository-validator to ${{ vars.targetRing }}
+        - uses: git-push
+          as: push
+          config:
+            path: ${{ vars.srcPath }}
+            targetBranch: ${{ ctx.project }}/repository-validator/${{ vars.targetRing }}
+            force: true
+        - uses: git-open-pr
+          as: open-pr
+          continueOnError: true
+          config:
+            repoURL: ${{ vars.repoURL }}
+            sourceBranch: ${{ ctx.project }}/repository-validator/${{ vars.targetRing }}
+            targetBranch: main
+            title: "chore(${{ ctx.stage }}): promote repository-validator to ${{ vars.targetRing }}"
+            description: |
+              ### ${{ ctx.stage }}
+
+              | | |
+              |---|---|
+              | **Component** | `repository-validator` |
+              | **Project** | `${{ ctx.project }}` |
+              | **Promotion** | `${{ ctx.promotion }}` |
+              | **Freight** | `${{ ctx.targetFreight.alias }}` |
+
+              ---
+
+              Auto-merged after CI passes. No manual approval required for Ring 1.
+
+              > Branch is force-pushed each promotion cycle. Do not commit directly.
+            labels:
+              - ring-1
+              - automated-promotion
+              - component/repository-validator
+        - task:
+            name: wait-for-ci
+          as: wait-for-ci
+          vars:
+            - name: commitSHA
+              value: ${{ outputs['push'].commit }}
+            - name: skipProwChecks
+              value: "true"
+        - uses: http
+          as: find-pr
+          retry:
+            timeout: 5m0s
+            errorThreshold: 10
+          config:
+            method: GET
+            url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/repository-validator/${{ vars.targetRing }}&state=open
+            headers:
+              - name: Authorization
+                value: Bearer ${{ secret('kargo-promotion-credentials').github_pat }}
+              - name: Accept
+                value: application/vnd.github+json
+            outputs:
+              - name: prNumber
+                fromExpression: response.body[0].number
+            successExpression: response.status == 200 && len(response.body) > 0
+            timeout: 30s
+        - uses: git-merge-pr
+          as: merge-pr
+          retry:
+            timeout: 2h0m0s
+          config:
+            repoURL: ${{ vars.repoURL }}
+            prNumber: ${{ outputs['find-pr'].prNumber }}
+            mergeMethod: squash
+            wait: true
+        - task:
+            name: wait-for-infra-deployments-argocd-sync
+          as: wait-for-sync
+          vars:
+            - name: commitSHA
+              value: ${{ outputs['merge-pr'].commit }}
+            - name: component
+              value: repository-validator-rd
+            - name: clusters
+              value: "stone-stg-rh01|stone-stage-p01"
+            - name: tokenSecret
+              value: argocd-app-reader-token-staging

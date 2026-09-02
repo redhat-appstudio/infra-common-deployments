@@ -8,6 +8,7 @@ resources:
   - base
   - components/authentication
   - components/etcd-shield
+  - components/repository-validator
 
 components:
   - ../../kargo-shared-secrets

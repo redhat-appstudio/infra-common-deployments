@@ -23,3 +23,7 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-4-etcd-shield
       autoPromotionEnabled: true
+    - stage: ring-0-repository-validator
+      autoPromotionEnabled: true
+    - stage: ring-1-repository-validator
+      autoPromotionEnabled: true
