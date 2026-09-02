@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: argocd-internal-appsre-all-application-sets
+  name: all-application-sets
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
