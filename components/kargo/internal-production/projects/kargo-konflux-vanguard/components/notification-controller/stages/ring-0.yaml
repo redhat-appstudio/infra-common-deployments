@@ -19,3 +19,5 @@ spec:
       steps:
         - uses: compose-output
           as: passthrough
+          config:
+            status: skipped

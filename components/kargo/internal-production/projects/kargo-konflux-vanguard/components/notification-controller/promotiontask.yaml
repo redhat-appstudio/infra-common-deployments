@@ -9,19 +9,12 @@ spec:
     - name: targetRing
 
   steps:
-    - uses: kustomize-set-image
-      as: update-image
-      config:
-        path: ${{ vars.srcPath }}/components/notification-controller-rd/rings/${{ vars.targetRing }}/base
-        images:
-          - image: quay.io/konflux-ci/notification-service
-            newName: quay.io/konflux-ci/notification-service
-            newTag: ${{ imageFrom("quay.io/konflux-ci/notification-service").Tag }}
-
     - uses: yaml-update
-      as: update-external-ref
+      as: update-image-and-ref
       config:
         path: ${{ vars.srcPath }}/components/notification-controller-rd/rings/${{ vars.targetRing }}/base/kustomization.yaml
         updates:
+          - key: images.0.newTag
+            value: ${{ imageFrom("quay.io/konflux-ci/notification-service").Tag }}
           - key: resources.0
             value: https://github.com/konflux-ci/notification-service/config/default?ref=${{ imageFrom("quay.io/konflux-ci/notification-service").Tag }}
