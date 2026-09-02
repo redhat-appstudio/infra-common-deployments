@@ -1,0 +1,68 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: ring-1
+  annotations:
+    kargo.akuity.io/color: green
+spec:
+  shard: infra-deployments-staging
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: dummy-deployment
+      sources:
+        stages:
+          - ring-0-dummy-deployment
+  verification:
+    analysisTemplates:
+      - name: kanary-staging
+      - name: konflux-conformance-tests-stone-stage-p01
+    args:
+      - name: clusters
+        value: stone-stg-rh01|stone-stage-p01
+      - name: expected-cluster-count
+        value: "2"
+  promotionTemplate:
+    spec:
+      vars:
+        - name: srcPath
+          value: ./src
+        - name: component
+          value: "${{ hasSuffix(ctx.targetFreight.origin.name, '-image-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-image-wh') : (hasSuffix(ctx.targetFreight.origin.name, '-manifest-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-manifest-wh') : (hasSuffix(ctx.targetFreight.origin.name, '-chart-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-chart-wh') : ctx.targetFreight.origin.name)) }}"
+        - name: targetRing
+          value: ring-1
+        - name: prevRing
+          value: ring-0
+      steps:
+        - uses: git-clone
+          as: clone
+          config:
+            repoURL: https://github.com/redhat-appstudio/infra-deployments.git
+            checkout:
+              - branch: main
+                path: ${{ vars.srcPath }}
+        - task:
+            name: dummy-deployment-promote-ring-1
+          as: promote-dummy-deployment
+          vars:
+            - name: srcPath
+              value: ${{ vars.srcPath }}
+        - task:
+            name: git-workflow-infra-deployments
+          as: git-workflow
+          vars:
+            - name: srcPath
+              value: ${{ vars.srcPath }}
+            - name: component
+              value: ${{ vars.component }}
+            - name: targetRing
+              value: ${{ vars.targetRing }}
+            - name: skipProwChecks
+              value: "true"
+            - name: clusters
+              value: "stone-stg-rh01|stone-stage-p01"
+            - name: tokenSecret
+              value: argocd-app-reader-token-staging
+            - name: githubPatSecret
+              value: kargo-promotion-credentials
