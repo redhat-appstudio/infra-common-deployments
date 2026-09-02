@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - ring-0.yaml
   - ring-1.yaml
+  - ring-2.yaml
