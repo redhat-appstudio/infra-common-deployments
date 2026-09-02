@@ -1,0 +1,15 @@
+---
+# Shared ClusterRole granting read access to ArgoCD Applications.
+# Each Kargo project binds to this via its own ClusterRoleBinding.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kargo-argocd-app-reader
+rules:
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - applications
+    verbs:
+      - get
+      - list
