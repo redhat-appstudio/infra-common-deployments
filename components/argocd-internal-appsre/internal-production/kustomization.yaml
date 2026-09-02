@@ -56,3 +56,15 @@ patches:
       version: v1beta1
       kind: ArgoCD
       name: argocd
+  - path: patches/argocd-redis-memory-limit-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd
+  - path: patches/argocd-redis-requests-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd
