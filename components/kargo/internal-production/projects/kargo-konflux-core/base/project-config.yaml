@@ -9,3 +9,5 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-1-konflux-operator
       autoPromotionEnabled: true
+    - stage: ring-2-konflux-operator
+      autoPromotionEnabled: true
