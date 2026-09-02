@@ -8,6 +8,7 @@ resources:
   - base
   - components/artifact-registry-proxy
   - components/container-image-proxy
+  - components/notification-controller
 
 components:
   - ../../kargo-shared-secrets

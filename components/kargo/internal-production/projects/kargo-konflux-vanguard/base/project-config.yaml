@@ -13,3 +13,7 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-1-container-image-proxy
       autoPromotionEnabled: true
+    - stage: ring-0-notification-controller
+      autoPromotionEnabled: true
+    - stage: ring-1-notification-controller
+      autoPromotionEnabled: true
