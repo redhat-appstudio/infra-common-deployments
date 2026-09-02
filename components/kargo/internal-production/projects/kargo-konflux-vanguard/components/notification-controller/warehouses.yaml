@@ -7,8 +7,9 @@ spec:
   freightCreationPolicy: Automatic
   interval: 30m0s
   subscriptions:
-    - git:
-        repoURL: https://github.com/konflux-ci/notification-service.git
-        commitSelectionStrategy: NewestFromBranch
-        branch: main
+    - image:
+        repoURL: quay.io/konflux-ci/notification-service
+        imageSelectionStrategy: NewestBuild
         discoveryLimit: 5
+        allowTagsRegexes:
+          - ^[0-9a-f]{40}$
