@@ -1,0 +1,14 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: notification-controller
+spec:
+  freightCreationPolicy: Automatic
+  interval: 30m0s
+  subscriptions:
+    - git:
+        repoURL: https://github.com/konflux-ci/notification-service.git
+        commitSelectionStrategy: NewestFromBranch
+        branch: main
+        discoveryLimit: 5

@@ -1,0 +1,20 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-notification-controller
+spec:
+  vars:
+    - name: srcPath
+    - name: targetRing
+
+  steps:
+    - uses: yaml-update
+      as: update-ref
+      config:
+        path: ${{ vars.srcPath }}/components/notification-controller-rd/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        updates:
+          - key: images.0.newTag
+            value: ${{ commitFrom("https://github.com/konflux-ci/notification-service.git").ID }}
+          - key: resources.0
+            value: https://github.com/konflux-ci/notification-service/config/default?ref=${{ commitFrom("https://github.com/konflux-ci/notification-service.git").ID }}
