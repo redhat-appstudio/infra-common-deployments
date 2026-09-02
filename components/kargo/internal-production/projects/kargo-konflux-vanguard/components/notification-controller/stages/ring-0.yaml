@@ -16,4 +16,6 @@ spec:
         direct: true
   promotionTemplate:
     spec:
-      steps: []
+      steps:
+        - uses: compose-output
+          as: passthrough
