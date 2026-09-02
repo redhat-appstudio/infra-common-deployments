@@ -18,14 +18,6 @@ spec:
         name: rover-group-sync
       sources:
         direct: true
-  verification:
-    analysisTemplates:
-      - name: conformance-konflux-e2e
-    args:
-      - name: cluster-url
-        value: "https://api.stone-stage-p01.hpmt.p1.openshiftapps.com:6443"
-      - name: cluster-name
-        value: stone-stage-p01
   promotionTemplate:
     spec:
       vars:

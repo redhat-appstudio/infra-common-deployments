@@ -85,7 +85,7 @@ data:
 
                 # ── clone test source and run ────────────────────
                 git clone --depth=1 --branch=fix_kubeconfig_e2e \
-                  https://github.com/flacatus/konflux-ci.git /tmp/src
+                  https://github.com/konflux-ci/konflux-ci.git /tmp/src
                 cd /tmp/src/test/go-tests
 
                 CUSTOM_DOCKER_BUILD_OCI_TA_MIN_PIPELINE_BUNDLE=$(grep -A1 'name: docker-build-oci-ta-min' \

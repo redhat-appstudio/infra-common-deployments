@@ -4,3 +4,4 @@ kind: Component
 resources:
   - kanary-staging.yaml
   - kanary-production.yaml
+  - konflux-conformance-tests

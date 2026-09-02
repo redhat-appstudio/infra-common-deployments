@@ -19,6 +19,7 @@ spec:
   verification:
     analysisTemplates:
       - name: kanary-staging
+      - name: konflux-conformance-tests-stone-stage-p01
     args:
       - name: clusters
         value: stone-stg-rh01|stone-stage-p01
