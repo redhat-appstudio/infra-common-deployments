@@ -1,0 +1,118 @@
+---
+# Shared git workflow for infra-deployments promotions.
+# Handles: commit → push → open PR → wait CI → find PR → merge → wait ArgoCD sync.
+# Used by all component stages after the component-specific promote task.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: git-workflow-infra-deployments
+spec:
+  vars:
+    - name: srcPath
+    - name: component
+    - name: targetRing
+    - name: skipProwChecks
+      value: "true"
+    - name: clusters
+      value: ""
+    - name: tokenSecret
+      value: argocd-app-reader-token-staging
+    - name: waitForSync
+      value: "true"
+    - name: githubPatSecret
+      value: kargo-promotion-credentials
+
+  steps:
+    - uses: git-commit
+      as: commit
+      config:
+        path: ${{ vars.srcPath }}
+        message: |
+          chore(ring-${{ vars.targetRing }}): promote ${{ vars.component }} to ${{ vars.targetRing }}
+
+    - uses: git-push
+      as: push
+      config:
+        path: ${{ vars.srcPath }}
+        targetBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
+        force: true
+
+    - uses: git-open-pr
+      as: open-pr
+      continueOnError: true
+      config:
+        repoURL: https://github.com/redhat-appstudio/infra-deployments.git
+        sourceBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
+        targetBranch: main
+        title: "chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}"
+        description: |
+          ### ${{ ctx.stage }}
+
+          | | |
+          |---|---|
+          | **Component** | `${{ vars.component }}` |
+          | **Project** | `${{ ctx.project }}` |
+          | **Promotion** | `${{ ctx.promotion }}` |
+          | **Freight** | `${{ ctx.targetFreight.alias }}` |
+
+          ---
+
+          Auto-merged after CI passes.
+
+          > Branch is force-pushed each promotion cycle. Do not commit directly.
+        labels:
+          - ${{ vars.targetRing }}
+          - automated-promotion
+          - component/${{ vars.component }}
+
+    - task:
+        name: wait-for-ci
+      as: wait-for-ci
+      vars:
+        - name: commitSHA
+          value: ${{ outputs['push'].commit }}
+        - name: skipProwChecks
+          value: ${{ vars.skipProwChecks }}
+
+    - uses: http
+      as: find-pr
+      retry:
+        timeout: 5m0s
+        errorThreshold: 10
+      config:
+        method: GET
+        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}&state=open
+        headers:
+          - name: Authorization
+            value: Bearer ${{ secret(vars.githubPatSecret).github_pat }}
+          - name: Accept
+            value: application/vnd.github+json
+        outputs:
+          - name: prNumber
+            fromExpression: response.body[0].number
+        successExpression: response.status == 200 && len(response.body) > 0
+        timeout: 30s
+
+    - uses: git-merge-pr
+      as: merge-pr
+      retry:
+        timeout: 2h0m0s
+      config:
+        repoURL: https://github.com/redhat-appstudio/infra-deployments.git
+        prNumber: ${{ outputs['find-pr'].prNumber }}
+        mergeMethod: squash
+        wait: true
+
+    - task:
+        name: wait-for-infra-deployments-argocd-sync
+      as: wait-for-sync
+      if: ${{ vars.waitForSync == 'true' && vars.clusters != '' }}
+      vars:
+        - name: commitSHA
+          value: ${{ outputs['merge-pr'].commit }}
+        - name: component
+          value: ${{ vars.component }}
+        - name: clusters
+          value: ${{ vars.clusters }}
+        - name: tokenSecret
+          value: ${{ vars.tokenSecret }}

@@ -6,10 +6,12 @@ namespace: kargo-infra-deployments
 
 resources:
   - base
-  - dummy-deployment
+  - components/dummy-deployment
 
 components:
   - ../../kargo-shared-secrets
+  - ../../kargo-shared-promotion-tasks
+  - ../../kargo-shared-verifications
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
