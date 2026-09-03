@@ -1,0 +1,32 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: repository-validator-manifest-wh
+spec:
+  freightCreationPolicy: Automatic
+  interval: 2h0m0s
+  subscriptions:
+    - git:
+        repoURL: https://github.com/redhat-appstudio/infra-deployments.git
+        commitSelectionStrategy: NewestFromBranch
+        branch: main
+        discoveryLimit: 5
+        includePaths:
+          - 'components/repository-validator-rd/base'
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: repository-validator-git-wh
+spec:
+  freightCreationPolicy: Automatic
+  interval: 2h0m0s
+  subscriptions:
+    - git:
+        repoURL: https://github.com/redhat-appstudio/internal-infra-deployments.git
+        commitSelectionStrategy: NewestFromBranch
+        branch: main
+        discoveryLimit: 5
+        includePaths:
+          - 'components/repository-validator'
