@@ -8,7 +8,6 @@ resources:
   - namespace.yaml
   - lease-rbac.yaml
   - project-rbac.yaml
-  - external-secret.yaml
   - argocd-app-reader-clusterrole.yaml
   - infra-deployments/staging
   - infra-deployments/production

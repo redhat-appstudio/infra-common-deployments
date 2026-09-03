@@ -8,7 +8,6 @@ resources:
   - base
 
 components:
-  - ../../kargo-shared-secrets
   - ../../kargo-shared-promotion-tasks
   - ../../kargo-shared-verifications
 

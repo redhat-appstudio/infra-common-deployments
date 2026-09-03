@@ -8,8 +8,5 @@ resources:
   - base
   - dummy-deployment
 
-components:
-  - ../../kargo-shared-secrets
-
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
