@@ -2,8 +2,7 @@
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: kargo-git-credentials
-  namespace: kargo-shared-resources
+  name: konflux-kargo-git-operations
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
@@ -11,7 +10,7 @@ spec:
     - extract:
         conversionStrategy: Default
         decodingStrategy: None
-        key: production/devprod/kargo-secrets-prod
+        key: production/devprod/konflux-kargo-git-operations
   refreshInterval: 15m
   secretStoreRef:
     kind: ClusterSecretStore
@@ -19,8 +18,8 @@ spec:
   target:
     creationPolicy: Owner
     deletionPolicy: Delete
-    name: kargo-git-credentials
+    name: konflux-kargo-git-operations
     template:
       metadata:
         labels:
-          kargo.akuity.io/cred-type: git
+          kargo.akuity.io/cred-type: generic

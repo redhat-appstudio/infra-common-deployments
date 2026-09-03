@@ -2,7 +2,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
-  name: wait-for-ci
+  name: github-ci-gate
 spec:
   vars:
     - name: commitSHA

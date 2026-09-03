@@ -9,7 +9,6 @@ resources:
   - components/konflux-operator
 
 components:
-  - ../../kargo-shared-secrets
   - ../../kargo-shared-promotion-tasks
   - ../../kargo-shared-verifications
 

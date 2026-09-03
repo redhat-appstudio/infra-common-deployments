@@ -2,6 +2,6 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Project
 metadata:
-  name: kargo-infra-deployments
+  name: kargo-production-playground
   annotations:
     kargo.akuity.io/keep-namespace: "true"

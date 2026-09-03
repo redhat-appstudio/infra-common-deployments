@@ -96,15 +96,13 @@ spec:
               - automated-promotion
               - component/${{ vars.component }}
         - task:
-            name: wait-for-ci
-          as: wait-for-ci
+            name: github-ci-gate
+          as: github-ci-gate
           vars:
             - name: commitSHA
               value: ${{ outputs['push'].commit }}
-            - name: requiredProwChecks
-              value: "^ci/prow/appstudio-e2e-tests$"
             - name: skipProwChecks
-              value: "false"
+              value: "true"
         - uses: http
           as: find-pr
           retry:
@@ -115,7 +113,7 @@ spec:
             url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}&state=open
             headers:
               - name: Authorization
-                value: Bearer ${{ secret('kargo-promotion-credentials').github_pat }}
+                value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
               - name: Accept
                 value: application/vnd.github+json
             outputs:

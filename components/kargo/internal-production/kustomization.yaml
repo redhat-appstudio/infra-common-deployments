@@ -6,6 +6,7 @@ resources:
   - deployment
   - projects
   - shard-rbac
+  - kargo-shared-secrets
 
 patches:
   - target:

@@ -53,12 +53,12 @@ subjects:
     name: kargo-shard-staging
     namespace: kargo
 ---
-# --- kargo-infra-deployments ---
+# --- kargo-production-playground ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: kargo-shard-staging-project-access
-  namespace: kargo-infra-deployments
+  namespace: kargo-production-playground
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
