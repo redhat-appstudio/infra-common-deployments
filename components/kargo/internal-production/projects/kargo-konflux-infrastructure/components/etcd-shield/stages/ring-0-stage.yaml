@@ -112,7 +112,7 @@ spec:
           as: github-ci-gate
           vars:
             - name: commitSHA
-              value: ${{ outputs['push'].commit }}
+              value: "${{ status('commit') != 'Skipped' ? outputs['push'].commit : '' }}"
             - name: promotionAsNoOp
               value: "${{ frieghtMetadata(ctx.targetFreight.name).promotionAsNoOp }}"
             - name: skipProwChecks
