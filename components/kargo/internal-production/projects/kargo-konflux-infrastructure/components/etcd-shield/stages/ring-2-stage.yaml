@@ -73,7 +73,7 @@ spec:
             path: ${{ vars.srcPath }}
             message: |
               chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}
-        # If the commit is skipped, set the freight promotion as no-op. This can happen with hotfixes.
+        # If the commit is skipped, set the freight promotion as no-op for Ring 2. This can happen with hotfixes.
         - uses: set-metadata
           as: set-freight-promotion-as-no-op
           config:
@@ -81,8 +81,7 @@ spec:
               - name: ${{ ctx.targetFreight.name }}
                 kind: Freight
                 values:
-                  promotionAsNoOp: "${{ status('commit') == 'Skipped' ? 'true' : 'false' }}"
-                  stage: ${{ ctx.stage }}
+                  noOpRing2: "${{ status('commit') == 'Skipped' ? 'true' : 'false' }}"
         - uses: git-push
           as: push
           if: ${{ status('commit') != 'Skipped'}}
