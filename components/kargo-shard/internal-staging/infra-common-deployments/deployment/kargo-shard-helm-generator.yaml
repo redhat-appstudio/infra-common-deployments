@@ -4,13 +4,13 @@ metadata:
   name: kargo-shard-infra-common-deployments
 name: kargo
 repo: oci://ghcr.io/akuity/kargo-charts
-version: 1.10.10
+version: 1.11.3
 namespace: kargo-shard-infra-common-deployments
 releaseName: kargo-shard-infra-common-deployments
 valuesInline:
   image:
     repository: quay.io/konflux-ci/kargo
-    tag: v1.10.10-0-gdd556f03
+    tag: v1.11.3-0-g08a4d084
   # Controller-only shard: full Kargo on this cluster owns the data plane
   # (CRDs, ClusterRoles, webhooks, shared namespaces). Avoid SharedResourceWarning.
   api:
