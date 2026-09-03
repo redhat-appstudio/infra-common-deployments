@@ -1,0 +1,5 @@
+- op: add
+  path: /spec/repo/env
+  value:
+    - name: ARGOCD_REPO_SERVER_PARALLELISM_LIMIT
+      value: "8"

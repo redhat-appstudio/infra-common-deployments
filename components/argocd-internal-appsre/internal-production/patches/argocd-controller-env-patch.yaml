@@ -1,0 +1,15 @@
+- op: add
+  path: /spec/controller/env/-
+  value:
+    name: ARGOCD_CONTROLLER_STATUS_PROCESSORS
+    value: "30"
+- op: add
+  path: /spec/controller/env/-
+  value:
+    name: ARGOCD_CONTROLLER_OPERATION_PROCESSORS
+    value: "15"
+- op: add
+  path: /spec/controller/env/-
+  value:
+    name: ARGOCD_APPLICATION_CONTROLLER_REPO_SERVER_TIMEOUT_SECONDS
+    value: "120"

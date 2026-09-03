@@ -21,17 +21,17 @@ patches:
       version: v1beta1
       kind: ArgoCD
       name: argocd
-  - path: patches/argocd-controller-sharding-replica-patch.yaml
-    target:
-      group: argoproj.io
-      version: v1beta1
-      kind: ArgoCD
-  - path: patches/argocd-disable-ha-patch.yaml
+  - path: patches/argocd-controller-env-patch.yaml
     target:
       group: argoproj.io
       version: v1beta1
       kind: ArgoCD
       name: argocd
+  - path: patches/argocd-controller-sharding-replica-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
   - path: patches/argocd-namespace-patch.yaml
     target:
       group: argoproj.io
@@ -45,6 +45,18 @@ patches:
       kind: ArgoCD
       name: argocd
   - path: patches/argocd-repo-requests-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd
+  - path: patches/argocd-repo-replicas-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd
+  - path: patches/argocd-repo-env-patch.yaml
     target:
       group: argoproj.io
       version: v1beta1

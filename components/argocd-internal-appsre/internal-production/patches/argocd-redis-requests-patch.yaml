@@ -2,4 +2,4 @@
   path: /spec/redis/resources/requests
   value:
     memory: 1Gi
-    cpu: 250m
+    cpu: 500m

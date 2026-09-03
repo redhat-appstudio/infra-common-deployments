@@ -1,3 +1,0 @@
-- op: replace
-  path: /spec/ha/enabled
-  value: false
