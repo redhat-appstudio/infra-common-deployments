@@ -33,7 +33,7 @@ spec:
     - name: component
     - name: clusters
     - name: promotionAsNoOp
-      value: "false" # TODO: remove this default value once all promotions have been updated to set the promotionAsNoOp var
+      value: false # TODO: remove this default value once all promotions have been updated to set the promotionAsNoOp var
     - name: appsNamespace
       value: argocd-infra-deployments
     - name: tokenSecret
@@ -41,7 +41,7 @@ spec:
   steps:
     - uses: http
       as: wait-for-all-healthy
-      if: ${{ vars.promotionAsNoOp != 'true' }}
+      if: ${{ !vars.promotionAsNoOp }}
       retry:
         timeout: 15m0s
         errorThreshold: 3
@@ -92,7 +92,7 @@ spec:
 
     - uses: compose-output
       as: output
-      if: ${{ vars.promotionAsNoOp != 'true' }}
+      if: ${{ !vars.promotionAsNoOp }}
       config:
         appDetails: ${{ task.outputs['wait-for-all-healthy'].appDetails }}
         lastCommit: ${{ task.outputs['wait-for-all-healthy'].lastCommit }}

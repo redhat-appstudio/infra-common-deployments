@@ -30,7 +30,7 @@ spec:
   vars:
     - name: commitSHA
     - name: promotionAsNoOp
-      value: "false" # TODO: remove this default value once all promotions have been updated to set the promotionAsNoOp var
+      value: false # TODO: remove this default value once all promotions have been updated to set the promotionAsNoOp var
     - name: repoOwner
       value: redhat-appstudio
     - name: repoName
