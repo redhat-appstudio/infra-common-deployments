@@ -96,8 +96,8 @@ spec:
               - automated-promotion
               - component/${{ vars.component }}
         - task:
-            name: wait-for-ci
-          as: wait-for-ci
+            name: github-ci-gate
+          as: github-ci-gate
           vars:
             - name: commitSHA
               value: ${{ outputs['push'].commit }}

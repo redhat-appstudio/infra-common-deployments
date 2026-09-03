@@ -24,7 +24,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
-  name: wait-for-ci
+  name: github-ci-gate
 spec:
   vars:
     - name: commitSHA
@@ -56,6 +56,11 @@ spec:
           response.status == 200 &&
           len(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}'})) > 0 &&
           all(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}'}), {.conclusion in ['success', 'neutral', 'skipped']})
+        failureExpression: |
+          response.status in [401, 403, 404] ||
+          (response.status == 200 &&
+          len(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}'})) > 0 &&
+          any(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}'}), {.conclusion in ['failure', 'cancelled', 'timed_out', 'action_required', 'stale']}))
         timeout: 30s
     # Phase 2: Wait for Prow status checks (skipped when skipProwChecks=true)
     # Filters out the 'tide' context since it reflects merge state, not test results
@@ -76,4 +81,9 @@ spec:
           response.status == 200 &&
           len(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')})) > 0 &&
           all(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')}), {.state == 'success'})
+        failureExpression: |
+          response.status in [401, 403, 404] ||
+          (response.status == 200 &&
+          len(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')})) > 0 &&
+          any(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')}), {.state in ['failure', 'error']}))
         timeout: 30s

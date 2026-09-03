@@ -109,8 +109,8 @@ spec:
               - automated-promotion
               - component/${{ vars.component }}
         - task:
-            name: wait-for-ci
-          as: wait-for-ci
+            name: github-ci-gate
+          as: github-ci-gate
           if: ${{ status('commit') != 'Skipped'}}
           vars:
             - name: commitSHA
