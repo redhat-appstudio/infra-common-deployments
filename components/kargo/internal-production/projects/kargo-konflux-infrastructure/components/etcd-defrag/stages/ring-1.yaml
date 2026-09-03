@@ -41,8 +41,10 @@ spec:
           value: etcd-defrag-rd
         - name: targetRing
           value: ring-1
+        # ring-0 is a compose-output passthrough (no manifest snapshot),
+        # so ring-1 copies directly from the component base.
         - name: prevRing
-          value: ring-0
+          value: base
       steps:
         - uses: git-clone
           as: clone
