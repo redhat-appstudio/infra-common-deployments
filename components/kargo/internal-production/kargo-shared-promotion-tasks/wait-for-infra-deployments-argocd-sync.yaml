@@ -33,7 +33,7 @@ spec:
     - name: component
     - name: clusters
     - name: promotionAsNoOp
-      value: false # TODO: remove this default value once all promotions have been updated to set the promotionAsNoOp var
+      value: "false" # TODO: remove this default value once all promotions have been updated to set the promotionAsNoOp var
     - name: appsNamespace
       value: argocd-infra-deployments
     - name: tokenSecret
