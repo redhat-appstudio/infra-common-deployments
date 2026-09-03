@@ -10,7 +10,6 @@ resources:
   - rover-group-sync
 
 components:
-  - ../../kargo-shared-secrets
   - ../../kargo-shared-verifications
 
 commonAnnotations:

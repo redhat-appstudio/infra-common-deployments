@@ -19,3 +19,9 @@ spec:
     creationPolicy: Owner
     deletionPolicy: Delete
     name: kargo-rhobs-production
+    template:
+      metadata:
+        annotations:
+          kargo.akuity.io/replicate-to: "*"
+        labels:
+          kargo.akuity.io/cred-type: generic
