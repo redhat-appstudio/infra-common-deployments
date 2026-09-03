@@ -61,13 +61,12 @@ spec:
         # If the commit is skipped, set the freight promotion as no-op. This can happen with hotfixes.
         - uses: set-metadata
           as: set-freight-promotion-as-no-op
-          if: ${{ status('commit') == 'Skipped'}}
           config:
             updates:
               - name: ${{ ctx.targetFreight.name }}
                 kind: Freight
                 values:
-                  promotionAsNoOp: true
+                  promotionAsNoOp: "${{ status('commit') == 'Skipped' ? 'true' : 'false' }}"
                   stage: ${{ ctx.stage }}
         - uses: git-push
           as: push
@@ -114,6 +113,8 @@ spec:
           vars:
             - name: commitSHA
               value: ${{ outputs['push'].commit }}
+            - name: promotionAsNoOp
+              value: "${{ frieghtMetadata(ctx.targetFreight.name).promotionAsNoOp }}"
             - name: skipProwChecks
               value: "true"
         - uses: http
@@ -137,6 +138,7 @@ spec:
             timeout: 30s
         - uses: git-merge-pr
           as: merge-pr
+          if: ${{ status('commit') != 'Skipped'}}
           retry:
             timeout: 2h0m0s
           config:
