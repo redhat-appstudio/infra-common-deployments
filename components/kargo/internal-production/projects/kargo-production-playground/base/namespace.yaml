@@ -2,6 +2,6 @@
 kind: Namespace
 apiVersion: v1
 metadata:
-  name: kargo-infra-deployments
+  name: kargo-production-playground
   labels:
     kargo.akuity.io/project: "true"

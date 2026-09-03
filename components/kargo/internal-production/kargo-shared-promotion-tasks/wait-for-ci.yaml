@@ -12,7 +12,7 @@
 #   2. Prow status checks — polls /status endpoint (skippable via vars)
 #
 # Both phases retry for up to 2h30m, polling every 30s.
-# Authentication uses the shared kargo-promotion-credentials secret (GitHub PAT).
+# Authentication uses the shared konflux-kargo-git-operations secret (GitHub PAT).
 #
 # Vars:
 #   commitSHA (required)       — git commit to check
@@ -49,7 +49,7 @@ spec:
         url: https://api.github.com/repos/${{ vars.repoOwner }}/${{ vars.repoName }}/commits/${{ vars.commitSHA }}/check-runs
         headers:
           - name: Authorization
-            value: Bearer ${{ secret('kargo-promotion-credentials').github_pat }}
+            value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
           - name: Accept
             value: application/vnd.github+json
         successExpression: |
@@ -69,7 +69,7 @@ spec:
         url: https://api.github.com/repos/${{ vars.repoOwner }}/${{ vars.repoName }}/commits/${{ vars.commitSHA }}/status
         headers:
           - name: Authorization
-            value: Bearer ${{ secret('kargo-promotion-credentials').github_pat }}
+            value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
           - name: Accept
             value: application/vnd.github+json
         successExpression: |
