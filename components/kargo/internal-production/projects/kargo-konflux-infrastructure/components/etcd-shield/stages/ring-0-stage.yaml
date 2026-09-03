@@ -111,12 +111,13 @@ spec:
         - task:
             name: github-ci-gate
           as: github-ci-gate
-          if: ${{ status('commit') != 'Skipped'}}
           vars:
             - name: commitSHA
-              value: ${{ outputs['push'].commit }}
+              value: "${{ status('commit') == 'Skipped' ? 'none' : outputs['push'].commit }}"
             - name: skipProwChecks
               value: "true"
+            - name: skip
+              value: "${{ status('commit') == 'Skipped' ? 'true' : 'false' }}"
         - uses: http
           as: find-pr
           if: ${{ status('commit') != 'Skipped'}}
