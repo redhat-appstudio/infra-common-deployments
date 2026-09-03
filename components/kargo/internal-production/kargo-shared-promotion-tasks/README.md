@@ -7,7 +7,7 @@ Included via `components:` in each project's `kustomization.yaml`.
 
 | Task | Purpose |
 | ---- | ------- |
-| `wait-for-ci` | Polls GitHub API until all CI checks (Actions + Prow) pass for a commit. Gates ring advancement on green CI. |
+| `github-ci-gate` | Polls GitHub API until all CI checks (Actions + Prow) pass for a commit. Gates ring advancement on green CI. |
 | `wait-for-infra-deployments-argocd-sync` | Verifies ArgoCD Applications have synced a specific commit and are healthy on target clusters. |
 
 Both tasks only apply to components using Ring Deployments via the

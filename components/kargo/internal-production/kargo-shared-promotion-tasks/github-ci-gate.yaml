@@ -16,12 +16,12 @@
 #
 # Vars:
 #   commitSHA (required)       — git commit to check
+#   promotionAsNoOp (required) — whether or not the promotion is a no-op; skips all steps when true (e.g. no-op promotions)
 #   repoOwner                  — GitHub org (default: redhat-appstudio)
 #   repoName                   — GitHub repo (default: infra-deployments)
-#   requiredCheckRuns           — regex filter for check-run names (default: .*)
-#   requiredProwChecks          — regex filter for prow context names (default: .*)
-#   skipProwChecks              — set "true" to skip prow phase entirely
-#   skip                        — set "true" to skip all checks (e.g. no-op promotions)
+#   requiredCheckRuns          — regex filter for check-run names (default: .*)
+#   requiredProwChecks         — regex filter for prow context names (default: .*)
+#   skipProwChecks             — set "true" to skip prow phase entirely
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
@@ -29,6 +29,8 @@ metadata:
 spec:
   vars:
     - name: commitSHA
+    - name: promotionAsNoOp
+      value: "false" # TODO: remove this default value once all promotions have been updated to set the promotionAsNoOp var
     - name: repoOwner
       value: redhat-appstudio
     - name: repoName
@@ -39,13 +41,11 @@ spec:
       value: ".*"
     - name: skipProwChecks
       value: "false"
-    - name: skip
-      value: "false"
   steps:
-    # Phase 1: Wait for GitHub Actions check runs to complete and pass
+    # Phase 1: Wait for GitHub Actions check runs to complete and pass (skipped when promotionAsNoOp=true)
     - uses: http
       as: wait-for-check-runs
-      if: ${{ vars.skip != 'true' }}
+      if: ${{ vars.promotionAsNoOp != 'true' }}
       retry:
         timeout: 2h30m
       config:
@@ -66,11 +66,11 @@ spec:
           len(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}'})) > 0 &&
           any(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}'}), {.conclusion in ['failure', 'cancelled', 'timed_out', 'action_required', 'stale']}))
         timeout: 30s
-    # Phase 2: Wait for Prow status checks (skipped when skipProwChecks=true)
+    # Phase 2: Wait for Prow status checks (skipped when skipProwChecks=true or promotionAsNoOp=true)
     # Filters out the 'tide' context since it reflects merge state, not test results
     - uses: http
       as: wait-for-prow-checks
-      if: ${{ vars.skip != 'true' && vars.skipProwChecks != 'true' }}
+      if: ${{ vars.skipProwChecks != 'true' && vars.promotionAsNoOp != 'true' }}
       retry:
         timeout: 2h30m
       config:
