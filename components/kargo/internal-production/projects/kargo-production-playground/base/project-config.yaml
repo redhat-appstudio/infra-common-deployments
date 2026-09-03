@@ -2,10 +2,10 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: ProjectConfig
 metadata:
-  name: kargo-infra-deployments
+  name: kargo-production-playground
 spec:
   promotionPolicies:
     - stage: ring-0-dummy-deployment
       autoPromotionEnabled: true
-    - stage: ring-1
+    - stage: ring-1-dummy-deployment
       autoPromotionEnabled: true

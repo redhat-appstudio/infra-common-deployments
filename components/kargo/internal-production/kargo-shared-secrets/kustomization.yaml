@@ -6,6 +6,7 @@ namespace: kargo-shared-resources
 
 resources:
   - kargo-promotion-credentials.yaml
+  - konflux-kargo-git-operations.yaml
   - argocd-app-reader-token-staging.yaml
   - kargo-rhobs-credentials
   - konflux-verifications-credentials

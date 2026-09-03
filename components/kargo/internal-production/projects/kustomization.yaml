@@ -2,7 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - kargo-infra-common
-  - kargo-infra-deployments
+  - kargo-production-playground
   - kargo-konflux-core
   - kargo-konflux-infrastructure
   - kargo-konflux-monitoring

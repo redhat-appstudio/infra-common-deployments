@@ -2,9 +2,11 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: ring-1
+  name: ring-1-dummy-deployment
+  labels:
+    konflux-environment: staging
   annotations:
-    kargo.akuity.io/color: green
+    kargo.akuity.io/color: yellow
 spec:
   shard: infra-deployments-staging
   requestedFreight:
@@ -17,6 +19,7 @@ spec:
   verification:
     analysisTemplates:
       - name: kanary-staging
+      - name: konflux-conformance-tests-stone-stage-p01
     args:
       - name: clusters
         value: stone-stg-rh01|stone-stage-p01
@@ -30,7 +33,7 @@ spec:
         - name: repoURL
           value: https://github.com/redhat-appstudio/infra-deployments.git
         - name: component
-          value: "${{ hasSuffix(ctx.targetFreight.origin.name, '-image-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-image-wh') : (hasSuffix(ctx.targetFreight.origin.name, '-manifest-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-manifest-wh') : (hasSuffix(ctx.targetFreight.origin.name, '-chart-wh') ? trimSuffix(ctx.targetFreight.origin.name, '-chart-wh') : ctx.targetFreight.origin.name)) }}"
+          value: ${{ ctx.targetFreight.origin.name }}
         - name: targetRing
           value: ring-1
         - name: prevRing
@@ -45,7 +48,7 @@ spec:
                 path: ${{ vars.srcPath }}
         - task:
             name: dummy-deployment-promote-ring-1
-          as: promote-dummy-deployment
+          as: dummy-deployment-promote
           vars:
             - name: srcPath
               value: ${{ vars.srcPath }}
@@ -81,7 +84,7 @@ spec:
 
               ---
 
-              ${{ (outputs['promote-' + vars.component + '.pr-meta']?.details) ?? ('Promotes `' + vars.component + '` to **' + ctx.stage + '**.') }}
+              ${{ (outputs['dummy-deployment-promote.pr-meta']?.details) ?? ('Promotes `' + vars.component + '` to **' + ctx.stage + '**.') }}
 
               ---
 
@@ -110,7 +113,7 @@ spec:
             url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}&state=open
             headers:
               - name: Authorization
-                value: Bearer ${{ secret('kargo-infra-deployments-secrets').github_pat }}
+                value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
               - name: Accept
                 value: application/vnd.github+json
             outputs:
@@ -127,15 +130,3 @@ spec:
             prNumber: ${{ outputs['find-pr'].prNumber }}
             mergeMethod: squash
             wait: true
-        - task:
-            name: wait-for-infra-deployments-argocd-sync
-          as: wait-for-sync
-          vars:
-            - name: commitSHA
-              value: ${{ outputs['merge-pr'].commit }}
-            - name: component
-              value: ${{ vars.component }}
-            - name: clusters
-              value: "stone-stg-rh01|stone-stage-p01"
-            - name: tokenSecret
-              value: kargo-infra-deployments-argocd-app-reader-token-staging

@@ -126,7 +126,7 @@ spec:
             url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}&state=open
             headers:
               - name: Authorization
-                value: Bearer ${{ secret('kargo-promotion-credentials').github_pat }}
+                value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
               - name: Accept
                 value: application/vnd.github+json
             outputs:
