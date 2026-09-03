@@ -5,6 +5,9 @@ kind: Kustomization
 generators:
   - kargo-shard-helm-generator.yaml
 
+resources:
+  - shard-shared-rbac.yaml
+
 # One patch entry per resource — multi-doc $patch: delete via path panics in kustomize.
 patches:
   - target:
@@ -151,3 +154,51 @@ patches:
       kind: RoleBinding
       metadata:
         name: kargo-system-resources-reader
+  - target:
+      group: rbac.authorization.k8s.io
+      version: v1
+      kind: Role
+      name: kargo-shared-resources-controller-reader
+      namespace: kargo-shared-resources
+    patch: |-
+      $patch: delete
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
+      metadata:
+        name: kargo-shared-resources-controller-reader
+  - target:
+      group: rbac.authorization.k8s.io
+      version: v1
+      kind: RoleBinding
+      name: kargo-controller-cluster-secrets-reader
+      namespace: kargo-cluster-secrets
+    patch: |-
+      $patch: delete
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: kargo-controller-cluster-secrets-reader
+  - target:
+      group: rbac.authorization.k8s.io
+      version: v1
+      kind: RoleBinding
+      name: kargo-controller-shared-resources-reader
+      namespace: kargo-shared-resources
+    patch: |-
+      $patch: delete
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: kargo-controller-shared-resources-reader
+  - target:
+      group: rbac.authorization.k8s.io
+      version: v1
+      kind: RoleBinding
+      name: kargo-controller-system-resources-reader
+      namespace: kargo-system-resources
+    patch: |-
+      $patch: delete
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: kargo-controller-system-resources-reader

@@ -16,7 +16,7 @@ spec:
       sources:
         stages:
           - ring-1-konflux-operator
-        requiredSoakTime: 48h
+        requiredSoakTime: 48h0m0s
   promotionTemplate:
     spec:
       vars:
