@@ -2,7 +2,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: ring-0-etcd-shield
+  name: ring-0-etcd-defrag
   labels:
     konflux-environment: development
   annotations:
@@ -11,12 +11,12 @@ spec:
   requestedFreight:
     - origin:
         kind: Warehouse
-        name: etcd-shield-manifest-wh
+        name: etcd-defrag-manifest-wh
       sources:
         direct: true
     - origin:
         kind: Warehouse
-        name: etcd-shield-image-wh
+        name: etcd-defrag-image-wh
       sources:
         direct: true
   promotionTemplate:
@@ -27,7 +27,7 @@ spec:
         - name: repoURL
           value: https://github.com/redhat-appstudio/infra-deployments.git
         - name: component
-          value: etcd-shield
+          value: etcd-defrag-rd
         - name: targetRing
           value: ring-0
         - name: prevRing
@@ -41,8 +41,8 @@ spec:
               - branch: main
                 path: ${{ vars.srcPath }}
         - task:
-            name: promote-etcd-shield-manifests
-          as: promote-etcd-shield
+            name: promote-etcd-defrag-manifests
+          as: promote-etcd-defrag
           vars:
             - name: srcPath
               value: ${{ vars.srcPath }}
@@ -58,7 +58,6 @@ spec:
             path: ${{ vars.srcPath }}
             message: |
               chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}
-        # If the commit is skipped, set the freight promotion as no-op. This can happen with hotfixes.
         - uses: set-metadata
           as: set-freight-promotion-as-no-op
           if: ${{ status('commit') == 'Skipped'}}
@@ -94,10 +93,6 @@ spec:
               | **Project** | `${{ ctx.project }}` |
               | **Promotion** | `${{ ctx.promotion }}` |
               | **Freight** | `${{ ctx.targetFreight.alias }}` |
-
-              ---
-
-              ${{ (outputs['promote-' + vars.component + '.pr-meta']?.details) ?? ('Promotes `' + vars.component + '` to **' + ctx.stage + '**.') }}
 
               ---
 
@@ -137,8 +132,10 @@ spec:
             timeout: 30s
         - uses: git-merge-pr
           as: merge-pr
+          if: ${{ status('commit') != 'Skipped'}}
           retry:
             timeout: 2h0m0s
+            errorThreshold: 240
           config:
             repoURL: ${{ vars.repoURL }}
             prNumber: ${{ outputs['find-pr'].prNumber }}

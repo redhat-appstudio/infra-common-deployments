@@ -13,6 +13,16 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-4-authentication
       autoPromotionEnabled: true
+    - stage: ring-0-etcd-defrag
+      autoPromotionEnabled: true
+    - stage: ring-1-etcd-defrag
+      autoPromotionEnabled: true
+    - stage: ring-2-etcd-defrag
+      autoPromotionEnabled: true
+    - stage: ring-3-etcd-defrag
+      autoPromotionEnabled: true
+    - stage: ring-4-etcd-defrag
+      autoPromotionEnabled: true
     - stage: ring-0-etcd-shield
       autoPromotionEnabled: true
     - stage: ring-1-etcd-shield
