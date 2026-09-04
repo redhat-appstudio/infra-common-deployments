@@ -41,7 +41,7 @@ spec:
   steps:
     - uses: http
       as: wait-for-all-healthy
-      if: ${{ !vars.promotionAsNoOp }}
+      if: ${{ vars.promotionAsNoOp != 'true' }}
       retry:
         timeout: 15m0s
         errorThreshold: 3
@@ -92,7 +92,7 @@ spec:
 
     - uses: compose-output
       as: output
-      if: ${{ !vars.promotionAsNoOp }}
+      if: ${{ vars.promotionAsNoOp != 'true' }}
       config:
         appDetails: ${{ task.outputs['wait-for-all-healthy'].appDetails }}
         lastCommit: ${{ task.outputs['wait-for-all-healthy'].lastCommit }}
