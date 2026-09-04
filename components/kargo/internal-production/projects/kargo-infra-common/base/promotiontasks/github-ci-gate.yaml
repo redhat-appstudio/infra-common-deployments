@@ -6,6 +6,7 @@ metadata:
 spec:
   vars:
     - name: commitSHA
+    - name: promotionAsNoOp
     - name: repoOwner
       value: redhat-appstudio
     - name: repoName
@@ -13,6 +14,7 @@ spec:
   steps:
     - uses: http
       as: wait-for-check-runs
+      if: ${{ vars.promotionAsNoOp != 'yes' }}
       retry:
         timeout: 2h
         errorThreshold: 240
@@ -31,6 +33,7 @@ spec:
         timeout: 30s
     - uses: http
       as: wait-for-prow-checks
+      if: ${{ vars.promotionAsNoOp != 'yes' }}
       retry:
         timeout: 2h
         errorThreshold: 240

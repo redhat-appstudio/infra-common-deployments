@@ -5,6 +5,6 @@ resources:
   - warehouse.yaml
   - promotiontask.yaml
   - promotiontask-ring-2.yaml
-  - stage.yaml
-  - stage-ring-2.yaml
+  - ring-1-stage.yaml
+  - ring-2-stage.yaml
   - analysis-templates
