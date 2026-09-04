@@ -14,11 +14,6 @@ spec:
         name: repository-validator-manifest-wh
       sources:
         direct: true
-    - origin:
-        kind: Warehouse
-        name: repository-validator-git-wh
-      sources:
-        direct: true
   promotionTemplate:
     spec:
       vars:
@@ -56,7 +51,6 @@ spec:
             path: ${{ vars.srcPath }}
             message: |
               chore(${{ ctx.stage }}): promote repository-validator to ${{ vars.targetRing }}
-        # If the commit is skipped, set the freight promotion as no-op for Ring 0. This can happen with hotfixes.
         - uses: set-metadata
           as: annotate-freight-as-no-op
           config:
@@ -65,8 +59,6 @@ spec:
                 kind: Freight
                 values:
                   noOpRing0: "${{ status('commit') == 'Skipped' ? 'true' : 'false' }}"
-        # Create promotionAsNoOp as an output since the Kargo context uses a cached version of Freight taken from
-        # the beginning of the promotion, and thus cannot see the updated Freight metadata from the previous step.
         - uses: compose-output
           as: set-promotion-as-no-op
           config:
@@ -111,7 +103,6 @@ spec:
           as: github-ci-gate
           vars:
             - name: commitSHA
-            # If the push step is skipped, the commit SHA is set to an empty string instead of being nil.
               value: "${{ outputs['push']?.commit ?? '' }}"
             - name: promotionAsNoOp
               value: "${{ outputs['set-promotion-as-no-op'].promotionAsNoOp }}"
