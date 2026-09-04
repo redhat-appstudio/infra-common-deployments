@@ -30,7 +30,7 @@ spec:
   vars:
     - name: commitSHA
     - name: promotionAsNoOp
-      value: "false" # TODO: remove this default value once all promotions have been updated to set the promotionAsNoOp var
+      value: "no" # TODO: remove this default value once all promotions have been updated to set the promotionAsNoOp var
     - name: repoOwner
       value: redhat-appstudio
     - name: repoName
@@ -45,7 +45,7 @@ spec:
     # Phase 1: Wait for GitHub Actions check runs to complete and pass (skipped when promotionAsNoOp=true)
     - uses: http
       as: wait-for-check-runs
-      if: ${{ vars.promotionAsNoOp != 'true' }}
+      if: ${{ vars.promotionAsNoOp != 'yes' }}
       retry:
         timeout: 2h30m
       config:
@@ -70,7 +70,7 @@ spec:
     # Filters out the 'tide' context since it reflects merge state, not test results
     - uses: http
       as: wait-for-prow-checks
-      if: ${{ vars.skipProwChecks != 'true' && vars.promotionAsNoOp != 'true' }}
+      if: ${{ vars.skipProwChecks != 'true' && vars.promotionAsNoOp != 'yes' }}
       retry:
         timeout: 2h30m
       config:
