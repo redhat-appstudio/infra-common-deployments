@@ -2,11 +2,11 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: ring-4-etcd-defrag
+  name: ring-2-etcd-defrag
   labels:
     konflux-environment: production
   annotations:
-    kargo.akuity.io/color: purple
+    kargo.akuity.io/color: orange
 spec:
   shard: infra-deployments-production
   requestedFreight:
@@ -15,23 +15,23 @@ spec:
         name: etcd-defrag-manifest-wh
       sources:
         stages:
-          - ring-3-etcd-defrag
-        requiredSoakTime: 72h0m0s
+          - ring-1-etcd-defrag
+        requiredSoakTime: 24h0m0s
     - origin:
         kind: Warehouse
         name: etcd-defrag-image-wh
       sources:
         stages:
-          - ring-3-etcd-defrag
-        requiredSoakTime: 72h0m0s
+          - ring-1-etcd-defrag
+        requiredSoakTime: 24h0m0s
   verification:
     analysisTemplates:
       - name: kanary-production
     args:
       - name: clusters
-        value: kflux-prd-rh02
+        value: stone-prod-p01|kflux-fedora-01|kflux-prd-rh03
       - name: expected-cluster-count
-        value: "1"
+        value: "3"
       - name: namespace
         value: konflux-otel
   promotionTemplate:
@@ -44,9 +44,9 @@ spec:
         - name: component
           value: etcd-defrag-rd
         - name: targetRing
-          value: ring-4
+          value: ring-2
         - name: prevRing
-          value: ring-3
+          value: ring-1
       steps:
         - uses: git-clone
           as: clone
@@ -73,8 +73,24 @@ spec:
             path: ${{ vars.srcPath }}
             message: |
               chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}
+        # If the commit is skipped, set the freight promotion as no-op for Ring 2. This can happen with hotfixes.
+        - uses: set-metadata
+          as: annotate-freight-as-no-op
+          config:
+            updates:
+              - name: ${{ ctx.targetFreight.name }}
+                kind: Freight
+                values:
+                  noOpRing2: "${{ status('commit') == 'Skipped' ? 'true' : 'false' }}"
+        # Create promotionAsNoOp as an output since the Kargo context uses a cached version of Freight taken from
+        # the beginning of the promotion, and thus cannot see the updated Freight metadata from the previous step.
+        - uses: compose-output
+          as: set-promotion-as-no-op
+          config:
+            promotionAsNoOp: "${{ status('commit') == 'Skipped' ? 'true' : 'false' }}"
         - uses: git-push
           as: push
+          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
           config:
             path: ${{ vars.srcPath }}
             targetBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
@@ -82,6 +98,7 @@ spec:
         - uses: git-open-pr
           as: open-pr
           continueOnError: true
+          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
           config:
             repoURL: ${{ vars.repoURL }}
             sourceBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
@@ -99,15 +116,16 @@ spec:
 
               ---
 
-              Manual approval required for Ring 4.
+              Manual approval required for Ring 2.
 
               > Branch is force-pushed each promotion cycle. Do not commit directly.
             labels:
-              - ring-4
+              - ring-2
               - manual-promotion
               - component/${{ vars.component }}
         - uses: http
           as: find-pr
+          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
           retry:
             timeout: 5m0s
             errorThreshold: 10
@@ -126,6 +144,7 @@ spec:
             timeout: 30s
         - uses: git-wait-for-pr
           as: wait-for-pr
+          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
           retry:
             timeout: 168h0m0s
           config:
@@ -133,6 +152,7 @@ spec:
             prNumber: ${{ outputs['find-pr'].prNumber }}
         - uses: http
           as: verify-merged
+          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
           config:
             method: GET
             url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls/${{ outputs['find-pr'].prNumber }}
