@@ -16,7 +16,7 @@
 #   commitSHA (required)        — expected git revision to verify (if no-op, empty string)
 #   component (required)        — component name prefix (apps match: <component>-<cluster>)
 #   clusters (required)         — pipe-separated cluster list (e.g. "stone-stg-rh01|stone-stage-p01")
-#   promotionAsNoOp (required)  — whether or not the promotion is a no-op; skips all steps when true (e.g. no-op promotions)
+#   promotionAsNoOp (required)  — whether or not the promotion is a no-op; skips all steps when 'yes' (e.g. no-op promotions)
 #   appsNamespace (optional)    — ArgoCD namespace (default: argocd-infra-deployments)
 #   tokenSecret (required)      — name of the Secret containing the ArgoCD bearer token
 #
@@ -33,7 +33,6 @@ spec:
     - name: component
     - name: clusters
     - name: promotionAsNoOp
-      value: "no" # TODO: remove this default value once all promotions have been updated to set the promotionAsNoOp var
     - name: appsNamespace
       value: argocd-infra-deployments
     - name: tokenSecret
