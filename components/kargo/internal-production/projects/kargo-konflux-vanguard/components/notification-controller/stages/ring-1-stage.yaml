@@ -2,7 +2,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: ring-1-konflux-operator
+  name: ring-1-notification-controller
   labels:
     konflux-environment: staging
   annotations:
@@ -12,14 +12,13 @@ spec:
   requestedFreight:
     - origin:
         kind: Warehouse
-        name: konflux-operator
+        name: notification-controller
       sources:
         stages:
-          - ring-0-konflux-operator
+          - ring-0-notification-controller
   verification:
     analysisTemplates:
       - name: kanary-staging
-      - name: konflux-conformance-tests-stone-stage-p01
     args:
       - name: clusters
         value: stone-stg-rh01|stone-stage-p01
@@ -32,12 +31,8 @@ spec:
           value: ./src
         - name: repoURL
           value: https://github.com/redhat-appstudio/infra-deployments.git
-        - name: component
-          value: ${{ ctx.targetFreight.origin.name }}
         - name: targetRing
           value: ring-1
-        - name: prevRing
-          value: ring-0
       steps:
         - uses: git-clone
           as: clone
@@ -47,44 +42,59 @@ spec:
               - branch: main
                 path: ${{ vars.srcPath }}
         - task:
-            name: konflux-operator-promote-ring-1
-          as: promote-konflux-operator
+            name: promote-notification-controller
+          as: promote-notification-controller
           vars:
             - name: srcPath
               value: ${{ vars.srcPath }}
+            - name: targetRing
+              value: ${{ vars.targetRing }}
         - uses: git-commit
           as: commit
           config:
             path: ${{ vars.srcPath }}
             message: |
-              chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}
+              chore(${{ ctx.stage }}): promote notification-controller to ${{ vars.targetRing }}
+        # If the commit is skipped, set the freight promotion as no-op for Ring 1. This can happen with hotfixes.
+        - uses: set-metadata
+          as: annotate-freight-as-no-op
+          config:
+            updates:
+              - name: ${{ ctx.targetFreight.name }}
+                kind: Freight
+                values:
+                  noOpRing1: "${{ status('commit') == 'Skipped' ? 'true' : 'false' }}"
+        # Create promotionAsNoOp as an output since the Kargo context uses a cached version of Freight taken from
+        # the beginning of the promotion, and thus cannot see the updated Freight metadata from the previous step.
+        - uses: compose-output
+          as: set-promotion-as-no-op
+          config:
+            promotionAsNoOp: "${{ status('commit') == 'Skipped' ? 'yes' : 'no' }}"
         - uses: git-push
           as: push
+          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
           config:
             path: ${{ vars.srcPath }}
-            targetBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
+            targetBranch: ${{ ctx.project }}/notification-controller/${{ vars.targetRing }}
             force: true
         - uses: git-open-pr
           as: open-pr
+          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
           continueOnError: true
           config:
             repoURL: ${{ vars.repoURL }}
-            sourceBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
+            sourceBranch: ${{ ctx.project }}/notification-controller/${{ vars.targetRing }}
             targetBranch: main
-            title: "chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}"
+            title: "chore(${{ ctx.stage }}): promote notification-controller to ${{ vars.targetRing }}"
             description: |
               ### ${{ ctx.stage }}
 
               | | |
               |---|---|
-              | **Component** | `${{ vars.component }}` |
+              | **Component** | `notification-controller` |
               | **Project** | `${{ ctx.project }}` |
               | **Promotion** | `${{ ctx.promotion }}` |
               | **Freight** | `${{ ctx.targetFreight.alias }}` |
-
-              ---
-
-              ${{ (outputs['promote-' + vars.component + '.pr-meta']?.details) ?? ('Promotes `' + vars.component + '` to **' + ctx.stage + '**.') }}
 
               ---
 
@@ -92,25 +102,29 @@ spec:
 
               > Branch is force-pushed each promotion cycle. Do not commit directly.
             labels:
-              - ${{ vars.targetRing }}
+              - ring-1
               - automated-promotion
-              - component/${{ vars.component }}
+              - component/notification-controller
         - task:
             name: github-ci-gate
           as: github-ci-gate
           vars:
             - name: commitSHA
-              value: ${{ outputs['push'].commit }}
+            # If the push step is skipped, the commit SHA is set to an empty string instead of being nil.
+              value: "${{ outputs['push']?.commit ?? '' }}"
+            - name: promotionAsNoOp
+              value: "${{ outputs['set-promotion-as-no-op'].promotionAsNoOp }}"
             - name: skipProwChecks
               value: "true"
         - uses: http
           as: find-pr
+          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
           retry:
             timeout: 5m0s
             errorThreshold: 10
           config:
             method: GET
-            url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}&state=open
+            url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/notification-controller/${{ vars.targetRing }}&state=open
             headers:
               - name: Authorization
                 value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
@@ -123,6 +137,7 @@ spec:
             timeout: 30s
         - uses: git-merge-pr
           as: merge-pr
+          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
           retry:
             timeout: 2h0m0s
           config:
@@ -135,9 +150,12 @@ spec:
           as: wait-for-sync
           vars:
             - name: commitSHA
-              value: ${{ outputs['merge-pr'].commit }}
+            # If the merge PR step is skipped, the commit SHA is set to an empty string instead of being nil.
+              value: "${{ outputs['merge-pr']?.commit ?? '' }}"
+            - name: promotionAsNoOp
+              value: "${{ outputs['set-promotion-as-no-op'].promotionAsNoOp }}"
             - name: component
-              value: ${{ vars.component }}
+              value: notification-controller-rd
             - name: clusters
               value: "stone-stg-rh01|stone-stage-p01"
             - name: tokenSecret
