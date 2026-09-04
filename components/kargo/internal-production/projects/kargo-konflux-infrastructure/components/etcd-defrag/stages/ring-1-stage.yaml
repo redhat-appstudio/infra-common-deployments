@@ -85,10 +85,10 @@ spec:
         - uses: compose-output
           as: set-promotion-as-no-op
           config:
-            promotionAsNoOp: "${{ status('commit') == 'Skipped' ? 'true' : 'false' }}"
+            promotionAsNoOp: "${{ status('commit') == 'Skipped' ? 'yes' : 'no' }}"
         - uses: git-push
           as: push
-          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
+          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
           config:
             path: ${{ vars.srcPath }}
             targetBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
@@ -96,7 +96,7 @@ spec:
         - uses: git-open-pr
           as: open-pr
           continueOnError: true
-          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
+          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
           config:
             repoURL: ${{ vars.repoURL }}
             sourceBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
@@ -134,7 +134,7 @@ spec:
               value: "true"
         - uses: http
           as: find-pr
-          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
+          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
           retry:
             timeout: 5m0s
             errorThreshold: 10
@@ -153,7 +153,7 @@ spec:
             timeout: 30s
         - uses: git-merge-pr
           as: merge-pr
-          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
+          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
           retry:
             timeout: 2h0m0s
           config:
