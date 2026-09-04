@@ -77,7 +77,7 @@ spec:
               - name: ${{ ctx.targetFreight.name }}
                 kind: Freight
                 values:
-                  noOpRing1: "${{ string(status('commit') == 'Skipped' ? 'true' : 'false') }}"
+                  noOpRing1: "${{ status('commit') == 'Skipped' ? 'true' : 'false' }}"
         # Create promotionAsNoOp as an output since the Kargo context uses a cached version of Freight taken from
         # the beginning of the promotion, and thus cannot see the updated Freight metadata from the previous step.
         - uses: compose-output

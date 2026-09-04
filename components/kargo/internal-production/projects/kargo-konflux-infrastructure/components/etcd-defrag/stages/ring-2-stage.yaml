@@ -87,10 +87,10 @@ spec:
         - uses: compose-output
           as: set-promotion-as-no-op
           config:
-            promotionAsNoOp: "${{ status('commit') == 'Skipped' ? 'true' : 'false' }}"
+            promotionAsNoOp: "${{ status('commit') == 'Skipped' ? 'yes' : 'no' }}"
         - uses: git-push
           as: push
-          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
+          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
           config:
             path: ${{ vars.srcPath }}
             targetBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
@@ -98,7 +98,7 @@ spec:
         - uses: git-open-pr
           as: open-pr
           continueOnError: true
-          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
+          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
           config:
             repoURL: ${{ vars.repoURL }}
             sourceBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
@@ -125,7 +125,7 @@ spec:
               - component/${{ vars.component }}
         - uses: http
           as: find-pr
-          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
+          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
           retry:
             timeout: 5m0s
             errorThreshold: 10
@@ -144,7 +144,7 @@ spec:
             timeout: 30s
         - uses: git-wait-for-pr
           as: wait-for-pr
-          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
+          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
           retry:
             timeout: 168h0m0s
           config:
@@ -152,7 +152,7 @@ spec:
             prNumber: ${{ outputs['find-pr'].prNumber }}
         - uses: http
           as: verify-merged
-          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
+          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
           config:
             method: GET
             url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls/${{ outputs['find-pr'].prNumber }}
