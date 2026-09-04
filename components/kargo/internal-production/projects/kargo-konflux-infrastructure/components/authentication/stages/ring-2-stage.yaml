@@ -122,6 +122,7 @@ spec:
               - component/${{ vars.component }}
         - uses: http
           as: find-pr
+          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
           retry:
             timeout: 5m0s
             errorThreshold: 10

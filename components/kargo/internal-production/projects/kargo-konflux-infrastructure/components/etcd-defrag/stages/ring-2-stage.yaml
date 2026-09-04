@@ -152,6 +152,7 @@ spec:
             prNumber: ${{ outputs['find-pr'].prNumber }}
         - uses: http
           as: verify-merged
+          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
           config:
             method: GET
             url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls/${{ outputs['find-pr'].prNumber }}

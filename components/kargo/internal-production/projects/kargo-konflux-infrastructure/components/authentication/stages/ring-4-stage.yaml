@@ -80,7 +80,7 @@ spec:
         - uses: compose-output
           as: set-promotion-as-no-op
           config:
-            promotionAsNoOp: "${{ status('commit') == 'Skipped' ? 'true' : 'false' }}"              
+            promotionAsNoOp: "${{ status('commit') == 'Skipped' ? 'true' : 'false' }}"
         - uses: git-push
           as: push
           if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
