@@ -45,7 +45,7 @@ spec:
     # Phase 1: Wait for GitHub Actions check runs to complete and pass (skipped when promotionAsNoOp=true)
     - uses: http
       as: wait-for-check-runs
-      if: ${{ !vars.promotionAsNoOp }}
+      if: ${{ vars.promotionAsNoOp != 'true' }}
       retry:
         timeout: 2h30m
       config:
@@ -70,7 +70,7 @@ spec:
     # Filters out the 'tide' context since it reflects merge state, not test results
     - uses: http
       as: wait-for-prow-checks
-      if: ${{ vars.skipProwChecks != 'true' && !vars.promotionAsNoOp }}
+      if: ${{ vars.skipProwChecks != 'true' && vars.promotionAsNoOp != 'true' }}
       retry:
         timeout: 2h30m
       config:
