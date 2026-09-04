@@ -62,8 +62,24 @@ spec:
             path: ${{ vars.srcPath }}
             message: |
               chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}
+        # If the commit is skipped, set the freight promotion as no-op for Ring 1. This can happen with hotfixes.
+        - uses: set-metadata
+          as: annotate-freight-as-no-op
+          config:
+            updates:
+              - name: ${{ ctx.targetFreight.name }}
+                kind: Freight
+                values:
+                  noOpRing1: "${{ status('commit') == 'Skipped' ? 'true' : 'false' }}"
+        # Create promotionAsNoOp as an output since the Kargo context uses a cached version of Freight taken from
+        # the beginning of the promotion, and thus cannot see the updated Freight metadata from the previous step.
+        - uses: compose-output
+          as: set-promotion-as-no-op
+          config:
+            promotionAsNoOp: "${{ status('commit') == 'Skipped' ? 'true' : 'false' }}"
         - uses: git-push
           as: push
+          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
           config:
             path: ${{ vars.srcPath }}
             targetBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
@@ -71,6 +87,7 @@ spec:
         - uses: git-open-pr
           as: open-pr
           continueOnError: true
+          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
           config:
             repoURL: ${{ vars.repoURL }}
             sourceBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
@@ -104,11 +121,15 @@ spec:
           as: github-ci-gate
           vars:
             - name: commitSHA
-              value: ${{ outputs['push'].commit }}
+            # If the push step is skipped, the commit SHA is set to an empty string instead of being nil.
+              value: "${{ outputs['push']?.commit ?? '' }}"
+            - name: promotionAsNoOp
+              value: "${{ outputs['set-promotion-as-no-op'].promotionAsNoOp }}"
             - name: skipProwChecks
               value: "true"
         - uses: http
           as: find-pr
+          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
           retry:
             timeout: 5m0s
             errorThreshold: 10
@@ -127,6 +148,7 @@ spec:
             timeout: 30s
         - uses: git-merge-pr
           as: merge-pr
+          if: ${{ !outputs['set-promotion-as-no-op'].promotionAsNoOp }}
           retry:
             timeout: 2h0m0s
           config:
@@ -139,7 +161,10 @@ spec:
           as: wait-for-sync
           vars:
             - name: commitSHA
-              value: ${{ outputs['merge-pr'].commit }}
+            # If the merge PR step is skipped, the commit SHA is set to an empty string instead of being nil.
+              value: "${{ outputs['merge-pr']?.commit ?? '' }}"
+            - name: promotionAsNoOp
+              value: "${{ outputs['set-promotion-as-no-op'].promotionAsNoOp }}"
             - name: component
               value: ${{ vars.component }}
             - name: clusters
