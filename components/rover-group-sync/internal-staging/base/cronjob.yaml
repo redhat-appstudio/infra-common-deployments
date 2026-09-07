@@ -1,0 +1,78 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: rover-group-sync
+  namespace: rover-group-sync
+spec:
+  schedule: "*/15 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 32
+  failedJobsHistoryLimit: 32
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: rover-group-sync-sa
+          # Do not set runAsUser/fsGroup here: OpenShift restricted-v2 requires the namespace UID/GID
+          # range (e.g. 1001030000–1001039999). Omitting them lets the platform assign a compliant UID.
+          volumes:
+            - name: rover-group-sync-config
+              configMap:
+                name: rover-group-sync-config
+                defaultMode: 420
+            - name: ca
+              secret:
+                secretName: mtls-ca-validators
+            - name: git-repo-creds
+              secret:
+                secretName: git-repo-creds
+                defaultMode: 0640
+            - name: tmp
+              emptyDir: {}
+          containers:
+            - name: rover-group-sync
+              image: quay.io/redhat-user-workloads/konflux-infra-tenant/rover-group-sync@sha256:45325f6ec0d064ceaa4ecd8fa17958394592f9bb3c5f95d0d5167e218bae94f0
+              imagePullPolicy: IfNotPresent
+              command: ["/bin/bash", "/scripts/sync-rover-groups.sh"]
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                capabilities:
+                  drop:
+                    - ALL
+              env:
+                - name: GIT_REPO_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: git-repo-creds
+                      key: url
+                - name: LDAP_DN
+                  valueFrom:
+                    secretKeyRef:
+                      name: ldap-creds
+                      key: username
+                - name: LDAP_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: ldap-creds
+                      key: password
+              volumeMounts:
+                - name: rover-group-sync-config
+                  mountPath: /config
+                  readOnly: true
+                - name: ca
+                  mountPath: /secrets
+                  readOnly: true
+                - name: git-repo-creds
+                  mountPath: /secrets/git-repo
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  memory: 512Mi

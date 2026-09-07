@@ -8,7 +8,7 @@ images:
   digest: sha256:45325f6ec0d064ceaa4ecd8fa17958394592f9bb3c5f95d0d5167e218bae94f0
 
 resources:
-  - ../base
+- base
 
 patches:
   - path: cronjob-patch.yaml
