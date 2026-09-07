@@ -16,7 +16,7 @@
 #
 # Vars:
 #   commitSHA (required)       — git commit to check
-#   promotionAsNoOp (required) — whether or not the promotion is a no-op; skips all steps when true (e.g. no-op promotions)
+#   promotionAsNoOp (required) — whether or not the promotion is a no-op; skips all steps when 'yes' (e.g. no-op promotions)
 #   repoOwner                  — GitHub org (default: redhat-appstudio)
 #   repoName                   — GitHub repo (default: infra-deployments)
 #   requiredCheckRuns          — regex filter for check-run names (default: .*)
@@ -30,7 +30,6 @@ spec:
   vars:
     - name: commitSHA
     - name: promotionAsNoOp
-      value: "no" # TODO: remove this default value once all promotions have been updated to set the promotionAsNoOp var
     - name: repoOwner
       value: redhat-appstudio
     - name: repoName

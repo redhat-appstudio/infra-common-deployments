@@ -41,8 +41,8 @@ kargo-infra-common/
 │   ├── project-config.yaml            # promotion policies (auto/manual per stage)
 │   ├── rbac/                          # RBAC for the konflux-devprod group
 │   ├── external-secrets/              # git credentials from Vault
-│   ├── stage-ring-1-staging.yaml      # staging stage (calls all component tasks)
-│   └── stage-ring-2-production.yaml   # production stage (calls component tasks)
+│   ├── staging-stage.yaml      # staging stage (calls all component tasks)
+│   └── production-stage.yaml   # production stage (calls component tasks)
 │
 ├── kargo/                             # kargo component
 │   ├── kustomization.yaml
@@ -201,7 +201,7 @@ commonAnnotations:
 
 ### 6. Add Your Warehouse as a Freight Origin in the Stage
 
-Edit `base/stage-ring-1-staging.yaml` — add your warehouse under
+Edit `base/staging-stage.yaml` — add your warehouse under
 `requestedFreight`:
 
 ```yaml
@@ -245,7 +245,7 @@ task calls:
 ```
 
 If your component also promotes to production, make the same changes in
-`base/stage-ring-2-production.yaml`.
+`base/production-stage.yaml`.
 
 ### 7. Update the Project Config (if needed)
 
