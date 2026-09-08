@@ -20,8 +20,7 @@ spec:
         kind: Warehouse
         name: repository-validator-git-wh
       sources:
-        stages:
-          - ring-0-repository-validator
+        direct: true
   verification:
     analysisTemplates:
       - name: kanary-staging
