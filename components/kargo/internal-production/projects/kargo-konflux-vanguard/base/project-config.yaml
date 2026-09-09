@@ -21,3 +21,7 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-1-notification-controller
       autoPromotionEnabled: true
+    - stage: ring-0-smee-client
+      autoPromotionEnabled: true
+    - stage: ring-1-smee-client
+      autoPromotionEnabled: true

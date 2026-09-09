@@ -9,6 +9,7 @@ resources:
   - components/artifact-registry-proxy
   - components/container-image-proxy
   - components/notification-controller
+  - components/smee-client
 
 components:
   - ../../kargo-shared-promotion-tasks
