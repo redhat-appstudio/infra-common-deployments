@@ -22,9 +22,11 @@ spec:
       - name: konflux-conformance-tests-stone-stage-p01
     args:
       - name: clusters
-        value: stone-stg-rh01|stone-stage-p01
+        value: stone-stage-p01
       - name: expected-cluster-count
-        value: "2"
+        value: "1"
+      - name: types
+        value: container-single-arch|container-multi-arch
   promotionTemplate:
     spec:
       vars:
