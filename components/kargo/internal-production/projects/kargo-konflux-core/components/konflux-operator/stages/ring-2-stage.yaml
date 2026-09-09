@@ -116,7 +116,7 @@ spec:
               value: "true"
         - uses: http
           as: find-pr
-          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
+          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' && status('github-ci-gate::wait-for-check-runs') == 'Succeeded' }}
           retry:
             timeout: 5m0s
             errorThreshold: 10
@@ -135,7 +135,7 @@ spec:
             timeout: 30s
         - uses: git-merge-pr
           as: merge-pr
-          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
+          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' && status('github-ci-gate::wait-for-check-runs') == 'Succeeded' }}
           retry:
             timeout: 2h0m0s
           config:
