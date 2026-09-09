@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - ring-0-stage.yaml
   - ring-1-stage.yaml
+  - ring-2-stage.yaml
