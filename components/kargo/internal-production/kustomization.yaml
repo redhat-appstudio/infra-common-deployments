@@ -7,6 +7,7 @@ resources:
   - projects
   - shard-rbac
   - kargo-shared-secrets
+  - promotion-cleaner
 
 patches:
   - target:

@@ -7,8 +7,8 @@ spec:
   metrics:
     - name: conformance-tests
       initialDelay: 2m
-      consecutiveSuccessLimit: 1
-      failureLimit: 0
+      count: 3
+      failureLimit: 2
       provider:
         job:
           spec:
