@@ -33,7 +33,7 @@ lake:
 
     # Default sync time range for new projects (days back from today)
     DEFAULT_SYNC_DAYS: "60"
-    
+ 
     # GitLab self-hosted default is to GET /users (entire instance, ~18k on CEE)
     # for every project. That overloads collection and can drop user rows so MR
     # approvals are missing from PR Stage Flow. Restrict to project members.
