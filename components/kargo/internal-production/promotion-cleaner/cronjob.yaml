@@ -1,0 +1,86 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: kargo-promotion-cleaner
+  namespace: kargo
+spec:
+  schedule: "*/10 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 300
+      backoffLimit: 0
+      template:
+        spec:
+          serviceAccountName: kargo-promotion-cleaner
+          restartPolicy: Never
+          volumes:
+            - name: config
+              configMap:
+                name: promotion-cleaner-config
+          containers:
+            - name: cleaner
+              image: quay.io/konflux-ci/task-runner:3.1.2
+              imagePullPolicy: IfNotPresent
+              resources:
+                requests:
+                  memory: 64Mi
+                  cpu: 50m
+                limits:
+                  memory: 128Mi
+                  cpu: 100m
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                  readOnly: true
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -uo pipefail
+
+                  TOTAL_ABORTED=0
+                  TOTAL_ERRORS=0
+
+                  while IFS= read -r NS; do
+                    [ -z "$NS" ] && continue
+
+                    # Capture name + resourceVersion to guard against race conditions
+                    if ! STALE=$(kubectl get promotions -n "$NS" -o json 2>&1 | \
+                      jq -r '[.items[] | select(.status.phase == "Pending")] |
+                        group_by(.spec.stage)[] |
+                        sort_by(.metadata.creationTimestamp) |
+                        .[:-1][] |
+                        "\(.metadata.name) \(.metadata.resourceVersion)"' 2>&1); then
+                      echo "[cleaner] ERROR: failed to list promotions in $NS"
+                      TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+                      continue
+                    fi
+
+                    while IFS=' ' read -r PROMO RV; do
+                      [ -z "$PROMO" ] && continue
+                      # Re-check phase — only abort Pending, let Running finish
+                      CURRENT_PHASE=$(kubectl get promotion "$PROMO" -n "$NS" \
+                        -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown")
+                      if [ "$CURRENT_PHASE" != "Pending" ]; then
+                        echo "[cleaner] skipping $NS/$PROMO (phase=$CURRENT_PHASE, only aborting Pending)"
+                        continue
+                      fi
+                      echo "[cleaner] aborting stale pending promotion: $NS/$PROMO (rv=$RV)"
+                      if kubectl patch promotion "$PROMO" -n "$NS" \
+                        --type=merge \
+                        -p "{\"metadata\":{\"resourceVersion\":\"$RV\",\"annotations\":{\"kargo.akuity.io/abort\":\"terminate\"}}}" 2>&1; then
+                        TOTAL_ABORTED=$((TOTAL_ABORTED + 1))
+                      else
+                        echo "[cleaner] ERROR: failed to abort $NS/$PROMO (conflict or permission error)"
+                        TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+                      fi
+                    done <<< "$STALE"
+                  done < /config/projects
+
+                  echo "[cleaner] done. aborted=${TOTAL_ABORTED} errors=${TOTAL_ERRORS}"
+                  [ "$TOTAL_ERRORS" -gt 0 ] && exit 1
+                  exit 0
