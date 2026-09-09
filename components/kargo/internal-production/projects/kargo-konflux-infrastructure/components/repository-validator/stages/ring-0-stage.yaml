@@ -58,7 +58,7 @@ spec:
               - name: ${{ ctx.targetFreight.name }}
                 kind: Freight
                 values:
-                  noOpRing0: "${{ status('commit') == 'Skipped' ? 'true' : 'false' }}"
+                  noOpRing0: "${{ status('commit') == 'Skipped' ? 'yes' : 'no' }}"
         - uses: compose-output
           as: set-promotion-as-no-op
           config:
