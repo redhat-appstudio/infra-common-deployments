@@ -1,5 +1,5 @@
 ---
-# Kubernetes RBAC — grants get/list/patch on Kargo Promotions
+# Kubernetes RBAC — grants get/list/patch on Promotions + get/list on Freight
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:

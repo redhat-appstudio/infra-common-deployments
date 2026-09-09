@@ -48,20 +48,55 @@ spec:
                   while IFS= read -r NS; do
                     [ -z "$NS" ] && continue
 
-                    # Capture name + resourceVersion to guard against race conditions
+                    # ── Step 1: Build a freight-origin lookup table ──
+                    # Each freight has an origin warehouse. We need this to group
+                    # promotions by (stage, warehouse) instead of just (stage).
+                    # If this fails, skip the entire namespace — without warehouse
+                    # identity, independent queues could be merged together.
+                    if ! FREIGHTS_JSON=$(kubectl get freights -n "$NS" -o json 2>&1 | \
+                      jq '[.items[] | {name: .metadata.name, origin: .origin.name}]' 2>&1); then
+                      echo "[cleaner] ERROR: failed to list freight in $NS"
+                      TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+                      continue
+                    fi
+
+                    if [ "$(echo "$FREIGHTS_JSON" | jq 'length')" -eq 0 ]; then
+                      echo "[cleaner] no freight in $NS, skipping"
+                      continue
+                    fi
+
+                    # ── Step 2: List Pending promotions, enrich with origin ──
+                    # For each Pending promotion, look up its freight's warehouse origin.
+                    # Group by (stage + origin) so promotions from different warehouses
+                    # are independent queues. Within each group, sort by creation time
+                    # and keep only the NEWEST — all older ones are stale.
+                    # Promotions with unresolvable freight are skipped (not grouped
+                    # under a shared key that could merge independent queues).
                     if ! STALE=$(kubectl get promotions -n "$NS" -o json 2>&1 | \
-                      jq -r '[.items[] | select(.status.phase == "Pending")] |
-                        group_by(.spec.stage)[] |
-                        sort_by(.metadata.creationTimestamp) |
+                      jq -r --argjson freights "$FREIGHTS_JSON" '
+                        [.items[] | select(.status.phase == "Pending") |
+                          . as $p |
+                          ($freights | map(select(.name == $p.spec.freight)) | .[0].origin // null) as $origin |
+                          select($origin != null) |
+                          { name: .metadata.name,
+                            rv:   .metadata.resourceVersion,
+                            key:  (.spec.stage + "/" + $origin),
+                            ts:   .metadata.creationTimestamp }
+                        ] |
+                        group_by(.key)[] |
+                        sort_by(.ts) |
                         .[:-1][] |
-                        "\(.metadata.name) \(.metadata.resourceVersion)"' 2>&1); then
+                        "\(.name) \(.rv)"
+                      ' 2>&1); then
                       echo "[cleaner] ERROR: failed to list promotions in $NS"
                       TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
                       continue
                     fi
 
+                    # ── Step 3: Abort each stale promotion ──
                     while IFS=' ' read -r PROMO RV; do
                       [ -z "$PROMO" ] && continue
+
                       # Re-check phase — only abort Pending, let Running finish
                       CURRENT_PHASE=$(kubectl get promotion "$PROMO" -n "$NS" \
                         -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown")
@@ -69,6 +104,7 @@ spec:
                         echo "[cleaner] skipping $NS/$PROMO (phase=$CURRENT_PHASE, only aborting Pending)"
                         continue
                       fi
+
                       echo "[cleaner] aborting stale pending promotion: $NS/$PROMO (rv=$RV)"
                       if kubectl patch promotion "$PROMO" -n "$NS" \
                         --type=merge \

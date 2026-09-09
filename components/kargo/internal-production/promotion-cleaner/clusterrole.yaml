@@ -12,3 +12,10 @@ rules:
       - get
       - list
       - patch
+  - apiGroups:
+      - kargo.akuity.io
+    resources:
+      - freights
+    verbs:
+      - get
+      - list
