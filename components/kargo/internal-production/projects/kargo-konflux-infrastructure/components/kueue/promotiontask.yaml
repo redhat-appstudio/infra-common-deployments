@@ -9,7 +9,7 @@ spec:
     - name: prevRing
     - name: targetRing
     - name: imageRepoURL
-      value: quay.io/konflux-ci/kueue
+      value: quay.io/konflux-ci/tekton-kueue
     - name: externalRepoURL
       value: https://github.com/konflux-ci/tekton-kueue/config/default
 
