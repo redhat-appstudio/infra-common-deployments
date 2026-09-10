@@ -1,0 +1,69 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-kueue
+spec:
+  vars:
+    - name: srcPath
+    - name: component
+    - name: prevRing
+    - name: targetRing
+    - name: imageRepoURL
+      value: quay.io/konflux-ci/kueue
+    - name: externalRepoURL
+      value: https://github.com/konflux-ci/tekton-kueue/config/default
+
+  steps:
+    - uses: kustomize-set-image
+      as: update-image
+      if: ${{ ctx.targetFreight.origin.name == "kueue-image-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/tekton-kueue
+        images:
+          - image: ${{ vars.imageRepoURL }}
+            tag: ${{ imageFrom(vars.imageRepoURL).Tag }}
+
+    # Update Tekton Kueue external repo reference
+    - uses: yaml-parse
+      as: get-external-repo-index
+      if: ${{ ctx.targetFreight.origin.name == "kueue-image-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/tekton-kueue/kustomization.yaml
+        outputs:
+        - name: externalRepoIndex
+          fromExpression: "string(findIndex(resources, # startsWith('${{ vars.externalRepoURL }}')))"
+    #-- Ensures the output of the get-external-repo-index task is a valid index (the external repo reference was found)
+    - uses: fail
+      as: external-repo-ref-not-found
+      if: ${{ ctx.targetFreight.origin.name == "kueue-image-wh" && !(task.outputs['get-external-repo-index'].externalRepoIndex matches "^[0-9]+$") }}
+      config:
+        message: "Could not find resource '${{ vars.externalRepoURL }}' in resources list of ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/tekton-kueue/kustomization.yaml"
+    - uses: yaml-update
+      as: update-external-repo-ref
+      if: ${{ ctx.targetFreight.origin.name == "kueue-image-wh" && task.outputs['get-external-repo-index'].externalRepoIndex matches "^[0-9]+$" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/tekton-kueue/kustomization.yaml
+        updates:
+          - key: "resources.${{ task.outputs['get-external-repo-index'].externalRepoIndex }}"
+            value: "${{ vars.externalRepoURL }}?ref=${{ imageFrom(vars.imageRepoURL).Tag }}"
+
+    # Deletes the target ring's base-snapshot directory, if it exists, to eliminate any orphaned files deleted in the previous ring's base-snapshot directory (or base)
+    - uses: delete
+      as: delete-old-base-snapshot-folder
+      if: ${{ ctx.targetFreight.origin.name == "kueue-manifest-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    #-- Copies the tier 1 base directory to the target ring's base-snapshot directory; only happens when promoting from base
+    - uses: copy
+      as: copy-tier-1-folder
+      if: ${{ ctx.targetFreight.origin.name == "kueue-manifest-wh" && vars.prevRing == "base" }}
+      config:
+        inPath: ${{ vars.srcPath }}/components/${{ vars.component }}/base
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    #-- Copies the previous ring's base-snapshot directory to the target ring's base-snapshot directory
+    - uses: copy
+      as: copy-prev-ring-base-snapshot-folder
+      if: ${{ ctx.targetFreight.origin.name == "kueue-manifest-wh" && vars.prevRing != "base" }}
+      config:
+        inPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.prevRing }}/base/base-snapshot
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot

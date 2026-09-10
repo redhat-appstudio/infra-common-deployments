@@ -33,6 +33,16 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-4-etcd-shield
       autoPromotionEnabled: true
+    - stage: ring-0-kueue
+      autoPromotionEnabled: true
+    - stage: ring-1-kueue
+      autoPromotionEnabled: true
+    - stage: ring-2-kueue
+      autoPromotionEnabled: true
+    - stage: ring-3-kueue
+      autoPromotionEnabled: true
+    - stage: ring-4-kueue
+      autoPromotionEnabled: true
     - stage: ring-0-repository-validator
       autoPromotionEnabled: true
     - stage: ring-1-repository-validator
