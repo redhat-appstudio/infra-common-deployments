@@ -29,7 +29,7 @@ spec:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
         outputs:
         - name: externalRepoIndex
-          fromExpression: "string(findIndex(resources, # == 'vars.externalRepoURL'))"
+          fromExpression: "string(findIndex(resources, # startsWith('vars.externalRepoURL')))"
     #-- Ensures the output of the get-external-repo-index task is a valid index (the external repo reference was found)
     - uses: fail
       as: external-repo-ref-not-found
