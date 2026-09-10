@@ -90,3 +90,11 @@ spec:
           len(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')})) > 0 &&
           any(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')}), {.state in ['failure', 'error']}))
         timeout: 30s
+    # Emit a result output only when all checks pass. Top-level steps can
+    # check outputs['github-ci-gate::result']?.passed == 'yes' to guard
+    # against merging after CI failure (status() cannot cross task namespaces).
+    - uses: compose-output
+      as: result
+      if: ${{ status('wait-for-check-runs') == 'Succeeded' && (status('wait-for-prow-checks') == 'Succeeded' || status('wait-for-prow-checks') == 'Skipped') }}
+      config:
+        passed: "yes"
