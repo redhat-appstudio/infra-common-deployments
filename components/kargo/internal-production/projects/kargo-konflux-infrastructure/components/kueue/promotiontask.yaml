@@ -20,7 +20,8 @@ spec:
       config:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/tekton-kueue
         images:
-          - image: ${{ vars.imageRepoURL }}
+          - image: "konflux-ci/tekton-kueue"
+            newName: ${{ vars.imageRepoURL }}
             tag: ${{ imageFrom(vars.imageRepoURL).Tag }}
 
     # Update Tekton Kueue external repo reference
