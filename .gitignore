@@ -1,3 +1,6 @@
 # Ignore cached Helm charts
 components/**/charts/
 
+kargo-*.html
+kargo-*.json
+kargo-*.png

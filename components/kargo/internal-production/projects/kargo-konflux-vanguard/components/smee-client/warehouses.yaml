@@ -1,0 +1,43 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: smee-client-manifest-wh
+spec:
+  freightCreationPolicy: Automatic
+  interval: 2h0m0s
+  subscriptions:
+    - git:
+        repoURL: https://github.com/redhat-appstudio/infra-deployments.git
+        commitSelectionStrategy: NewestFromBranch
+        branch: main
+        includePaths:
+          - 'components/smee-client-rd/base'
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: smee-client-gosmee-wh
+spec:
+  freightCreationPolicy: Automatic
+  interval: 2h0m0s
+  subscriptions:
+    - image:
+        repoURL: ghcr.io/chmouel/gosmee
+        semverConstraint: ^0.28.0
+        discoveryLimit: 5
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: smee-client-sidecar-wh
+spec:
+  freightCreationPolicy: Automatic
+  interval: 2h0m0s
+  subscriptions:
+    - image:
+        repoURL: quay.io/konflux-ci/smee-sidecar
+        imageSelectionStrategy: NewestBuild
+        discoveryLimit: 5
+        allowTagsRegexes:
+          - ^[0-9a-f]{40}$
