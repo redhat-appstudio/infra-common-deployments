@@ -1,0 +1,71 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: rh-managed-workspaces-config
+  # Finalizer that ensures that project is not deleted until it is not referenced by any application
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  # Project description
+  description: Manage RedHat managed workspaces configuration using ArgoCD
+
+  # Allow manifests to deploy from the following Git repos
+  sourceRepos:
+    - https://github.com/redhat-appstudio/tenants-config.git
+    - https://gitlab.cee.redhat.com/releng/konflux-release-data.git
+
+  # Only permit applications to deploy to the rh-managed-* namespaces
+  destinations:
+    # Public Staging
+    - namespace: managed-release-team-tenant
+      name: stone-stg-rh01
+    - namespace: managed-konflux-perfscale-tenant
+      name: stone-stg-rh01
+    - namespace: test-rhtap-*-tenant
+      name: stone-stg-rh01
+    - namespace: rh-managed-*-tenant
+      name: stone-stg-rh01
+    - namespace: rhtap-releng-tenant
+      name: stone-stg-rh01
+    - namespace: managed-release-team-tenant
+      name: stone-stg-es01
+    # Internal Staging
+    - namespace: managed-release-team-tenant
+      name: stone-stage-p01
+    - namespace: managed-konflux-perfscale-tenant
+      name: stone-stage-p01
+    - namespace: rh-managed-*-tenant
+      name: stone-stage-p01
+    - namespace: rhtap-releng-tenant
+      name: stone-stage-p01
+
+  # Deny all namespaced-scoped resources from being created, except for the following
+  namespaceResourceWhitelist:
+    - group: external-secrets.io
+      kind: ExternalSecret
+    - group: external-secrets.io
+      kind: SecretStore
+    - group: appstudio.redhat.com
+      kind: ReleasePlan
+    - group: appstudio.redhat.com
+      kind: ReleasePlanAdmission
+    - group: appstudio.redhat.com
+      kind: ReleaseStrategy
+    - group: appstudio.redhat.com
+      kind: Application
+    - group: appstudio.redhat.com
+      kind: Component
+    - group: appstudio.redhat.com
+      kind: EnterpriseContractPolicy
+    - group: ""
+      kind: PersistentVolumeClaim
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+    - group: ""
+      kind: ServiceAccount
+    - group: ""
+      kind: ConfigMap
+    - group: batch
+      kind: CronJob
+  orphanedResources:
+    warn: false

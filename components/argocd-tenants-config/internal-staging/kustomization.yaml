@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: argocd-tenants-config
+
+resources:
+  - ../base
+  - ns.yaml
+  - rh-managed-workspaces-config-appproject.yaml
+  - tenants-config-admin-appproject.yaml
+  - tenants-config-appproject.yaml
