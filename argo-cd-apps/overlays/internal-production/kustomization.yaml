@@ -7,9 +7,28 @@ resources:
   - ../../base/internal
   - argo-rollouts.yaml
   - kargo-shard-infra-deployments.yaml
+
 patches:
   - path: environment-patch.yaml
     target:
       group: argoproj.io
       version: v1alpha1
       kind: ApplicationSet
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: ApplicationSet
+      name: argocd-internal-appsre
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/destination/namespace
+        value: argocd
+  - target:
+      group: argoproj.io
+      version: v1alpha1
+      kind: ApplicationSet
+      name: argocd-external-appsre
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/destination/namespace
+        value: konflux-public-production
