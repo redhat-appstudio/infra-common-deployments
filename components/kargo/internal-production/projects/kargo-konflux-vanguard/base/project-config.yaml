@@ -13,6 +13,8 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-3-artifact-registry-proxy
       autoPromotionEnabled: true
+    - stage: ring-4-artifact-registry-proxy
+      autoPromotionEnabled: true
     - stage: ring-0-container-image-proxy
       autoPromotionEnabled: true
     - stage: ring-1-container-image-proxy
@@ -20,6 +22,8 @@ spec:
     - stage: ring-2-container-image-proxy
       autoPromotionEnabled: true
     - stage: ring-3-container-image-proxy
+      autoPromotionEnabled: true
+    - stage: ring-4-container-image-proxy
       autoPromotionEnabled: true
     - stage: ring-0-notification-controller
       autoPromotionEnabled: true
