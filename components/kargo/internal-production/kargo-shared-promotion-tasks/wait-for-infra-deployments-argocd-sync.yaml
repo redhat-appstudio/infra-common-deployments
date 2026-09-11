@@ -42,7 +42,7 @@ spec:
       as: wait-for-all-healthy
       if: ${{ vars.promotionAsNoOp != 'yes' }}
       retry:
-        timeout: 15m0s
+        timeout: 45m0s
         errorThreshold: 3
       config:
         method: GET
