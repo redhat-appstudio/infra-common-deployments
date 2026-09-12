@@ -4,3 +4,4 @@ kind: Component
 resources:
   - github-ci-gate.yaml
   - wait-for-infra-deployments-argocd-sync.yaml
+  - git-workflow-infra-deployments.yaml
