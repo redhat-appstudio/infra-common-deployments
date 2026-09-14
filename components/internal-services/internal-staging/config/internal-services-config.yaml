@@ -5,6 +5,7 @@ metadata:
 spec:
   allowList:
   - managed-release-team-tenant
+  - rhtap-releng-tenant
   debug: true
   volumeClaim:
     name: pipeline
