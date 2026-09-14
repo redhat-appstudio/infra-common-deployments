@@ -1,0 +1,69 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: tenants-config
+  # Finalizer that ensures that project is not deleted until it is not referenced by any application
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  # Project description
+  description: Manage RedHat user configuration using ArgoCD
+
+  # Allow manifests to deploy from any Git repos
+  sourceRepos:
+    - https://github.com/redhat-appstudio/tenants-config.git
+    - https://gitlab.cee.redhat.com/releng/konflux-release-data.git
+
+  # Only permit applications to deploy to the guestbook namespace in the same cluster
+  # Destination clusters can be identified by 'server', 'name', or both.
+  destinations:
+    # Public Staging
+    - namespace: '*-tenant'
+      name: stone-stg-rh01
+    # Internal Staging
+    - namespace: '*-tenant'
+      name: stone-stage-p01
+
+  # Deny all namespaced-scoped resources from being created, except for the following
+  namespaceResourceWhitelist:
+    - group: external-secrets.io
+      kind: ExternalSecret
+    - group: external-secrets.io
+      kind: SecretStore
+    - group: appstudio.redhat.com
+      kind: ReleasePlan
+    - group: appstudio.redhat.com
+      kind: ReleasePlanAdmission
+    - group: appstudio.redhat.com
+      kind: ReleaseStrategy
+    - group: appstudio.redhat.com
+      kind: Application
+    - group: appstudio.redhat.com
+      kind: Component
+    - group: appstudio.redhat.com
+      kind: ImageRepository
+    - group: appstudio.redhat.com
+      kind: EnterpriseContractPolicy
+    - group: ""
+      kind: PersistentVolumeClaim
+    - group: appstudio.redhat.com
+      kind: IntegrationTestScenario
+    - group: projctl.konflux.dev
+      kind: Project
+    - group: projctl.konflux.dev
+      kind: ProjectDevelopmentStream
+    - group: projctl.konflux.dev
+      kind: ProjectDevelopmentStreamTemplate
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+    - group: ""
+      kind: ServiceAccount
+    - group: ""
+      kind: ConfigMap
+    - group: batch
+      kind: CronJob
+    - group: pulp.konflux-ci.dev
+      kind: PulpAccessRequest
+  # Enables namespace orphaned resource monitoring.
+  orphanedResources:
+    warn: false

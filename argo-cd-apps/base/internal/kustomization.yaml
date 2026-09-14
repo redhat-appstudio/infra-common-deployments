@@ -6,6 +6,7 @@ resources:
   - argocd-external-appsre
   - argocd-infra-deployments
   - argocd-internal-appsre
+  - argocd-tenants-config
   - internal-services
   - openshift-pipelines
   - kargo

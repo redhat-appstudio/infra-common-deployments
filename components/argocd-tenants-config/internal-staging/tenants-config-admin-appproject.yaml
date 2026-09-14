@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: tenants-config-admin
+  # Finalizer that ensures that project is not deleted until it is not referenced by any application
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Manage Konflux admin configurations for users using ArgoCD
+  sourceRepos:
+    - https://gitlab.cee.redhat.com/releng/konflux-release-data.git
+
+  # Only permit applications to deploy to the guestbook namespace in the same cluster
+  # Destination clusters can be identified by 'server', 'name', or both.
+  destinations:
+    - namespace: '*-tenant'
+      name: stone-stg-rh01
+    - namespace: managed-release-team-tenant
+      name: stone-stg-rh01
+    - namespace: '*-tenant'
+      name: stone-stg-es01
+    - namespace: managed-release-team-tenant
+      name: stone-stg-es01
+    - namespace: '*-tenant'
+      name: stone-stage-p01
+    - namespace: managed-release-team-tenant
+      name: stone-stage-p01
+
+  # Deny all namespaced-scoped resources from being created, except for the following
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: ResourceQuota
+    - group: ""
+      kind: LimitRange
+
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+
+  # Enables namespace orphaned resource monitoring.
+  orphanedResources:
+    warn: false
