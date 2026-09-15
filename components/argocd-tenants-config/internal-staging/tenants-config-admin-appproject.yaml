@@ -18,10 +18,6 @@ spec:
     - namespace: managed-release-team-tenant
       name: stone-stg-rh01
     - namespace: '*-tenant'
-      name: stone-stg-es01
-    - namespace: managed-release-team-tenant
-      name: stone-stg-es01
-    - namespace: '*-tenant'
       name: stone-stage-p01
     - namespace: managed-release-team-tenant
       name: stone-stage-p01
