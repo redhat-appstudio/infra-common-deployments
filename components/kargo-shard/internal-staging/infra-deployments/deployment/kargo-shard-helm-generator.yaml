@@ -37,6 +37,10 @@ valuesInline:
     sharedResources:
       createNamespace: false
   controller:
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
     shardName: infra-deployments-staging
     argocd:
       integrationEnabled: true

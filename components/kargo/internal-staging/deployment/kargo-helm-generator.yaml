@@ -61,5 +61,19 @@ valuesInline:
                 name: dex-client
                 key: token
   controller:
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
     rollouts:
       integrationEnabled: true
+  managementController:
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+  webhooksServer:
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
