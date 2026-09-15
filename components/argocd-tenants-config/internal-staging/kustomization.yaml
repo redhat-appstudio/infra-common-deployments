@@ -8,3 +8,4 @@ resources:
   - rh-managed-workspaces-config-appproject.yaml
   - tenants-config-admin-appproject.yaml
   - tenants-config-appproject.yaml
+  - external-secrets
