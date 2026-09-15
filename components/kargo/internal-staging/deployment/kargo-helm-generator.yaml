@@ -61,5 +61,25 @@ valuesInline:
                 name: dex-client
                 key: token
   controller:
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        additionalLabels:
+          monitoring.rhobs/stack: appstudio-federate-ms
     rollouts:
       integrationEnabled: true
+  managementController:
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        additionalLabels:
+          monitoring.rhobs/stack: appstudio-federate-ms
+  webhooksServer:
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        additionalLabels:
+          monitoring.rhobs/stack: appstudio-federate-ms
