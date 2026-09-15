@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd-external-appsre-all-application-sets
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    path: argo-cd-apps/overlays/konflux-public-staging
+    repoURL: https://github.com/redhat-appstudio/infra-deployments.git
+    targetRevision: main
+  destination:
+    namespace: konflux-public-staging
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    # automated:
+    #   prune: true
+    #   selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

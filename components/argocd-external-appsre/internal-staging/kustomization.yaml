@@ -4,6 +4,7 @@ namespace: konflux-public-staging
 
 resources:
   - ../base
+  - all-application-sets-app.yaml
   - ns.yaml
   - external-secrets
 
