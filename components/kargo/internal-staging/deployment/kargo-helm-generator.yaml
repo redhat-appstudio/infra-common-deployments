@@ -65,6 +65,8 @@ valuesInline:
       enabled: true
       serviceMonitor:
         enabled: true
+        additionalLabels:
+          monitoring.rhobs/stack: appstudio-federate-ms
     rollouts:
       integrationEnabled: true
   managementController:
@@ -72,8 +74,12 @@ valuesInline:
       enabled: true
       serviceMonitor:
         enabled: true
+        additionalLabels:
+          monitoring.rhobs/stack: appstudio-federate-ms
   webhooksServer:
     metrics:
       enabled: true
       serviceMonitor:
         enabled: true
+        additionalLabels:
+          monitoring.rhobs/stack: appstudio-federate-ms

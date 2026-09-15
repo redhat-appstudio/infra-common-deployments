@@ -41,6 +41,8 @@ valuesInline:
       enabled: true
       serviceMonitor:
         enabled: true
+        additionalLabels:
+          monitoring.rhobs/stack: appstudio-federate-ms
     shardName: infra-deployments-staging
     argocd:
       integrationEnabled: true
