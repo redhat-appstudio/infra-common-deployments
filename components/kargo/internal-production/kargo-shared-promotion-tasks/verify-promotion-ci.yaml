@@ -1,0 +1,96 @@
+---
+# Opt-in workflow task; see git-workflow-README.md for contracts and limitations.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: verify-promotion-ci
+spec:
+  vars:
+    - name: published
+    - name: commitSHA
+    - name: promotionAsNoOp
+    - name: skipProwChecks
+    # An empty literal is treated as a missing default during task expansion.
+    - name: requiredProwChecks
+      value: ${{ '' }}
+    - name: requiredCheckRuns
+      value: .*
+    - name: ciPollInterval
+      value: 2m
+  steps:
+    - uses: fail
+      as: validate-config
+      if: >-
+        ${{ vars.published != 'yes' || vars.promotionAsNoOp not in ['yes', 'no'] || vars.skipProwChecks not in ['true', 'false'] || vars.requiredCheckRuns
+        == '' || (vars.skipProwChecks == 'false' && vars.requiredProwChecks == '') || (vars.promotionAsNoOp == 'no' && vars.commitSHA == '') }}
+      config:
+        message: CI requires successful publication, an immutable commit and explicit Prow policy with nonempty selectors.
+    # Rate-limit responses remain pending; polling uses a fixed interval.
+    - uses: http
+      as: wait-for-check-runs
+      if: ${{ status('validate-config') == 'Skipped' && vars.promotionAsNoOp == 'no' }}
+      retry:
+        timeout: 2h30m
+      config:
+        method: GET
+        pollInterval: ${{ vars.ciPollInterval }}
+        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/commits/${{ vars.commitSHA }}/check-runs?per_page=100
+        headers:
+          - name: Authorization
+            value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
+          - name: Accept
+            value: application/vnd.github+json
+        successExpression: |
+          response.status == 200 &&
+          response.body.total_count <= len(response.body.check_runs) &&
+          len(filter(response.body.check_runs, {.name matches ${{ quote(vars.requiredCheckRuns) }}})) > 0 &&
+          all(filter(response.body.check_runs, {.name matches ${{ quote(vars.requiredCheckRuns) }}}), {.status == 'completed' && .conclusion in ['success', 'neutral', 'skipped']})
+        failureExpression: |
+          (response.status in [401, 404] || (response.status == 403 && response.header('X-RateLimit-Remaining') != '0' && response.header('Retry-After') == '' && !(lower(response.body?.message ?? '') contains 'rate limit'))) ||
+          (response.status == 200 &&
+          (response.body.total_count > len(response.body.check_runs) ||
+          any(filter(response.body.check_runs, {.name matches ${{ quote(vars.requiredCheckRuns) }}}), {.conclusion in ['failure', 'cancelled', 'timed_out', 'action_required', 'stale']})))
+        errorExpression: |
+          response.status != 200 ? 'GitHub checks API: HTTP ' + string(response.status) :
+          response.body.total_count > len(response.body.check_runs) ? 'GitHub check-runs response is truncated; refusing to merge' :
+          'Failed checks: ' + join(map(filter(response.body.check_runs, {.name matches ${{ quote(vars.requiredCheckRuns) }} && .conclusion in ['failure', 'cancelled', 'timed_out', 'action_required', 'stale']}), {.name + '=' + .conclusion}), ', ')
+        timeout: 30s
+    # Only explicit caller policy skips Prow; exclude the non-test tide context.
+    - uses: http
+      as: wait-for-prow-checks
+      if: ${{ status('wait-for-check-runs') == 'Succeeded' && vars.skipProwChecks == 'false' }}
+      retry:
+        timeout: 2h30m
+      config:
+        method: GET
+        pollInterval: ${{ vars.ciPollInterval }}
+        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/commits/${{ vars.commitSHA }}/status?per_page=100
+        headers:
+          - name: Authorization
+            value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
+          - name: Accept
+            value: application/vnd.github+json
+        successExpression: |
+          response.status == 200 &&
+          response.body.total_count <= len(response.body.statuses) &&
+          len(filter(response.body.statuses, {.context != 'tide' && (.context matches ${{ quote(vars.requiredProwChecks) }})})) > 0 &&
+          all(filter(response.body.statuses, {.context != 'tide' && (.context matches ${{ quote(vars.requiredProwChecks) }})}), {.state == 'success'})
+        failureExpression: |
+          (response.status in [401, 404] || (response.status == 403 && response.header('X-RateLimit-Remaining') != '0' && response.header('Retry-After') == '' && !(lower(response.body?.message ?? '') contains 'rate limit'))) ||
+          (response.status == 200 &&
+          (response.body.total_count > len(response.body.statuses) ||
+          any(filter(response.body.statuses, {.context != 'tide' && (.context matches ${{ quote(vars.requiredProwChecks) }})}), {.state in ['failure', 'error']})))
+        errorExpression: |
+          response.status != 200 ? 'GitHub status API: HTTP ' + string(response.status) :
+          response.body.total_count > len(response.body.statuses) ? 'GitHub statuses response is truncated; refusing to merge' :
+          'Failed Prow checks: ' + join(map(filter(response.body.statuses, {.context != 'tide' && (.context matches ${{ quote(vars.requiredProwChecks) }}) && .state in ['failure', 'error']}), {.context + '=' + .state}), ', ')
+        timeout: 30s
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-config') == 'Skipped' && (vars.promotionAsNoOp == 'yes' || (status('wait-for-check-runs') == 'Succeeded' && (status('wait-for-prow-checks')
+        == 'Succeeded' || (vars.skipProwChecks == 'true' && status('wait-for-prow-checks') == 'Skipped')))) }}
+      config:
+        passed: 'yes'
+        checkedSHA: ${{ vars.commitSHA }}
+        promotionAsNoOp: ${{ vars.promotionAsNoOp }}
