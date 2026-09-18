@@ -1,0 +1,143 @@
+---
+# Opt-in workflow task; see README.md for contracts and limitations.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: publish-promotion-pr
+spec:
+  vars:
+    - name: srcPath
+    - name: component
+    - name: targetRing
+    - name: prepared
+    - name: baseCommitSHA
+    - name: mergeMode
+    - name: skipProwChecks
+    # Optional presentation data; missing metadata must not change promotion policy.
+    - name: prSummary
+      value: ${{ '' }}
+    - name: prChanges
+      value: ${{ [] }}
+    - name: prCompareURL
+      value: ${{ '' }}
+  steps:
+    - uses: fail
+      as: validate-config
+      if: >-
+        ${{ vars.prepared != 'yes' || vars.baseCommitSHA == '' || vars.mergeMode not in ['auto', 'manual'] || vars.skipProwChecks not in ['true',
+        'false'] }}
+      config:
+        message: Component preparation must succeed; supply baseCommitSHA and explicit merge/Prow policies.
+    - uses: git-commit
+      as: commit
+      if: ${{ status('validate-config') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}
+        message: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}'
+    # One branch per Promotion isolates its tested head from later Freight updates.
+    - uses: git-push
+      as: push
+      if: ${{ status('commit') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}
+        targetBranch: ${{ ctx.project }}/promotions/${{ ctx.promotion }}
+        force: false
+    - uses: git-open-pr
+      as: open-pr
+      if: ${{ status('push') == 'Succeeded' }}
+      config:
+        repoURL: https://github.com/redhat-appstudio/infra-deployments.git
+        sourceBranch: ${{ ctx.project }}/promotions/${{ ctx.promotion }}
+        targetBranch: main
+        title: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}'
+        description: |
+          ## Promote ${{ vars.component }} to ${{ vars.targetRing }}
+
+          ${{ vars.prSummary != '' ? vars.prSummary : 'Promote the selected Freight into the target Git configuration.' }}
+
+          ${{ len(vars.prChanges) > 0 ? '| Change | Previous Git configuration | Proposed | File |\n|---|---|---|---|\n' + join(map(vars.prChanges, {'| ' + replace(replace(replace(replace(string(#.kind), '|', '&#124;'), '`', '&#96;'), '\n', ' '), '\r', ' ') + ' | `' + replace(replace(replace(replace(string(#.previous), '|', '&#124;'), '`', '&#96;'), '\n', ' '), '\r', ' ') + '` | `' + replace(replace(replace(replace(string(#.proposed), '|', '&#124;'), '`', '&#96;'), '\n', ' '), '\r', ' ') + '` | `' + replace(replace(replace(replace(string(#.path), '|', '&#124;'), '`', '&#96;'), '\n', ' '), '\r', ' ') + '` |'}), '\n') : 'See the Files changed tab for the configuration changes.' }}
+
+          ${{ vars.prCompareURL != '' ? '[Compare configured manifest refs](' + vars.prCompareURL + ')' : '' }}
+
+          ### Merge and checks
+
+          - **Merge:** ${{ vars.mergeMode == 'auto' ? 'Kargo merges after the configured CI gates pass.' : 'Manual merge required; Kargo waits for the PR to be merged.' }}
+          - **Prow:** ${{ vars.skipProwChecks == 'true' ? 'Explicitly disabled for this Stage.' : 'Required before Kargo proceeds to the merge step.' }}
+          - **CI:** Results are shown in GitHub checks. This description is created before the CI gate completes.
+
+          <details>
+          <summary>Promotion details</summary>
+
+          | Field | Value |
+          |---|---|
+          | Component | `${{ vars.component }}` |
+          | Stage | `${{ ctx.stage }}` |
+          | Project | `${{ ctx.project }}` |
+          | Freight | `${{ ctx.targetFreight.alias }}` (`${{ ctx.targetFreight.name }}`) |
+          | Promotion | `${{ ctx.promotion }}` |
+          | Published commit | `${{ task.outputs['push'].commit }}` |
+
+          </details>
+
+          Previous values describe Git configuration, not necessarily the running deployment.
+          This branch belongs to this promotion. Do not push additional changes.
+        labels:
+          - ${{ vars.targetRing }}
+          - automated-promotion
+          - component/${{ vars.component }}
+    # A skipped PR can mean main already has the promoted tree. Verify, never assume.
+    - uses: http
+      as: read-converged-main
+      if: ${{ status('push') == 'Succeeded' && status('open-pr') == 'Skipped' }}
+      retry:
+        timeout: 2h
+      config:
+        method: GET
+        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/commits/main
+        headers: &id001
+          - name: Authorization
+            value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
+          - name: Accept
+            value: application/vnd.github+json
+        pollInterval: 2m
+        timeout: 30s
+        successExpression: response.status == 200 && (response.body.sha ?? '') != '' && (response.body.commit.tree.sha ?? '') != ''
+        failureExpression: response.status in [401, 404] || (response.status == 403 && response.header('X-RateLimit-Remaining') != '0' && response.header('Retry-After')
+          == '' && !(lower(response.body?.message ?? '') contains 'rate limit'))
+        errorExpression: '''Cannot confirm concurrent no-op: HTTP '' + string(response.status) + ''; main must have the exact promoted Git tree'''
+        outputs:
+          - name: commitSHA
+            fromExpression: response.body.sha
+          - name: treeSHA
+            fromExpression: response.body.commit.tree.sha
+    - uses: http
+      as: verify-converged-tree
+      if: ${{ status('read-converged-main') == 'Succeeded' }}
+      retry:
+        timeout: 2h
+      config:
+        method: GET
+        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/commits/${{ task.outputs['push'].commit }}
+        headers: *id001
+        pollInterval: 2m
+        timeout: 30s
+        successExpression: response.status == 200 && response.body.commit.tree.sha == ${{ quote(task.outputs['read-converged-main'].treeSHA) }}
+        failureExpression: (response.status in [401, 404] || (response.status == 403 && response.header('X-RateLimit-Remaining') != '0' && response.header('Retry-After')
+          == '' && !(lower(response.body?.message ?? '') contains 'rate limit'))) || (response.status == 200 && response.body.commit.tree.sha
+          != ${{ quote(task.outputs['read-converged-main'].treeSHA) }})
+        errorExpression: '''Cannot confirm concurrent no-op: HTTP '' + string(response.status) + ''; main must have the exact promoted Git tree'''
+    # Successful publication includes verified no-ops; readiness must still run.
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-config') == 'Skipped' && (status('commit') == 'Skipped' || status('open-pr') == 'Succeeded' || status('verify-converged-tree')
+        == 'Succeeded') }}
+      config:
+        published: 'yes'
+        promotionAsNoOp: '${{ (status(''commit'') == ''Skipped'' || status(''verify-converged-tree'') == ''Succeeded'') ? ''yes'' : ''no'' }}'
+        baseCommitSHA: '${{ status(''verify-converged-tree'') == ''Succeeded'' ? task.outputs[''read-converged-main''].commitSHA : vars.baseCommitSHA
+          }}'
+        headCommitSHA: '${{ (status(''commit'') == ''Skipped'' || status(''verify-converged-tree'') == ''Succeeded'') ? '''' : task.outputs[''push''].commit
+          }}'
+        prNumber: ${{ task.outputs['open-pr']?.pr?.id ?? 0 }}
+        prURL: ${{ task.outputs['open-pr']?.pr?.url ?? '' }}

@@ -1,0 +1,104 @@
+---
+# Opt-in workflow task; see README.md for contracts and limitations.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: merge-promotion-pr
+spec:
+  vars:
+    - name: passed
+    - name: checkedSHA
+    - name: headCommitSHA
+    - name: baseCommitSHA
+    - name: prNumber
+    - name: promotionAsNoOp
+    - name: mergeMode
+  steps:
+    - uses: fail
+      as: validate-config
+      if: >-
+        ${{ vars.passed != 'yes' || vars.checkedSHA != vars.headCommitSHA || vars.promotionAsNoOp not in ['yes', 'no'] || vars.mergeMode not in
+        ['auto', 'manual'] || vars.baseCommitSHA == '' || (vars.promotionAsNoOp == 'no' && (vars.headCommitSHA == '' || vars.prNumber == 0)) }}
+      config:
+        message: Merge requires a passing CI result for this exact head SHA and valid publication outputs.
+    - as: inspect-pr
+      config:
+        errorExpression: '''Promotion PR is unavailable, closed without merging, or no longer contains the tested head SHA targeting main'''
+        failureExpression: |
+          (response.status in [401, 404] || (response.status == 403 && response.header('X-RateLimit-Remaining') != '0' && response.header('Retry-After') == '' && !(lower(response.body?.message ?? '') contains 'rate limit'))) ||
+          (response.status == 200 && (response.body.head.sha != ${{ quote(vars.headCommitSHA) }} ||
+          response.body.base.ref != 'main' || (response.body.state == 'closed' && response.body.merged == false)))
+        headers:
+          - name: Authorization
+            value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
+        outputs:
+          - fromExpression: response.body.merged
+            name: merged
+          - fromExpression: response.body.merge_commit_sha
+            name: mergeCommitSHA
+        successExpression: |
+          response.status == 200 && response.body.head.sha == ${{ quote(vars.headCommitSHA) }} &&
+          response.body.base.ref == 'main' && (response.body.state == 'open' || response.body.merged == true)
+        timeout: 30s
+        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls/${{ vars.prNumber }}
+        pollInterval: 2m
+      if: ${{ status('validate-config') == 'Skipped' && vars.promotionAsNoOp == 'no' && vars.mergeMode == 'auto' }}
+      retry:
+        timeout: 2h
+      uses: http
+    # Native merge has no atomic head precondition and some API errors are terminal.
+    - as: auto-merge
+      config:
+        mergeMethod: squash
+        pollInterval: 2m
+        prNumber: ${{ vars.prNumber }}
+        repoURL: https://github.com/redhat-appstudio/infra-deployments.git
+        wait: true
+      if: ${{ status('inspect-pr') == 'Succeeded' && vars.mergeMode == 'auto' && task.outputs['inspect-pr'].merged == false }}
+      retry:
+        timeout: 2h
+      uses: git-merge-pr
+    # The native waiter observes human merges without requesting a merge itself.
+    - as: wait-for-manual-merge
+      config:
+        pollInterval: 5m
+        prNumber: ${{ vars.prNumber }}
+        repoURL: https://github.com/redhat-appstudio/infra-deployments.git
+      if: ${{ status('validate-config') == 'Skipped' && vars.promotionAsNoOp == 'no' && vars.mergeMode == 'manual' }}
+      retry:
+        timeout: 168h
+      uses: git-wait-for-pr
+    # Check that the native step returned the merge of the tested head and base.
+    - as: verify-merged
+      config:
+        errorExpression: '''PR merge verification failed: PR closed, inaccessible, or tested head/base changed'''
+        failureExpression: |
+          (response.status in [401, 404] || (response.status == 403 && response.header('X-RateLimit-Remaining') != '0' && response.header('Retry-After') == '' && !(lower(response.body?.message ?? '') contains 'rate limit'))) ||
+          (response.status == 200 && (response.body.head.sha != ${{ quote(vars.headCommitSHA) }} ||
+          response.body.base.ref != 'main' || (response.body.state == 'closed' && response.body.merged == false)))
+        headers:
+          - name: Authorization
+            value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
+        successExpression: |
+          response.status == 200 && response.body.merged == true &&
+          response.body.head.sha == ${{ quote(vars.headCommitSHA) }} &&
+          response.body.base.ref == 'main' && (response.body.merge_commit_sha ?? '') != '' &&
+          response.body.merge_commit_sha == ${{ quote(vars.mergeMode == 'manual' ? task.outputs['wait-for-manual-merge'].commit : (task.outputs['auto-merge']?.commit ?? task.outputs['inspect-pr'].mergeCommitSHA)) }}
+        timeout: 30s
+        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls/${{ vars.prNumber }}
+        pollInterval: 2m
+      if: >-
+        ${{ status('wait-for-manual-merge') == 'Succeeded' || (status('inspect-pr') == 'Succeeded' && (task.outputs['inspect-pr'].merged == true
+        || status('auto-merge') == 'Succeeded')) }}
+      retry:
+        timeout: 2h
+      uses: http
+    - uses: compose-output
+      as: result
+      if: ${{ status('validate-config') == 'Skipped' && (vars.promotionAsNoOp == 'yes' || status('verify-merged') == 'Succeeded') }}
+      config:
+        mergeConfirmed: 'yes'
+        mergeCommitSHA: >-
+          ${{ vars.promotionAsNoOp == 'yes' ? vars.baseCommitSHA : (vars.mergeMode == 'manual' ? task.outputs['wait-for-manual-merge'].commit
+          : (task.outputs['auto-merge']?.commit ?? task.outputs['inspect-pr'].mergeCommitSHA)) }}
+        promotionAsNoOp: ${{ vars.promotionAsNoOp }}
