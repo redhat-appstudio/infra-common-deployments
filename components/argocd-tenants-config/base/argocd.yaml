@@ -314,10 +314,10 @@ spec:
     processors: {}
     resources:
       limits:
-        memory: 8Gi
+        memory: 10Gi
       requests:
-        cpu: 3
-        memory: 8Gi
+        cpu: 5
+        memory: 10Gi
     sharding:
       enabled: true
       replicas: 2
