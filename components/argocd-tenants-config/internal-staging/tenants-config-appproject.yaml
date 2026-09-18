@@ -40,7 +40,11 @@ spec:
       kind: Application
     - group: appstudio.redhat.com
       kind: Component
+    - group: konflux-ci.dev
+      kind: Component
     - group: appstudio.redhat.com
+      kind: ImageRepository
+    - group: konflux-ci.dev
       kind: ImageRepository
     - group: appstudio.redhat.com
       kind: EnterpriseContractPolicy

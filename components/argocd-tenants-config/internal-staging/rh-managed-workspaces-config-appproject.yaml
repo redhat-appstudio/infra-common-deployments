@@ -27,8 +27,6 @@ spec:
       name: stone-stg-rh01
     - namespace: rhtap-releng-tenant
       name: stone-stg-rh01
-    - namespace: managed-release-team-tenant
-      name: stone-stg-es01
     # Internal Staging
     - namespace: managed-release-team-tenant
       name: stone-stage-p01

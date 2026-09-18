@@ -1,0 +1,74 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: tenants-config
+spec:
+  generators:
+    - git:
+        repoURL: https://gitlab.cee.redhat.com/releng/konflux-release-data.git
+        revision: main
+        directories:
+          - path: staging/tenants-config/auto-generated/cluster/stone-stage-p01/tenants/*
+          - path: staging/tenants-config/auto-generated/cluster/stone-stg-rh01/tenants/*
+  template:
+    metadata:
+      name: '{{path.basename}}-{{path[4]}}'
+      annotations:
+        argocd.argoproj.io/compare-options: ServerSideDiff=true,IncludeMutationWebhook=true
+    spec:
+      project: tenants-config
+      source:
+        path: '{{path}}'
+        repoURL: https://gitlab.cee.redhat.com/releng/konflux-release-data.git
+        targetRevision: main
+      destination:
+        namespace: '{{path.basename}}'
+        name: '{{path[4]}}'
+      ignoreDifferences:
+        # needed because of IncludeMutationWebhook=true to avoid that ArgoCD
+        # considers OutOfSync the resources for which a MutatingWebHook
+        # introduces a resourveVersion in the output
+        - group: "*"
+          kind: "*"
+          jsonPointers:
+            - /metadata/resourceVersion
+        - group: appstudio.redhat.com
+          kind: Component
+          jsonPointers:
+            - /metadata/annotations/build.appstudio.openshift.io~1request
+            - /metadata/annotations/build.appstudio.openshift.io~1sa-migration
+            - /metadata/annotations/image.redhat.com~1image
+            - /metadata/annotations/image.redhat.com~1generate
+            - /spec/actions
+        - group: konflux-ci.dev
+          kind: Component
+          jsonPointers:
+            - /spec/actions
+            - /status
+        - group: appstudio.redhat.com
+          kind: ImageRepository
+          jsonPointers:
+            - /metadata/annotations/image-controller.appstudio.redhat.com~1update-component-image
+        - group: konflux-ci.dev
+          kind: ImageRepository
+          jsonPointers:
+            - /metadata/annotations/build.konflux-ci.dev~1update-component-image
+        - group: appstudio.redhat.com
+          kind: ReleasePlan
+          jsonPointers:
+            - /metadata/labels/release.appstudio.openshift.io~1author
+            - /metadata/labels/release.appstudio.openshift.io~1standing-attribution
+      syncPolicy:
+        #automated:
+        #  prune: true
+        #  selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - RespectIgnoreDifferences=true
+          - ServerSideApply=true
+        retry:
+          limit: 10
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 3m

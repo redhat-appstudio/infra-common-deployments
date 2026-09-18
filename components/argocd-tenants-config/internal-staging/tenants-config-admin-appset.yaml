@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: tenants-config-admin
+spec:
+  generators:
+    - git:
+        repoURL: https://gitlab.cee.redhat.com/releng/konflux-release-data.git
+        revision: main
+        directories:
+          - path: staging/tenants-config/auto-generated/cluster/stone-stage-p01/admin/*
+          - path: staging/tenants-config/auto-generated/cluster/stone-stg-rh01/admin/*
+  template:
+    metadata:
+      name: '{{path.basename}}-admin-{{path[4]}}'
+      annotations:
+        argocd.argoproj.io/compare-options: ServerSideDiff=true,IncludeMutationWebhook=true
+    spec:
+      project: tenants-config-admin
+      source:
+        path: '{{path}}'
+        repoURL: https://gitlab.cee.redhat.com/releng/konflux-release-data.git
+        targetRevision: main
+      destination:
+        namespace: '{{path.basename}}'
+        name: '{{path[4]}}'
+      ignoreDifferences:
+        # needed because of IncludeMutationWebhook=true to avoid that ArgoCD
+        # considers OutOfSync the resources for which a MutatingWebHook
+        # introduces a resourveVersion in the output
+        - group: "*"
+          kind: "*"
+          jsonPointers:
+            - /metadata/resourceVersion
+      syncPolicy:
+        #automated:
+        #  prune: true
+        #  selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+        retry:
+          limit: 10
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 3m
