@@ -263,6 +263,12 @@ spec:
       requests:
         cpu: 2000m
         memory: 4Gi
+    systemCATrust:
+      configMaps:
+        - name: config-trusted-cabundle
+          items:
+            - key: ca-bundle.crt
+              path: ca-bundle.crt
   resourceExclusions: |
     - apiGroups:
       - tekton.dev
