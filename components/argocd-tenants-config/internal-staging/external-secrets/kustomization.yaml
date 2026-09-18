@@ -4,6 +4,5 @@ kind: Kustomization
 resources:
   - stg-rh01-es.yaml
   - stg-p01-es.yaml
-  - stg-es01-es.yaml
   - redhat-appstudio-es.yaml
   - konflux-release-data-es.yaml
