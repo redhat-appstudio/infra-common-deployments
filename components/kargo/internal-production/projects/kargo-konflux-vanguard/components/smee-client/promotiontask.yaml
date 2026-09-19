@@ -1,0 +1,56 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-smee-client-manifests
+spec:
+  vars:
+    - name: srcPath
+    - name: component
+    - name: prevRing
+    - name: targetRing
+    - name: sidecarImageRepoURL
+      value: quay.io/konflux-ci/smee-sidecar
+    - name: gosmeeImageRepoURL
+      value: ghcr.io/chmouel/gosmee
+
+  steps:
+    # gosmee-wh: update the gosmee image tag
+    - uses: kustomize-set-image
+      as: update-gosmee-image
+      if: ${{ ctx.targetFreight.origin.name == "smee-client-gosmee-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base
+        images:
+          - image: ${{ vars.gosmeeImageRepoURL }}
+            tag: ${{ imageFrom(vars.gosmeeImageRepoURL).Tag }}
+
+    # sidecar-wh: update the smee-sidecar image tag
+    - uses: kustomize-set-image
+      as: update-sidecar-image
+      if: ${{ ctx.targetFreight.origin.name == "smee-client-sidecar-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base
+        images:
+          - image: ${{ vars.sidecarImageRepoURL }}
+            tag: ${{ imageFrom(vars.sidecarImageRepoURL).Tag }}
+
+    # manifest-wh: copy base-snapshot from base or previous ring
+    - uses: delete
+      as: delete-old-base-snapshot-folder
+      if: ${{ ctx.targetFreight.origin.name == "smee-client-manifest-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+
+    - uses: copy
+      as: copy-tier-1-folder
+      if: ${{ ctx.targetFreight.origin.name == "smee-client-manifest-wh" && vars.prevRing == "base" }}
+      config:
+        inPath: ${{ vars.srcPath }}/components/${{ vars.component }}/base
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+
+    - uses: copy
+      as: copy-prev-ring-base-snapshot-folder
+      if: ${{ ctx.targetFreight.origin.name == "smee-client-manifest-wh" && vars.prevRing != "base" }}
+      config:
+        inPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.prevRing }}/base/base-snapshot
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
