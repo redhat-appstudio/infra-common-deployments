@@ -1,0 +1,89 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pharos-reader
+rules:
+  # Core resources — namespace-scoped and cluster-scoped read
+  - apiGroups: [""]
+    resources:
+      - configmaps
+      - endpoints
+      - events
+      - limitranges
+      - namespaces
+      - nodes
+      - persistentvolumeclaims
+      - persistentvolumes
+      - pods
+      - pods/log
+      - replicationcontrollers
+      - resourcequotas
+      - serviceaccounts
+      - services
+    verbs: [get, list, watch]
+  # Workloads
+  - apiGroups: [apps]
+    resources:
+      - daemonsets
+      - deployments
+      - replicasets
+      - statefulsets
+    verbs: [get, list, watch]
+  # Jobs
+  - apiGroups: [batch]
+    resources:
+      - cronjobs
+      - jobs
+    verbs: [get, list, watch]
+  # Tekton pipelines
+  - apiGroups: [tekton.dev]
+    resources:
+      - pipelines
+      - pipelineruns
+      - taskruns
+      - tasks
+    verbs: [get, list, watch]
+  # KubeArchive / Tekton Results
+  - apiGroups: [results.tekton.dev]
+    resources:
+      - logs
+      - records
+      - results
+    verbs: [get, list]
+  # OpenShift cluster operator status — needed for get_openshift_cluster_operator_status
+  - apiGroups: [config.openshift.io]
+    resources:
+      - apiservers
+      - clusteroperators
+      - clusterversions
+      - infrastructures
+      - networks
+      - proxies
+    verbs: [get, list, watch]
+  # Machine and node health
+  - apiGroups: [machine.openshift.io]
+    resources:
+      - machines
+      - machinesets
+    verbs: [get, list, watch]
+  # MachineConfigPool status — separate apiGroup from machine.openshift.io
+  - apiGroups: [machineconfiguration.openshift.io]
+    resources:
+      - machineconfigpools
+    verbs: [get, list, watch]
+  # Metrics and alerting context
+  - apiGroups: [monitoring.coreos.com]
+    resources:
+      - podmonitors
+      - prometheusrules
+      - servicemonitors
+    verbs: [get, list]
+  # Queue triage
+  - apiGroups: [kueue.x-k8s.io]
+    resources:
+      - clusterqueues
+      - localqueues
+      - workloads
+    verbs: [get, list, watch]
+  # secrets-read deliberately deferred — separate team decision (SPRE-6656)
