@@ -33,7 +33,7 @@ spec:
             - /mnt/internal-services/remote-client-config/kubeconfig
             - --leader-election-id
             - "staging-p01"
-          image: quay.io/konflux-ci/internal-services:bd2876949db55753e23ee375dafddd7995869f23
+          image: quay.io/konflux-ci/internal-services:0898b4d4cf5a0b23cd89b94842d5daad60746cf4
           name: manager
           securityContext:
             allowPrivilegeEscalation: false
