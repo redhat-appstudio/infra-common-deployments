@@ -51,7 +51,9 @@ spec:
         == 'Succeeded' && status('update-bundle-images') == 'Succeeded' }}
       config:
         prepared: 'yes'
-        prSummary: >-
-          ${{ 'Promote the complete smee-client bundle. Manifest commit: ' + commitFrom(vars.repoURL).ID +
-          '; gosmee: ' + imageFrom(vars.gosmeeImageRepoURL).Tag + ' @ ' + imageFrom(vars.gosmeeImageRepoURL).Digest +
-          '; smee-sidecar: ' + imageFrom(vars.sidecarImageRepoURL).Tag + ' @ ' + imageFrom(vars.sidecarImageRepoURL).Digest }}
+        prSummary: |
+          Update smee-client with:
+
+          - **gosmee:** `${{ imageFrom(vars.gosmeeImageRepoURL).Tag }}`
+          - **smee-sidecar:** `${{ imageFrom(vars.sidecarImageRepoURL).Tag }}`
+          - **Manifests:** [`${{ commitFrom(vars.repoURL).ID[0:12] }}`](https://github.com/redhat-appstudio/infra-deployments/commit/${{ commitFrom(vars.repoURL).ID }})

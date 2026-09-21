@@ -180,7 +180,9 @@ Preparation tasks may return `prSummary`, `prChanges`, and `prCompareURL` alongs
 `prepared`. Each change row has `kind`, `previous`, `proposed`, and `path`.
 The Stage forwards them to the publisher; they are optional.
 
-The publisher shows configuration changes, merge/Prow policy and promotion IDs.
+The publisher shows configuration changes and a short merge/Prow policy sentence.
+Promotion identifiers are collapsed under Promotion details. Keep `prSummary`
+short; use a Markdown list when describing several artifacts.
 Previous values come from Git, not the running deployment. Comparison links are
 only produced for recognized manifest repositories with old and new 40-character
 hexadecimal refs; they are not proof of image provenance. No extra GitHub calls
