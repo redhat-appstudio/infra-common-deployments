@@ -148,10 +148,24 @@ Keep these rules when extending or generating configuration:
 
 ## What the checks guarantee
 
-**Publication:** each Promotion gets its own branch, with force-push disabled.
-Native Kargo steps push and open the PR. If PR creation is skipped because the
-change may already exist, two HTTP reads verify exact Git-tree equality before
-accepting it as a no-op. The branch must remain owned exclusively by its Promotion.
+**Publication:** each project/component/ring uses one stable branch:
+`<project>/<component>/<targetRing>`. Native `git-push` replaces that branch with
+the newly prepared changes, and native `git-open-pr` reuses its open PR. A new
+Promotion for the same Freight therefore updates the existing PR instead of
+opening another one. CI checks the newly pushed SHA; an earlier passing result
+cannot approve a different head. No additional HTTP lookup is needed.
+
+Kargo serializes Promotions within a Stage. Each branch must belong to exactly
+one Stage: do not configure two Stages with the same project/component/ring or
+push to these branches manually. If PR creation is skipped because the change
+may already exist, two HTTP reads verify exact Git-tree equality before accepting
+it as a no-op.
+
+Existing PRs on the older `<project>/promotions/<promotion>` branches are not
+adopted or closed automatically. The first promotion after this change starts the
+stable branch; later promotions reuse its open PR. Review and close obsolete
+per-Promotion PRs separately so they are not accidentally merged. A closed PR is not reopened;
+new changes can create a new PR on the same branch.
 
 **CI and merge:** required checks must pass for the published head SHA. Automatic
 mode uses native `git-merge-pr`; manual mode uses native `git-wait-for-pr`. HTTP
@@ -170,7 +184,7 @@ verify the captured target revision. Existing `noOpRing0/1/2` Freight annotation
 are retained, but later tasks use fresh publication outputs instead of cached
 Freight metadata.
 
-Operator migration intentionally adopts these stricter checks and unique branches.
+Operator migration intentionally adopts these stricter checks and shared tasks.
 It preserves sources, ring targets and policies, but is not behavior-identical to
 the legacy flow: no-ops now undergo readiness and every configured target is required.
 
@@ -199,7 +213,7 @@ are made just to build the description. A reused PR may keep its original body.
 | GitHub rate limiting | HTTP CI/identity calls still use a shared PAT. Native Git steps use configured Kargo credentials. Task reuse alone does not reduce request volume. |
 | Merge fails on a transient API error | Native Kargo v1.11.3 merge errors can be terminal. A retry budget does not make every provider failure retryable. |
 | Branch changes during merge | Native merge lacks an atomic expected-head precondition. The final identity check can detect a mismatch but cannot undo an already completed merge. |
-| Restarting a Promotion | Exercise restart/retry behavior after publication before broad adoption; do not manually push to its branch. |
+| Repeating a promotion | An open PR on the stable branch is reused. The branch is replaced and CI checks the new head. A retry that resumes after publication keeps its captured head and fails the merge identity check if the branch has changed. |
 
 CI polling defaults to two minutes, with up to 2h30m per phase. Automatic merge and
 PR identity checks use two-minute polling and two-hour budgets; the manual merge
