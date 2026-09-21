@@ -59,9 +59,9 @@ spec:
             - /metadata/labels/release.appstudio.openshift.io~1author
             - /metadata/labels/release.appstudio.openshift.io~1standing-attribution
       syncPolicy:
-        #automated:
-        #  prune: true
-        #  selfHeal: true
+        automated:
+          prune: true
+          selfHeal: true
         syncOptions:
           - CreateNamespace=true
           - RespectIgnoreDifferences=true
