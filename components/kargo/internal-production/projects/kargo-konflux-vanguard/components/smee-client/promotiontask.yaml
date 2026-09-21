@@ -1,0 +1,56 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-smee-client-bundle
+spec:
+  vars:
+    - name: srcPath
+    - name: freightPath
+    - name: repoURL
+    - name: componentPath
+    - name: targetRing
+    - name: sidecarImageRepoURL
+      value: quay.io/konflux-ci/smee-sidecar
+    - name: gosmeeImageRepoURL
+      value: ghcr.io/chmouel/gosmee
+  steps:
+    - uses: fail
+      as: validate-bundle
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'smee-client' || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$') || !(imageFrom(vars.gosmeeImageRepoURL).Digest
+        matches '^sha256:[0-9a-f]{64}$') || !(imageFrom(vars.sidecarImageRepoURL).Digest matches '^sha256:[0-9a-f]{64}$') }}
+      config:
+        message: Expected smee-client Freight containing a Git commit and both image digests.
+    - uses: delete
+      as: delete-old-base-snapshot
+      if: ${{ status('validate-bundle') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: copy
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-base-snapshot') == 'Succeeded' }}
+      config:
+        inPath: ${{ vars.freightPath }}/${{ vars.componentPath }}/base
+        outPath: ${{ vars.srcPath }}/${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: kustomize-set-image
+      as: update-bundle-images
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base
+        images:
+          - image: ${{ vars.gosmeeImageRepoURL }}
+            digest: ${{ imageFrom(vars.gosmeeImageRepoURL).Digest }}
+          - image: ${{ vars.sidecarImageRepoURL }}
+            digest: ${{ imageFrom(vars.sidecarImageRepoURL).Digest }}
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-bundle') == 'Skipped' && status('delete-old-base-snapshot') == 'Succeeded' && status('copy-freight-manifests')
+        == 'Succeeded' && status('update-bundle-images') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: >-
+          ${{ 'Promote the complete smee-client bundle. Manifest commit: ' + commitFrom(vars.repoURL).ID +
+          '; gosmee: ' + imageFrom(vars.gosmeeImageRepoURL).Tag + ' @ ' + imageFrom(vars.gosmeeImageRepoURL).Digest +
+          '; smee-sidecar: ' + imageFrom(vars.sidecarImageRepoURL).Tag + ' @ ' + imageFrom(vars.sidecarImageRepoURL).Digest }}
