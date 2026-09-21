@@ -1,0 +1,96 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-external-secrets-operator
+spec:
+  vars:
+    - name: srcPath
+    - name: freightPath
+    - name: repoURL
+    - name: component
+    - name: targetRing
+    - name: imageRepoURL
+      value: quay.io/konflux-ci/external-secrets-operator
+    - name: chartImageRepoURL
+      value: ghcr.io/external-secrets/external-secrets
+  steps:
+    - uses: fail
+      as: validate-bundle
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'external-secrets-operator' || vars.component != ctx.targetFreight.origin.name ||
+        vars.targetRing not in ['ring-1', 'ring-2', 'ring-3', 'ring-4'] ||
+        !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$') || !(imageFrom(vars.imageRepoURL).Tag matches '^[0-9a-f]{40}$') }}
+      config:
+        message: Expected external-secrets-operator Freight containing a Git commit and a SHA-tagged image, targeting Ring 1–4.
+    - uses: yaml-parse
+      as: read-previous-chart
+      if: ${{ status('validate-bundle') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot/external-secrets/Chart.yaml
+        outputs:
+          - name: version
+            fromExpression: string(version)
+    - uses: yaml-parse
+      as: read-previous-image
+      if: ${{ status('read-previous-chart') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        outputs:
+          - name: version
+            fromExpression: >-
+              let image = find(images ?? [], {.name == ${{ quote(vars.chartImageRepoURL) }}});
+              image == nil ? 'Chart/values defaults (no image override)' :
+              (image.newName ?? image.name) + (image.digest != nil ? '@' + image.digest : ':' + string(image.newTag))
+    - uses: yaml-parse
+      as: read-freight-chart
+      if: ${{ status('read-previous-image') == 'Succeeded' }}
+      config:
+        path: ${{ vars.freightPath }}/components/${{ vars.component }}/base/external-secrets/Chart.yaml
+        outputs:
+          - name: version
+            fromExpression: string(version)
+    # Remove deleted manifests too; copy only from the selected Freight checkout.
+    - uses: delete
+      as: delete-old-base-snapshot
+      if: ${{ status('read-freight-chart') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: copy
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-base-snapshot') == 'Succeeded' }}
+      config:
+        inPath: ${{ vars.freightPath }}/components/${{ vars.component }}/base
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    # All three chart Deployments use this upstream image name. Preserve the
+    # chart match key while pinning manager, webhook and cert-controller to Quay.
+    - uses: kustomize-set-image
+      as: update-image
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base
+        images:
+          - image: ${{ vars.chartImageRepoURL }}
+            newName: ${{ vars.imageRepoURL }}
+            tag: ${{ quote(imageFrom(vars.imageRepoURL).Tag) }}
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-bundle') == 'Skipped' && status('read-previous-chart') == 'Succeeded' &&
+        status('read-previous-image') == 'Succeeded' && status('read-freight-chart') == 'Succeeded' &&
+        status('delete-old-base-snapshot') == 'Succeeded' && status('copy-freight-manifests') == 'Succeeded' && status('update-image') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: |
+          Update External Secrets Operator's chart, base manifests and image in ${{ vars.targetRing }}.
+
+          Manifest source: [${{ commitFrom(vars.repoURL).ID[0:12] }}](https://github.com/redhat-appstudio/infra-deployments/commit/${{ commitFrom(vars.repoURL).ID }}).
+        prChanges:
+          - kind: Helm chart
+            previous: ${{ quote(task.outputs['read-previous-chart'].version) }}
+            proposed: ${{ quote(task.outputs['read-freight-chart'].version) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot/external-secrets/Chart.yaml
+          - kind: Operator image (manager, webhook and cert-controller)
+            previous: ${{ quote(task.outputs['read-previous-image'].version) }}
+            proposed: ${{ vars.imageRepoURL }}:${{ imageFrom(vars.imageRepoURL).Tag }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
