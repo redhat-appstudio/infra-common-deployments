@@ -1,4 +1,5 @@
 ---
+# Read the previous Git configuration before mutation; this is not live cluster state.
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
@@ -7,13 +8,45 @@ spec:
   vars:
     - name: srcPath
   steps:
+    - uses: yaml-parse
+      as: read-previous
+      if: ${{ ctx.targetFreight.origin.name == "konflux-operator" }}
+      config:
+        path: ${{ vars.srcPath }}/components/konflux-operator/rings/ring-1/base/invariant/kustomization.yaml
+        outputs:
+          - name: imageTag
+            fromExpression: string(images[0].newTag ?? 'unknown')
+          - name: manifestSource
+            fromExpression: string(resources[0] ?? 'unknown')
     - uses: yaml-update
       as: update-konflux-operator
-      if: ${{ ctx.targetFreight.origin.name == "konflux-operator" }}
+      if: ${{ status('read-previous') == 'Succeeded' }}
       config:
         path: ${{ vars.srcPath }}/components/konflux-operator/rings/ring-1/base/invariant/kustomization.yaml
         updates:
           - key: images.0.newTag
             value: ${{ imageFrom("quay.io/konflux-ci/konflux-operator").Tag }}
           - key: resources.0
-            value: https://github.com/konflux-ci/konflux-ci/operator/config/default?ref=${{ imageFrom("quay.io/konflux-ci/konflux-operator").Tag }}
+            value: https://github.com/konflux-ci/konflux-ci/operator/config/default?ref=${{ imageFrom("quay.io/konflux-ci/konflux-operator").Tag
+              }}
+    - uses: compose-output
+      as: result
+      if: ${{ status('update-konflux-operator') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: Update the konflux-operator image and manifest reference in the ring-1 configuration.
+        prChanges:
+          - kind: Image tag
+            previous: ${{ quote(task.outputs['read-previous'].imageTag) }}
+            proposed: ${{ quote(imageFrom("quay.io/konflux-ci/konflux-operator").Tag) }}
+            path: components/konflux-operator/rings/ring-1/base/invariant/kustomization.yaml
+          - kind: Manifest source
+            previous: ${{ task.outputs['read-previous'].manifestSource }}
+            proposed: https://github.com/konflux-ci/konflux-ci/operator/config/default?ref=${{ imageFrom("quay.io/konflux-ci/konflux-operator").Tag
+              }}
+            path: components/konflux-operator/rings/ring-1/base/invariant/kustomization.yaml
+        prCompareURL: >-
+          ${{ task.outputs['read-previous'].manifestSource matches '^https://github\\.com/konflux-ci/konflux-ci/operator/config/default\\?ref=[0-9a-f]{40}$'
+          && imageFrom("quay.io/konflux-ci/konflux-operator").Tag matches '^[0-9a-f]{40}$' ? 'https://github.com/konflux-ci/konflux-ci/compare/'
+          + split(task.outputs['read-previous'].manifestSource, '?ref=')[1] + '...' + imageFrom("quay.io/konflux-ci/konflux-operator").Tag
+          : '' }}

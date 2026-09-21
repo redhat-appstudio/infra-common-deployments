@@ -1,0 +1,86 @@
+---
+# Verify the complete expected cluster group together; see README.md.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: verify-argocd-deployment
+spec:
+  vars:
+    - name: mergeConfirmed
+    - name: commitSHA
+    - name: component
+    - name: clusters
+    - name: tokenSecret
+      value: argocd-app-reader-token-staging
+    - name: appsNamespace
+      value: argocd-infra-deployments
+  steps:
+    - uses: fail
+      as: validate-config
+      if: >-
+        ${{ vars.mergeConfirmed != 'yes' || vars.commitSHA == '' || !(vars.component matches '^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$') || vars.clusters
+        == '' || any(split(vars.clusters, '|'), {!(# matches '^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$')}) || len(uniq(split(vars.clusters, '|'))) !=
+        len(split(vars.clusters, '|')) || len(split(vars.clusters, '|')) > 15 }}
+      config:
+        message: Readiness requires a confirmed revision, component prefix and 1–15 unique pipe-separated cluster names (no regex, spaces or empty
+          entries).
+    # Persist the freshness boundary once, rather than moving it on every poll.
+    - uses: compose-output
+      as: readiness-start
+      if: ${{ status('validate-config') == 'Skipped' }}
+      config:
+        startedAt: ${{ now().Format('2006-01-02T15:04:05Z07:00') }}
+    # Evaluate the whole group from one response; never accept a partial page.
+    - uses: http
+      as: wait-for-sync
+      if: ${{ status('readiness-start') == 'Succeeded' }}
+      retry:
+        timeout: 45m
+        errorThreshold: 3
+      config:
+        url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/${{ vars.appsNamespace }}/applications
+        insecureSkipTLSVerify: true
+        headers:
+          - name: Authorization
+            value: Bearer ${{ secret(vars.tokenSecret).token }}
+        successExpression: |
+          response.status == 200 &&
+          (response.body.metadata?.continue ?? '') == '' &&
+          all(split(${{ quote(vars.clusters) }}, '|'), {
+            let expectedName = ${{ quote(vars.component) }} + '-' + #;
+            any(response.body.items, {
+              .metadata.name == expectedName &&
+              .metadata.deletionTimestamp == nil &&
+              .status?.sync?.status == 'Synced' &&
+              .status?.health?.status == 'Healthy' &&
+              .operation == nil &&
+              (.status?.reconciledAt ?? '') != '' &&
+              date(.status.reconciledAt) >= date(${{ quote(task.outputs['readiness-start'].startedAt) }}) &&
+              (
+                .status?.operationState == nil ||
+                (
+                  .status.operationState.phase == 'Succeeded' &&
+                  (.status.operationState.finishedAt ?? '') != '' &&
+                  date(.status.reconciledAt) >= date(.status.operationState.finishedAt)
+                )
+              ) &&
+              .status.sync.revision == ${{ quote(vars.commitSHA) }}
+            })
+          })
+        failureExpression: response.status in [401, 403, 404] || (response.status == 200 && (response.body.metadata?.continue ?? '') != '')
+        errorExpression: 'response.status != 200 ? ''Cannot list Argo CD Applications: HTTP '' + string(response.status) : ''Application list
+          is paginated; refusing incomplete readiness verification.'''
+        outputs:
+          - name: appDetails
+            fromExpression: |
+              map(filter(response.body.items, {
+                .metadata.name in map(split(${{ quote(vars.clusters) }}, '|'), {${{ quote(vars.component) }} + '-' + #})
+              }), {.metadata.name + ' health=' + .status.health.status + ' revision=' + .status.sync.revision})
+        timeout: 30s
+    - uses: compose-output
+      as: result
+      if: ${{ status('wait-for-sync') == 'Succeeded' }}
+      config:
+        deploymentVerified: 'yes'
+        commitSHA: ${{ vars.commitSHA }}
+        appDetails: ${{ task.outputs['wait-for-sync'].appDetails }}

@@ -4,3 +4,7 @@ kind: Component
 resources:
   - github-ci-gate.yaml
   - wait-for-infra-deployments-argocd-sync.yaml
+  - publish-promotion-pr.yaml
+  - verify-promotion-ci.yaml
+  - merge-promotion-pr.yaml
+  - verify-argocd-deployment.yaml
