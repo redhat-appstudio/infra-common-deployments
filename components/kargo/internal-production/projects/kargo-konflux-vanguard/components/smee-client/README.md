@@ -38,7 +38,8 @@ covers base manifests and images, not every repository file.
 
 The publisher's base commit is still the `./src` commit, not the Freight commit.
 This allows the PR to update current `main` without rolling back unrelated work.
-PR descriptions include the manifest commit, image tags, and digests.
+PR descriptions show the gosmee version, sidecar SHA tag, and a link to the manifest
+commit. Full image provenance remains available in Freight.
 
 ## Ring policies
 

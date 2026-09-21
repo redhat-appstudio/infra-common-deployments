@@ -53,25 +53,19 @@ spec:
         description: |
           ## Promote ${{ vars.component }} to ${{ vars.targetRing }}
 
-          ${{ vars.prSummary != '' ? vars.prSummary : 'Promote the selected Freight into the target Git configuration.' }}
+          ${{ vars.prSummary != '' ? vars.prSummary : 'Update the component to the selected Freight.' }}
 
-          ${{ len(vars.prChanges) > 0 ? '| Change | Previous Git configuration | Proposed | File |\n|---|---|---|---|\n' + join(map(vars.prChanges, {'| ' + replace(replace(replace(replace(string(#.kind), '|', '&#124;'), '`', '&#96;'), '\n', ' '), '\r', ' ') + ' | `' + replace(replace(replace(replace(string(#.previous), '|', '&#124;'), '`', '&#96;'), '\n', ' '), '\r', ' ') + '` | `' + replace(replace(replace(replace(string(#.proposed), '|', '&#124;'), '`', '&#96;'), '\n', ' '), '\r', ' ') + '` | `' + replace(replace(replace(replace(string(#.path), '|', '&#124;'), '`', '&#96;'), '\n', ' '), '\r', ' ') + '` |'}), '\n') : 'See the Files changed tab for the configuration changes.' }}
+          ${{ len(vars.prChanges) > 0 ? '| Change | Previous Git configuration | Proposed | File |\n|---|---|---|---|\n' + join(map(vars.prChanges, {'| ' + replace(replace(replace(replace(string(#.kind), '|', '&#124;'), '`', '&#96;'), '\n', ' '), '\r', ' ') + ' | `' + replace(replace(replace(replace(string(#.previous), '|', '&#124;'), '`', '&#96;'), '\n', ' '), '\r', ' ') + '` | `' + replace(replace(replace(replace(string(#.proposed), '|', '&#124;'), '`', '&#96;'), '\n', ' '), '\r', ' ') + '` | `' + replace(replace(replace(replace(string(#.path), '|', '&#124;'), '`', '&#96;'), '\n', ' '), '\r', ' ') + '` |'}), '\n') : '' }}
 
           ${{ vars.prCompareURL != '' ? '[Compare configured manifest refs](' + vars.prCompareURL + ')' : '' }}
 
-          ### Merge and checks
-
-          - **Merge:** ${{ vars.mergeMode == 'auto' ? 'Kargo merges after the configured CI gates pass.' : 'Manual merge required; Kargo waits for the PR to be merged.' }}
-          - **Prow:** ${{ vars.skipProwChecks == 'true' ? 'Explicitly disabled for this Stage.' : 'Required before Kargo proceeds to the merge step.' }}
-          - **CI:** Results are shown in GitHub checks. This description is created before the CI gate completes.
+          ${{ vars.mergeMode == 'auto' ? 'Merges automatically after required checks pass.' : 'Requires manual merge after required checks pass.' }}${{ vars.skipProwChecks == 'true' ? '' : ' Prow is required.' }}
 
           <details>
           <summary>Promotion details</summary>
 
           | Field | Value |
           |---|---|
-          | Component | `${{ vars.component }}` |
-          | Stage | `${{ ctx.stage }}` |
           | Project | `${{ ctx.project }}` |
           | Freight | `${{ ctx.targetFreight.alias }}` (`${{ ctx.targetFreight.name }}`) |
           | Promotion | `${{ ctx.promotion }}` |
@@ -79,8 +73,7 @@ spec:
 
           </details>
 
-          Previous values describe Git configuration, not necessarily the running deployment.
-          This branch belongs to this promotion. Do not push additional changes.
+          ${{ len(vars.prChanges) > 0 ? 'Previous values reflect Git configuration, not necessarily the running deployment.' : '' }}
         labels:
           - ${{ vars.targetRing }}
           - automated-promotion
