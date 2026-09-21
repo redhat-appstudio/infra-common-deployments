@@ -12,3 +12,4 @@ resources:
   - monitoring-workload-logging
   - monitoring-workload-prometheus
   - perf-team-prometheus-reader
+  - monitoring-workload-custom-kube-state-metrics
