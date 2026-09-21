@@ -34,20 +34,21 @@ spec:
       config:
         path: ${{ vars.srcPath }}
         message: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}'
-    # One branch per Promotion isolates its tested head from later Freight updates.
+    # One branch per component/ring lets native git-open-pr reuse an open PR.
+    # Kargo serializes Promotions within a Stage; CI must use this push's SHA.
     - uses: git-push
       as: push
       if: ${{ status('commit') == 'Succeeded' }}
       config:
         path: ${{ vars.srcPath }}
-        targetBranch: ${{ ctx.project }}/promotions/${{ ctx.promotion }}
-        force: false
+        targetBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
+        force: true
     - uses: git-open-pr
       as: open-pr
       if: ${{ status('push') == 'Succeeded' }}
       config:
         repoURL: https://github.com/redhat-appstudio/infra-deployments.git
-        sourceBranch: ${{ ctx.project }}/promotions/${{ ctx.promotion }}
+        sourceBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
         targetBranch: main
         title: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}'
         description: |
