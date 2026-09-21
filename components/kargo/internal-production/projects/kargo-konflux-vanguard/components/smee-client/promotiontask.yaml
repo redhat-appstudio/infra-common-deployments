@@ -23,9 +23,24 @@ spec:
         !(imageFrom(vars.sidecarImageRepoURL).Tag matches '^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$') }}
       config:
         message: Expected smee-client Freight containing a Git commit and two valid image tags.
+    # Capture Git configuration before changing it, as the Operator preparation does.
+    - uses: yaml-parse
+      as: read-previous
+      if: ${{ status('validate-bundle') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        outputs:
+          - name: gosmeeVersion
+            fromExpression: >-
+              let image = find(images ?? [], {.name == ${{ quote(vars.gosmeeImageRepoURL) }}});
+              string(image?.digest ?? image?.newTag ?? 'not configured')
+          - name: sidecarVersion
+            fromExpression: >-
+              let image = find(images ?? [], {.name == ${{ quote(vars.sidecarImageRepoURL) }}});
+              string(image?.digest ?? image?.newTag ?? 'not configured')
     - uses: delete
       as: delete-old-base-snapshot
-      if: ${{ status('validate-bundle') == 'Skipped' }}
+      if: ${{ status('read-previous') == 'Succeeded' }}
       config:
         path: ${{ vars.srcPath }}/${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/base-snapshot
     - uses: copy
@@ -41,19 +56,28 @@ spec:
         path: ${{ vars.srcPath }}/${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base
         images:
           - image: ${{ vars.gosmeeImageRepoURL }}
+            newName: ${{ vars.gosmeeImageRepoURL }}
             tag: ${{ quote(imageFrom(vars.gosmeeImageRepoURL).Tag) }}
           - image: ${{ vars.sidecarImageRepoURL }}
+            newName: ${{ vars.sidecarImageRepoURL }}
             tag: ${{ quote(imageFrom(vars.sidecarImageRepoURL).Tag) }}
     - uses: compose-output
       as: result
       if: >-
-        ${{ status('validate-bundle') == 'Skipped' && status('delete-old-base-snapshot') == 'Succeeded' && status('copy-freight-manifests')
+        ${{ status('validate-bundle') == 'Skipped' && status('read-previous') == 'Succeeded' && status('delete-old-base-snapshot') == 'Succeeded' && status('copy-freight-manifests')
         == 'Succeeded' && status('update-bundle-images') == 'Succeeded' }}
       config:
         prepared: 'yes'
         prSummary: |
-          Update smee-client with:
+          Update the smee-client images and base manifests in the ${{ vars.targetRing }} configuration.
 
-          - **gosmee:** `${{ imageFrom(vars.gosmeeImageRepoURL).Tag }}`
-          - **smee-sidecar:** `${{ imageFrom(vars.sidecarImageRepoURL).Tag }}`
-          - **Manifests:** [`${{ commitFrom(vars.repoURL).ID[0:12] }}`](https://github.com/redhat-appstudio/infra-deployments/commit/${{ commitFrom(vars.repoURL).ID }})
+          Manifest source: [${{ commitFrom(vars.repoURL).ID[0:12] }}](https://github.com/redhat-appstudio/infra-deployments/commit/${{ commitFrom(vars.repoURL).ID }}).
+        prChanges:
+          - kind: gosmee image
+            previous: ${{ quote(task.outputs['read-previous'].gosmeeVersion) }}
+            proposed: ${{ quote(imageFrom(vars.gosmeeImageRepoURL).Tag) }}
+            path: ${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+          - kind: smee-sidecar image
+            previous: ${{ quote(task.outputs['read-previous'].sidecarVersion) }}
+            proposed: ${{ quote(imageFrom(vars.sidecarImageRepoURL).Tag) }}
+            path: ${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
