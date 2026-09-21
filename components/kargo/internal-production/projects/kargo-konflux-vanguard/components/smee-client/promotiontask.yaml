@@ -18,10 +18,11 @@ spec:
     - uses: fail
       as: validate-bundle
       if: >-
-        ${{ ctx.targetFreight.origin.name != 'smee-client' || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$') || !(imageFrom(vars.gosmeeImageRepoURL).Digest
-        matches '^sha256:[0-9a-f]{64}$') || !(imageFrom(vars.sidecarImageRepoURL).Digest matches '^sha256:[0-9a-f]{64}$') }}
+        ${{ ctx.targetFreight.origin.name != 'smee-client' || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$') ||
+        !(imageFrom(vars.gosmeeImageRepoURL).Tag matches '^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$') ||
+        !(imageFrom(vars.sidecarImageRepoURL).Tag matches '^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$') }}
       config:
-        message: Expected smee-client Freight containing a Git commit and both image digests.
+        message: Expected smee-client Freight containing a Git commit and two valid image tags.
     - uses: delete
       as: delete-old-base-snapshot
       if: ${{ status('validate-bundle') == 'Skipped' }}
@@ -40,9 +41,9 @@ spec:
         path: ${{ vars.srcPath }}/${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base
         images:
           - image: ${{ vars.gosmeeImageRepoURL }}
-            digest: ${{ imageFrom(vars.gosmeeImageRepoURL).Digest }}
+            tag: ${{ quote(imageFrom(vars.gosmeeImageRepoURL).Tag) }}
           - image: ${{ vars.sidecarImageRepoURL }}
-            digest: ${{ imageFrom(vars.sidecarImageRepoURL).Digest }}
+            tag: ${{ quote(imageFrom(vars.sidecarImageRepoURL).Tag) }}
     - uses: compose-output
       as: result
       if: >-
