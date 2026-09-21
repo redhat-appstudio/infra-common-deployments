@@ -13,6 +13,7 @@ resources:
 
 patches:
 - path: configmap-patch.yaml
+- path: oauth2-proxy-deployment-patch.yaml
 
 helmCharts:
 - name: devlake
