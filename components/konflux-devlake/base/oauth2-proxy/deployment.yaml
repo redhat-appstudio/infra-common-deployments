@@ -44,7 +44,7 @@ spec:
             - name: OAUTH2_PROXY_HTTP_ADDRESS
               value: "0.0.0.0:4180"
             - name: OAUTH2_PROXY_SKIP_AUTH_ROUTES
-              value: "^/grafana/.*,^/health.*,^/api/.*"
+              value: "^/grafana/.*,^/health.*,^/api/rest/.*"
             - name: OAUTH2_PROXY_EMAIL_DOMAINS
               value: "redhat.com"
             - name: OAUTH2_PROXY_CODE_CHALLENGE_METHOD
