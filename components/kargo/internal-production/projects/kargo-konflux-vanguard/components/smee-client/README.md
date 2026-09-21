@@ -25,13 +25,14 @@ Both rings use two worktrees from the same repository:
 - `./freight`: the exact Git commit recorded in the selected Freight.
 
 The preparation task replaces the target ring's `base-snapshot` with
-`components/smee-client-rd/base` from `./freight`, then sets both image digests in
+`components/smee-client-rd/base` from `./freight`, then sets both image tags recorded in Freight in
 the target ring's outer Kustomization. It emits `prepared: 'yes'` only after
 validation, deletion, copying, and image updates succeed.
 
 Ring 1 reconstructs the same Freight bundle rather than copying the current
-Ring 0 directory, which might already contain a newer promotion. Digest pinning
-also prevents a moved image tag from changing the selected image bytes. Existing
+Ring 0 directory, which might already contain a newer promotion. Gosmee uses its
+version tag and smee-sidecar uses its commit-SHA tag. Tags must remain immutable
+in their registries to preserve identical image contents across rings. Existing
 ring-specific patches and overlays remain in the target checkout; the bundle
 covers base manifests and images, not every repository file.
 
