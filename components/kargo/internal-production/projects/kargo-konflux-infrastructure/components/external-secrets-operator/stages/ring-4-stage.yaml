@@ -1,0 +1,145 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: ring-4-external-secrets-operator
+  labels:
+    konflux-environment: production
+  annotations:
+    kargo.akuity.io/color: purple
+spec:
+  shard: infra-deployments-production
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: external-secrets-operator
+      sources:
+        stages:
+          - ring-3-external-secrets-operator
+        requiredSoakTime: 72h0m0s
+  verification:
+    analysisTemplates:
+      - name: kanary-production
+    args:
+      - name: clusters
+        value: kflux-prd-rh02
+      - name: expected-cluster-count
+        value: '1'
+  promotionTemplate:
+    spec:
+      vars:
+        - name: srcPath
+          value: ./src
+        - name: repoURL
+          value: https://github.com/redhat-appstudio/infra-deployments.git
+        - name: component
+          value: ${{ ctx.targetFreight.origin.name }}
+        - name: targetRing
+          value: ring-4
+        - name: mergeMode
+          value: manual
+        - name: skipProwChecks
+          value: 'true'
+        - name: freightPath
+          value: ./freight
+      steps:
+        - uses: git-clone
+          as: clone
+          config:
+            repoURL: ${{ vars.repoURL }}
+            checkout:
+              - branch: main
+                path: ${{ vars.srcPath }}
+              - commit: ${{ commitFrom(vars.repoURL).ID }}
+                path: ${{ vars.freightPath }}
+        - task:
+            name: prepare-external-secrets-operator
+          as: promote
+          vars:
+            - name: srcPath
+              value: ${{ vars.srcPath }}
+            - name: freightPath
+              value: ${{ vars.freightPath }}
+            - name: repoURL
+              value: ${{ vars.repoURL }}
+            - name: component
+              value: ${{ vars.component }}
+            - name: targetRing
+              value: ${{ vars.targetRing }}
+        - task:
+            name: publish-promotion-pr
+          as: publish
+          vars:
+            - name: srcPath
+              value: ${{ vars.srcPath }}
+            - name: component
+              value: ${{ vars.component }}
+            - name: targetRing
+              value: ${{ vars.targetRing }}
+            - name: prSummary
+              value: ${{ outputs['promote::result']?.prSummary ?? '' }}
+            - name: prChanges
+              value: ${{ outputs['promote::result']?.prChanges ?? [] }}
+            - name: prCompareURL
+              value: ${{ outputs['promote::result']?.prCompareURL ?? '' }}
+            - name: prepared
+              value: ${{ outputs['promote::result']?.prepared ?? '' }}
+            - name: baseCommitSHA
+              value: ${{ outputs['clone'].commits[vars.srcPath] }}
+            - name: mergeMode
+              value: ${{ vars.mergeMode }}
+            - name: skipProwChecks
+              value: ${{ quote(vars.skipProwChecks) }}
+        - uses: set-metadata
+          as: annotate-freight-as-no-op
+          if: ${{ outputs['publish::result']?.published == 'yes' }}
+          config:
+            updates:
+              - kind: Freight
+                name: ${{ ctx.targetFreight.name }}
+                values:
+                  noOpRing4: ${{ outputs['publish::result'].promotionAsNoOp }}
+        - task:
+            name: verify-promotion-ci
+          as: ci
+          vars:
+            - name: published
+              value: ${{ outputs['publish::result']?.published ?? '' }}
+            - name: commitSHA
+              value: ${{ outputs['publish::result']?.headCommitSHA ?? '' }}
+            - name: promotionAsNoOp
+              value: ${{ outputs['publish::result']?.promotionAsNoOp ?? '' }}
+            - name: skipProwChecks
+              value: ${{ quote(vars.skipProwChecks) }}
+        - task:
+            name: merge-promotion-pr
+          as: merge
+          vars:
+            - name: passed
+              value: ${{ outputs['ci::result']?.passed ?? '' }}
+            - name: checkedSHA
+              value: ${{ outputs['ci::result']?.checkedSHA ?? '' }}
+            - name: headCommitSHA
+              value: ${{ outputs['publish::result']?.headCommitSHA ?? '' }}
+            - name: baseCommitSHA
+              value: ${{ outputs['publish::result']?.baseCommitSHA ?? '' }}
+            - name: prNumber
+              value: ${{ outputs['publish::result']?.prNumber ?? 0 }}
+            - name: promotionAsNoOp
+              value: ${{ outputs['publish::result']?.promotionAsNoOp ?? '' }}
+            - name: mergeMode
+              value: ${{ vars.mergeMode }}
+        - task:
+            name: verify-argocd-deployment
+          as: verify-deployment
+          vars:
+            - name: mergeConfirmed
+              value: ${{ outputs['merge::result']?.mergeConfirmed ?? '' }}
+            - name: commitSHA
+              value: ${{ outputs['merge::result']?.mergeCommitSHA ?? '' }}
+            - name: component
+              value: ${{ vars.component }}
+            - name: clusters
+              value: kflux-prd-rh02
+            - name: tokenSecret
+              value: argocd-app-reader-token

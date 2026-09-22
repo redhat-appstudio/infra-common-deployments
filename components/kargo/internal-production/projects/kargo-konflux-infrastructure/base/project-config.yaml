@@ -47,3 +47,11 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-1-repository-validator
       autoPromotionEnabled: true
+    - stage: ring-1-external-secrets-operator
+      autoPromotionEnabled: true
+    - stage: ring-2-external-secrets-operator
+      autoPromotionEnabled: true
+    - stage: ring-3-external-secrets-operator
+      autoPromotionEnabled: true
+    - stage: ring-4-external-secrets-operator
+      autoPromotionEnabled: true

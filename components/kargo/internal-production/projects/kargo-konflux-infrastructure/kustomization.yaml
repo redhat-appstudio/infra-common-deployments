@@ -9,6 +9,7 @@ resources:
   - components/authentication
   - components/etcd-defrag
   - components/etcd-shield
+  - components/external-secrets-operator
   - components/kueue
   - components/repository-validator
 
