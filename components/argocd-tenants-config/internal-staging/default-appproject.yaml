@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: default
+spec:
+  # 1. Remove all permitted source repositories
+  sourceRepos: []
+
+  # 2. Remove all permitted destinations (clusters/namespaces)
+  destinations: []
+
+  # 3. Explicitly deny all resources in all clusters
+  clusterResourceBlacklist:
+    - group: '*'
+      kind: '*'
+
+  # 4. Explicitly deny all resources in all namespaces
+  namespaceResourceBlacklist:
+    - group: '*'
+      kind: '*'

@@ -5,6 +5,7 @@ namespace: argocd-tenants-config
 resources:
   - ../base
   - ns.yaml
+  - default-appproject.yaml
   - rh-managed-workspaces-config-appproject.yaml
   - tenants-config-admin-appproject.yaml
   - tenants-config-appproject.yaml

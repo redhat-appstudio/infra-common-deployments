@@ -8,12 +8,9 @@ metadata:
 spec:
   # Project description
   description: Manage RedHat managed workspaces configuration using ArgoCD
-
   # Allow manifests to deploy from the following Git repos
   sourceRepos:
-    - https://github.com/redhat-appstudio/tenants-config.git
     - https://gitlab.cee.redhat.com/releng/konflux-release-data.git
-
   # Only permit applications to deploy to the rh-managed-* namespaces
   destinations:
     # Public Staging
