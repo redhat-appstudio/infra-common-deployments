@@ -8,6 +8,7 @@ resources:
   - base
   - components/artifact-registry-proxy
   - components/container-image-proxy
+  - components/crossplane-config
   - components/notification-controller
   - components/smee-client
 
