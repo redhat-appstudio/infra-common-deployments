@@ -1,33 +1,20 @@
 # Custom Kube State Metrics
 
-Deploys a dedicated `kube-state-metrics` instance for exposing Prometheus metrics
-from Kargo custom resources as part of SPRE-6674.
+Deploys a dedicated `kube-state-metrics` instance in the common cluster for
+exposing Prometheus metrics from custom resources.
 
 Uses `--custom-resource-state-only=true` to avoid duplicating platform metrics.
 
-## Kargo Metrics
-
-The current configuration exposes custom metrics from:
-
-- `Stage`
-  - Stage health status
-  - Latest promotion phase
-  - Latest promotion start timestamp
-  - Latest promotion finish timestamp
-- `Warehouse`
-  - Warehouse condition status
-
-The Stage metrics use `status.lastPromotion` rather than individual Promotion
-resources to provide stable labels and avoid creating time series for uniquely
-named Promotion objects.
+This component provides the base custom kube-state-metrics deployment.
+Custom resource metrics will be added and validated separately.
 
 ## Configuration
 
-Custom resource metrics are defined in:
+Custom resource metrics are configured in:
 
 `base/custom-resource-state-config.yaml`
 
-RBAC permissions for the monitored Kargo resources are defined in:
+RBAC permissions required by custom resource collectors are defined in:
 
 `base/rbac.yaml`
 

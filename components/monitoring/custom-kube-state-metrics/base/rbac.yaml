@@ -9,9 +9,6 @@ kind: ClusterRole
 metadata:
   name: custom-kube-state-metrics
 rules:
-  - apiGroups: ["kargo.akuity.io"]
-    resources: ["stages", "warehouses"]
-    verbs: ["list", "watch", "get"]
   # Needed so kube-state-metrics can discover CRDs for custom-resource collectors.
   - apiGroups: ["apiextensions.k8s.io"]
     resources: ["customresourcedefinitions"]
