@@ -58,6 +58,13 @@ spec:
           jsonPointers:
             - /metadata/labels/release.appstudio.openshift.io~1author
             - /metadata/labels/release.appstudio.openshift.io~1standing-attribution
+        # OpenShift auto-injects dockercfg secrets into SA secrets/imagePullSecrets;
+        # ignore to prevent ArgoCD prune → OpenShift recreate → endless OutOfSync loop
+        - group: ""
+          kind: ServiceAccount
+          jsonPointers:
+            - /secrets
+            - /imagePullSecrets
       syncPolicy:
         automated:
           prune: true

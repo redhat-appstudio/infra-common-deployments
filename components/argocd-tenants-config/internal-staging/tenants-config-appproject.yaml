@@ -8,12 +8,9 @@ metadata:
 spec:
   # Project description
   description: Manage RedHat user configuration using ArgoCD
-
   # Allow manifests to deploy from any Git repos
   sourceRepos:
-    - https://github.com/redhat-appstudio/tenants-config.git
     - https://gitlab.cee.redhat.com/releng/konflux-release-data.git
-
   # Only permit applications to deploy to the guestbook namespace in the same cluster
   # Destination clusters can be identified by 'server', 'name', or both.
   destinations:
