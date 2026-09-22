@@ -1,0 +1,44 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-crossplane-config
+spec:
+  vars:
+    - name: srcPath
+    - name: freightPath
+    - name: repoURL
+    - name: component
+    - name: targetRing
+  steps:
+    - uses: fail
+      as: validate-freight
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'crossplane-config' || vars.component != ctx.targetFreight.origin.name ||
+        vars.targetRing not in ['ring-0', 'ring-1', 'ring-2'] || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$') }}
+      config:
+        message: Expected crossplane-config Freight containing a Git commit, targeting Ring 0–2.
+    # Remove stale manifests as well as copying additions and updates.
+    - uses: delete
+      as: delete-old-base-snapshot
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: copy
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-base-snapshot') == 'Succeeded' }}
+      config:
+        inPath: ${{ vars.freightPath }}/components/${{ vars.component }}/base
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-freight') == 'Skipped' && status('delete-old-base-snapshot') == 'Succeeded' && status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: |
+          Update Crossplane Config's base manifests in ${{ vars.targetRing }} from the selected Git revision.
+
+          Source: [${{ commitFrom(vars.repoURL).ID[0:12] }}](https://github.com/redhat-appstudio/infra-deployments/commit/${{ commitFrom(vars.repoURL).ID }}).
+
+          Replaces `components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot`. Ring-specific overlays are preserved.
