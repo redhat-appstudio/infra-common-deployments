@@ -4,8 +4,9 @@ Kargo promotes a selected release by changing Git configuration, opening a pull
 request, checking CI, merging, and checking the deployment. A release is called
 **Freight**; a deployment step such as Ring 0 or Ring 1 is called a **Stage**.
 
-The playground and Konflux Operator use the shared tasks described here. Other
-components keep their existing workflows until they are migrated.
+The playground, Konflux Operator and Vanguard components use the shared tasks
+described here. Notification Controller Ring 0 remains a passthrough. Other
+projects keep their existing workflows until they are migrated.
 
 ## How it works
 
