@@ -2,40 +2,66 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
-  name: promote-artifact-registry-proxy-manifests
+  name: prepare-artifact-registry-proxy-bundle
 spec:
   vars:
     - name: srcPath
+    - name: freightPath
+    - name: repoURL
     - name: component
-    - name: prevRing
     - name: targetRing
-
+    - name: chartRepoURL
+      value: oci://quay.io/konflux-ci/caching/caching-helm
   steps:
+    - uses: fail
+      as: validate-bundle
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'artifact-registry-proxy' || vars.component != ctx.targetFreight.origin.name ||
+        vars.targetRing not in ['ring-0', 'ring-1', 'ring-2', 'ring-3', 'ring-4'] ||
+        !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$') || chartFrom(vars.chartRepoURL).Version == '' }}
+      config:
+        message: Expected artifact-registry-proxy Freight containing a Git commit and chart version, targeting Ring 0–4.
+    - uses: yaml-parse
+      as: read-previous-chart
+      if: ${{ status('validate-bundle') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/caching-helm-generator.yaml
+        outputs:
+          - name: version
+            fromExpression: string(version)
+    # Always copy from the immutable Freight checkout, including source deletions.
+    - uses: delete
+      as: delete-old-base-snapshot
+      if: ${{ status('read-previous-chart') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: copy
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-base-snapshot') == 'Succeeded' }}
+      config:
+        inPath: ${{ vars.freightPath }}/components/${{ vars.component }}/base
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
     - uses: yaml-update
       as: update-chart-version
-      if: ${{ ctx.targetFreight.origin.name == "artifact-registry-proxy-chart-wh" }}
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
       config:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/caching-helm-generator.yaml
         updates:
           - key: version
-            value: ${{ chartFrom("oci://quay.io/konflux-ci/caching/caching-helm", warehouse("artifact-registry-proxy-chart-wh")).Version }}
-
-    - uses: delete
-      as: delete-old-base-snapshot-folder
-      if: ${{ ctx.targetFreight.origin.name == "artifact-registry-proxy-manifest-wh" }}
+            value: ${{ quote(chartFrom(vars.chartRepoURL).Version) }}
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-bundle') == 'Skipped' && status('read-previous-chart') == 'Succeeded' &&
+        status('delete-old-base-snapshot') == 'Succeeded' && status('copy-freight-manifests') == 'Succeeded' && status('update-chart-version') == 'Succeeded' }}
       config:
-        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+        prepared: 'yes'
+        prSummary: |
+          Update artifact-registry-proxy's base manifests and caching chart in ${{ vars.targetRing }}.
 
-    - uses: copy
-      as: copy-tier-1-folder
-      if: ${{ ctx.targetFreight.origin.name == "artifact-registry-proxy-manifest-wh" && vars.prevRing == "base" }}
-      config:
-        inPath: ${{ vars.srcPath }}/components/${{ vars.component }}/base
-        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
-
-    - uses: copy
-      as: copy-prev-ring-base-snapshot-folder
-      if: ${{ ctx.targetFreight.origin.name == "artifact-registry-proxy-manifest-wh" && vars.prevRing != "base" }}
-      config:
-        inPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.prevRing }}/base/base-snapshot
-        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+          Manifest source: [${{ commitFrom(vars.repoURL).ID[0:12] }}](https://github.com/redhat-appstudio/infra-deployments/commit/${{ commitFrom(vars.repoURL).ID }}).
+        prChanges:
+          - kind: Caching Helm chart
+            previous: ${{ quote(task.outputs['read-previous-chart'].version) }}
+            proposed: ${{ quote(chartFrom(vars.chartRepoURL).Version) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/caching-helm-generator.yaml

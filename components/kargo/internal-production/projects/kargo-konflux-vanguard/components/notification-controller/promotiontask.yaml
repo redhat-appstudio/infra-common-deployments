@@ -2,19 +2,64 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
-  name: promote-notification-controller
+  name: prepare-notification-controller
 spec:
   vars:
     - name: srcPath
+    - name: component
     - name: targetRing
-
   steps:
+    - uses: fail
+      as: validate-freight
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'notification-controller' || vars.component != ctx.targetFreight.origin.name ||
+        vars.targetRing != 'ring-1' || !(imageFrom('quay.io/konflux-ci/notification-service').Tag matches '^[0-9a-f]{40}$') }}
+      config:
+        message: Expected notification-controller Freight with a SHA-tagged notification-service image, targeting Ring 1.
+    - uses: yaml-parse
+      as: read-previous
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        outputs:
+          - name: imageName
+            fromExpression: string(images[0].name)
+          - name: imageTag
+            fromExpression: string(images[0].newTag ?? 'unknown')
+          - name: manifestSource
+            fromExpression: string(resources[0])
+    # Fail rather than overwrite unrelated entries if the source layout changes.
+    - uses: fail
+      as: validate-layout
+      if: >-
+        ${{ status('read-previous') == 'Succeeded' && (task.outputs['read-previous'].imageName != 'quay.io/konflux-ci/notification-service' ||
+        !(task.outputs['read-previous'].manifestSource startsWith 'https://github.com/konflux-ci/notification-service/config/default?ref=')) }}
+      config:
+        message: Expected notification-service at images[0] and its pinned remote Kustomize resource at resources[0].
     - uses: yaml-update
       as: update-image-and-ref
+      if: ${{ status('read-previous') == 'Succeeded' && status('validate-layout') == 'Skipped' }}
       config:
-        path: ${{ vars.srcPath }}/components/notification-controller-rd/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
         updates:
           - key: images.0.newTag
-            value: ${{ imageFrom("quay.io/konflux-ci/notification-service").Tag }}
+            value: ${{ quote(imageFrom('quay.io/konflux-ci/notification-service').Tag) }}
           - key: resources.0
-            value: https://github.com/konflux-ci/notification-service/config/default?ref=${{ imageFrom("quay.io/konflux-ci/notification-service").Tag }}
+            value: https://github.com/konflux-ci/notification-service/config/default?ref=${{ imageFrom('quay.io/konflux-ci/notification-service').Tag }}
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-freight') == 'Skipped' && status('read-previous') == 'Succeeded' && status('validate-layout') == 'Skipped' &&
+        status('update-image-and-ref') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: Update the notification-service image and remote manifests to the same selected Freight SHA in Ring 1.
+        prChanges:
+          - kind: Image tag
+            previous: ${{ quote(task.outputs['read-previous'].imageTag) }}
+            proposed: ${{ quote(imageFrom('quay.io/konflux-ci/notification-service').Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+          - kind: Manifest source
+            previous: ${{ task.outputs['read-previous'].manifestSource }}
+            proposed: https://github.com/konflux-ci/notification-service/config/default?ref=${{ imageFrom('quay.io/konflux-ci/notification-service').Tag }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml

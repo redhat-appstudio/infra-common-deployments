@@ -2,7 +2,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: artifact-registry-proxy-manifest-wh
+  name: artifact-registry-proxy
 spec:
   freightCreationPolicy: Automatic
   interval: 2h0m0s
@@ -12,16 +12,7 @@ spec:
         commitSelectionStrategy: NewestFromBranch
         branch: main
         includePaths:
-          - 'components/artifact-registry-proxy/base'
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Warehouse
-metadata:
-  name: artifact-registry-proxy-chart-wh
-spec:
-  freightCreationPolicy: Automatic
-  interval: 2h0m0s
-  subscriptions:
+          - components/artifact-registry-proxy/base
     - chart:
         repoURL: oci://quay.io/konflux-ci/caching/caching-helm
         semverConstraint: ^0.1.0
