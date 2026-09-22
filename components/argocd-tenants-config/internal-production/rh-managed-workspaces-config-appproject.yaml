@@ -1,0 +1,97 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: rh-managed-workspaces-config
+  # Finalizer that ensures that project is not deleted until it is not referenced by any application
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  # Project description
+  description: Manage RedHat managed workspaces configuration using ArgoCD
+  # Allow manifests to deploy from the following Git repos
+  sourceRepos:
+    - https://gitlab.cee.redhat.com/releng/konflux-release-data.git
+  # Only permit applications to deploy to the rh-managed-* namespaces
+  destinations:
+    # Public Production
+    - namespace: 'managed-konflux-perfscale-tenant'
+      name: stone-prd-rh01
+    - namespace: 'rh-managed-*-tenant'
+      name: stone-prd-rh01
+    - namespace: 'rhtap-releng-tenant'
+      name: stone-prd-rh01
+    - namespace: 'managed-konflux-perfscale-tenant'
+      name: kflux-prd-rh02
+    - namespace: 'rh-managed-*-tenant'
+      name: kflux-prd-rh02
+    - namespace: 'rhtap-releng-tenant'
+      name: kflux-prd-rh02
+    - namespace: 'managed-konflux-perfscale-tenant'
+      name: kflux-prd-rh03
+    - namespace: 'rh-managed-*-tenant'
+      name: kflux-prd-rh03
+    - namespace: 'rhtap-releng-tenant'
+      name: kflux-prd-rh03
+    # Internal Production
+    - namespace: 'managed-konflux-perfscale-tenant'
+      name: stone-prod-p01
+    - namespace: 'rh-managed-*-tenant'
+      name: stone-prod-p01
+    - namespace: 'rhtap-releng-tenant'
+      name: stone-prod-p01
+    - namespace: 'managed-konflux-perfscale-tenant'
+      name: stone-prod-p02
+    - namespace: 'rh-managed-*-tenant'
+      name: stone-prod-p02
+    - namespace: 'rhtap-releng-tenant'
+      name: stone-prod-p02
+    - namespace: 'rhel-on-gitlab-tenant' # To house a serviceaccount for RoG
+      name: stone-prod-p02
+    - namespace: 'managed-konflux-perfscale-tenant'
+      name: kflux-ocp-p01
+    - namespace: 'rh-managed-*-tenant'
+      name: kflux-ocp-p01
+    - namespace: 'rhtap-releng-tenant'
+      name: kflux-ocp-p01
+    - namespace: managed-konflux-perfscale-tenant
+      name: kflux-rhel-p01
+    - namespace: rh-managed-*-tenant
+      name: kflux-rhel-p01
+    - namespace: rhtap-releng-tenant
+      name: kflux-rhel-p01
+    - namespace: managed-konflux-perfscale-tenant
+      name: kflux-osp-p01
+    - namespace: rh-managed-*-tenant
+      name: kflux-osp-p01
+    - namespace: rhtap-releng-tenant
+      name: kflux-osp-p01
+  # Deny all namespaced-scoped resources from being created, except for the following
+  namespaceResourceWhitelist:
+    - group: external-secrets.io
+      kind: ExternalSecret
+    - group: external-secrets.io
+      kind: SecretStore
+    - group: appstudio.redhat.com
+      kind: ReleasePlan
+    - group: appstudio.redhat.com
+      kind: ReleasePlanAdmission
+    - group: appstudio.redhat.com
+      kind: ReleaseStrategy
+    - group: appstudio.redhat.com
+      kind: Application
+    - group: appstudio.redhat.com
+      kind: Component
+    - group: appstudio.redhat.com
+      kind: EnterpriseContractPolicy
+    - group: ""
+      kind: PersistentVolumeClaim
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+    - group: ""
+      kind: ServiceAccount
+    - group: ""
+      kind: ConfigMap
+    - group: batch
+      kind: CronJob
+  orphanedResources:
+    warn: false
