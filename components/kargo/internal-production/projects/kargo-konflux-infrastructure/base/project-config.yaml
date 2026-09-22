@@ -65,3 +65,7 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-4-multi-platform-controller
       autoPromotionEnabled: true
+    - stage: ring-2-repository-validator
+      autoPromotionEnabled: true
+    - stage: ring-3-repository-validator
+      autoPromotionEnabled: true

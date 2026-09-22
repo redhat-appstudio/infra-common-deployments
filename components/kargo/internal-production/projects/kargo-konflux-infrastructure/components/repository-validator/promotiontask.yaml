@@ -2,43 +2,85 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
-  name: promote-repository-validator-manifests
+  name: prepare-repository-validator
 spec:
   vars:
     - name: srcPath
+    - name: freightPath
+    - name: repoURL
+    - name: configRepoURL
     - name: component
-      value: repository-validator-rd
-    - name: prevRing
     - name: targetRing
-
   steps:
-    # manifest-wh: copy base-snapshot from Tier 1 or previous ring
+    - uses: fail
+      as: validate-bundle
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'repository-validator' || vars.repoURL != 'https://github.com/redhat-appstudio/infra-deployments.git' || vars.configRepoURL != 'https://github.com/redhat-appstudio/internal-infra-deployments.git' || vars.component != ctx.targetFreight.origin.name || vars.targetRing
+        not in ['ring-0', 'ring-1', 'ring-2', 'ring-3'] || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$') || !(commitFrom(vars.configRepoURL).ID
+        matches '^[0-9a-f]{40}$') }}
+      config:
+        message: Expected repository-validator Freight containing immutable public policy and internal configuration commits, targeting
+          Ring 0-3.
+    - uses: yaml-parse
+      as: read-previous
+      if: ${{ status('validate-bundle') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/repository-validator/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        outputs:
+          - name: resources
+            fromExpression: resources ?? []
+    - uses: fail
+      as: validate-layout
+      if: >-
+        ${{ status('read-previous') == 'Succeeded' && ('base-snapshot' not in task.outputs['read-previous'].resources || (vars.targetRing
+        == 'ring-0' ? len(filter(task.outputs['read-previous'].resources, {# startsWith 'https://github.com/redhat-appstudio/internal-infra-deployments/components/repository-validator/'}))
+        != 0 : (len(filter(task.outputs['read-previous'].resources, {# startsWith 'https://github.com/redhat-appstudio/internal-infra-deployments/components/repository-validator/'}))
+        != 1 || len(filter(task.outputs['read-previous'].resources, {# startsWith ('https://github.com/redhat-appstudio/internal-infra-deployments/components/repository-validator/'
+        + (vars.targetRing == 'ring-1' ? 'staging' : 'production') + '?ref=')})) != 1))) }}
+      config:
+        message: >-
+          Expected base-snapshot and exactly one environment-appropriate internal config ref outside Ring 0; Ring 0 must keep its
+          local wildcard configuration.
+    # Replace from the selected Freight checkout, never from a moving previous ring.
     - uses: delete
-      as: delete-old-base-snapshot-folder
-      if: ${{ ctx.targetFreight.origin.name == "repository-validator-manifest-wh" }}
+      as: delete-old-base-snapshot
+      if: ${{ status('read-previous') == 'Succeeded' && status('validate-layout') == 'Skipped' }}
       config:
-        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
-
+        path: ${{ vars.srcPath }}/components/repository-validator/rings/${{ vars.targetRing }}/base/base-snapshot
     - uses: copy
-      as: copy-tier-1-folder
-      if: ${{ ctx.targetFreight.origin.name == "repository-validator-manifest-wh" && vars.prevRing == "base" }}
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-base-snapshot') == 'Succeeded' }}
       config:
-        inPath: ${{ vars.srcPath }}/components/${{ vars.component }}/base
-        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
-
-    - uses: copy
-      as: copy-prev-ring-base-snapshot-folder
-      if: ${{ ctx.targetFreight.origin.name == "repository-validator-manifest-wh" && vars.prevRing != "base" }}
-      config:
-        inPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.prevRing }}/base/base-snapshot
-        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
-
-    # git-wh: update external repo ref from internal-infra-deployments
+        inPath: ${{ vars.freightPath }}/components/repository-validator/base
+        outPath: ${{ vars.srcPath }}/components/repository-validator/rings/${{ vars.targetRing }}/base/base-snapshot
+    # Ring 0 intentionally keeps its local wildcard ConfigMap.
     - uses: yaml-update
-      as: update-external-ref
-      if: ${{ ctx.targetFreight.origin.name == "repository-validator-git-wh" }}
+      as: update-config-ref
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' && vars.targetRing != 'ring-0' }}
       config:
-        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        path: ${{ vars.srcPath }}/components/repository-validator/rings/${{ vars.targetRing }}/base/kustomization.yaml
         updates:
-          - key: resources.0
-            value: https://github.com/redhat-appstudio/internal-infra-deployments/components/repository-validator/staging?ref=${{ commitFrom("https://github.com/redhat-appstudio/internal-infra-deployments.git", warehouse("repository-validator-git-wh")).ID }}
+          - key: >-
+              resources.${{ findIndex(task.outputs['read-previous'].resources, {# startsWith 'https://github.com/redhat-appstudio/internal-infra-deployments/components/repository-validator/'}) }}
+            value: >-
+              ${{ 'https://github.com/redhat-appstudio/internal-infra-deployments/components/repository-validator/' + (vars.targetRing
+              == 'ring-1' ? 'staging' : 'production') + '?ref=' + commitFrom(vars.configRepoURL).ID }}
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-bundle') == 'Skipped' && status('read-previous') == 'Succeeded' && status('validate-layout') == 'Skipped'
+        && status('delete-old-base-snapshot') == 'Succeeded' && status('copy-freight-manifests') == 'Succeeded' && (vars.targetRing
+        == 'ring-0' || status('update-config-ref') == 'Succeeded') }}
+      config:
+        prepared: 'yes'
+        prSummary: |
+          Update the repository validation policy in ${{ vars.targetRing }} from the selected Freight.
+
+          Policy source: [${{ commitFrom(vars.repoURL).ID[0:12] }}](https://github.com/redhat-appstudio/infra-deployments/commit/${{ commitFrom(vars.repoURL).ID }}).
+
+          ${{ vars.targetRing == 'ring-0' ? 'Development keeps its local wildcard configuration.' : 'Pin the ' + (vars.targetRing == 'ring-1' ? 'staging' : 'production') + ' configuration to the selected internal Git revision. Review that configuration in its source repository.' }}
+        prChanges: >-
+          ${{ vars.targetRing == 'ring-0' ? [] : [{'kind': 'Configuration ref', 'previous': split(find(task.outputs['read-previous'].resources,
+          {# startsWith 'https://github.com/redhat-appstudio/internal-infra-deployments/components/repository-validator/'}), '?ref=')[1],
+          'proposed': commitFrom(vars.configRepoURL).ID, 'path': 'components/repository-validator/rings/' + vars.targetRing
+          + '/base/kustomization.yaml'}] }}

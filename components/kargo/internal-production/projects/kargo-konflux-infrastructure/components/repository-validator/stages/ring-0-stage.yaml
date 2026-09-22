@@ -11,7 +11,7 @@ spec:
   requestedFreight:
     - origin:
         kind: Warehouse
-        name: repository-validator-manifest-wh
+        name: repository-validator
       sources:
         direct: true
   promotionTemplate:
@@ -22,11 +22,19 @@ spec:
         - name: repoURL
           value: https://github.com/redhat-appstudio/infra-deployments.git
         - name: component
-          value: repository-validator-rd
+          value: ${{ ctx.targetFreight.origin.name }}
         - name: targetRing
           value: ring-0
-        - name: prevRing
-          value: base
+        - name: mergeMode
+          value: auto
+        - name: skipProwChecks
+          value: 'false'
+        - name: requiredProwChecks
+          value: ^ci/prow/appstudio-operator-overlay-e2e-tests$
+        - name: freightPath
+          value: ./freight
+        - name: configRepoURL
+          value: https://github.com/redhat-appstudio/internal-infra-deployments.git
       steps:
         - uses: git-clone
           as: clone
@@ -35,105 +43,86 @@ spec:
             checkout:
               - branch: main
                 path: ${{ vars.srcPath }}
+              - commit: ${{ commitFrom(vars.repoURL).ID }}
+                path: ${{ vars.freightPath }}
         - task:
-            name: promote-repository-validator-manifests
-          as: promote-repository-validator
+            name: prepare-repository-validator
+          as: promote
           vars:
             - name: srcPath
               value: ${{ vars.srcPath }}
-            - name: prevRing
-              value: ${{ vars.prevRing }}
+            - name: freightPath
+              value: ${{ vars.freightPath }}
+            - name: repoURL
+              value: ${{ vars.repoURL }}
+            - name: component
+              value: ${{ vars.component }}
             - name: targetRing
               value: ${{ vars.targetRing }}
-        - uses: git-commit
-          as: commit
-          config:
-            path: ${{ vars.srcPath }}
-            message: |
-              chore(${{ ctx.stage }}): promote repository-validator to ${{ vars.targetRing }}
+            - name: configRepoURL
+              value: ${{ vars.configRepoURL }}
+        - task:
+            name: publish-promotion-pr
+          as: publish
+          vars:
+            - name: srcPath
+              value: ${{ vars.srcPath }}
+            - name: component
+              value: ${{ vars.component }}
+            - name: targetRing
+              value: ${{ vars.targetRing }}
+            - name: prSummary
+              value: ${{ outputs['promote::result']?.prSummary ?? '' }}
+            - name: prChanges
+              value: ${{ outputs['promote::result']?.prChanges ?? [] }}
+            - name: prCompareURL
+              value: ${{ outputs['promote::result']?.prCompareURL ?? '' }}
+            - name: prepared
+              value: ${{ outputs['promote::result']?.prepared ?? '' }}
+            - name: baseCommitSHA
+              value: ${{ outputs['clone'].commits[vars.srcPath] }}
+            - name: mergeMode
+              value: ${{ vars.mergeMode }}
+            - name: skipProwChecks
+              value: ${{ quote(vars.skipProwChecks) }}
         - uses: set-metadata
           as: annotate-freight-as-no-op
+          if: ${{ outputs['publish::result']?.published == 'yes' }}
           config:
             updates:
-              - name: ${{ ctx.targetFreight.name }}
-                kind: Freight
+              - kind: Freight
+                name: ${{ ctx.targetFreight.name }}
                 values:
-                  noOpRing0: "${{ status('commit') == 'Skipped' ? 'yes' : 'no' }}"
-        - uses: compose-output
-          as: set-promotion-as-no-op
-          config:
-            promotionAsNoOp: "${{ status('commit') == 'Skipped' ? 'yes' : 'no' }}"
-        - uses: git-push
-          as: push
-          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
-          config:
-            path: ${{ vars.srcPath }}
-            targetBranch: ${{ ctx.project }}/repository-validator/${{ vars.targetRing }}
-            force: true
-        - uses: git-open-pr
-          as: open-pr
-          continueOnError: true
-          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
-          config:
-            repoURL: ${{ vars.repoURL }}
-            sourceBranch: ${{ ctx.project }}/repository-validator/${{ vars.targetRing }}
-            targetBranch: main
-            title: "chore(${{ ctx.stage }}): promote repository-validator to ${{ vars.targetRing }}"
-            description: |
-              ### ${{ ctx.stage }}
-
-              | | |
-              |---|---|
-              | **Component** | `repository-validator` |
-              | **Project** | `${{ ctx.project }}` |
-              | **Promotion** | `${{ ctx.promotion }}` |
-              | **Freight** | `${{ ctx.targetFreight.alias }}` |
-
-              ---
-
-              Auto-merged after CI passes. No manual approval required for Ring 0.
-
-              > Branch is force-pushed each promotion cycle. Do not commit directly.
-            labels:
-              - ring-0
-              - automated-promotion
-              - component/repository-validator
+                  noOpRing0: ${{ outputs['publish::result'].promotionAsNoOp }}
         - task:
-            name: github-ci-gate
-          as: github-ci-gate
+            name: verify-promotion-ci
+          as: ci
           vars:
+            - name: published
+              value: ${{ outputs['publish::result']?.published ?? '' }}
             - name: commitSHA
-              value: "${{ outputs['push']?.commit ?? '' }}"
+              value: ${{ outputs['publish::result']?.headCommitSHA ?? '' }}
             - name: promotionAsNoOp
-              value: "${{ outputs['set-promotion-as-no-op'].promotionAsNoOp }}"
+              value: ${{ outputs['publish::result']?.promotionAsNoOp ?? '' }}
             - name: skipProwChecks
-              value: "true"
-        - uses: http
-          as: find-pr
-          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
-          retry:
-            timeout: 5m0s
-            errorThreshold: 10
-          config:
-            method: GET
-            url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/repository-validator/${{ vars.targetRing }}&state=open
-            headers:
-              - name: Authorization
-                value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
-              - name: Accept
-                value: application/vnd.github+json
-            outputs:
-              - name: prNumber
-                fromExpression: response.body[0].number
-            successExpression: response.status == 200 && len(response.body) > 0
-            timeout: 30s
-        - uses: git-merge-pr
-          as: merge-pr
-          if: ${{ outputs['set-promotion-as-no-op'].promotionAsNoOp != 'yes' }}
-          retry:
-            timeout: 2h0m0s
-          config:
-            repoURL: ${{ vars.repoURL }}
-            prNumber: ${{ outputs['find-pr'].prNumber }}
-            mergeMethod: squash
-            wait: true
+              value: ${{ quote(vars.skipProwChecks) }}
+            - name: requiredProwChecks
+              value: ${{ vars.requiredProwChecks }}
+        - task:
+            name: merge-promotion-pr
+          as: merge
+          vars:
+            - name: passed
+              value: ${{ outputs['ci::result']?.passed ?? '' }}
+            - name: checkedSHA
+              value: ${{ outputs['ci::result']?.checkedSHA ?? '' }}
+            - name: headCommitSHA
+              value: ${{ outputs['publish::result']?.headCommitSHA ?? '' }}
+            - name: baseCommitSHA
+              value: ${{ outputs['publish::result']?.baseCommitSHA ?? '' }}
+            - name: prNumber
+              value: ${{ outputs['publish::result']?.prNumber ?? 0 }}
+            - name: promotionAsNoOp
+              value: ${{ outputs['publish::result']?.promotionAsNoOp ?? '' }}
+            - name: mergeMode
+              value: ${{ vars.mergeMode }}
