@@ -1,4 +1,41 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: argocd-tenants-config
 
-resources: []
+resources:
+  - ../base
+  - ns.yaml
+  - default-appproject.yaml
+  - rh-managed-workspaces-config-appproject.yaml
+  - tenants-config-admin-appproject.yaml
+  - tenants-config-appproject.yaml
+  - tenants-config-admin-appset.yaml
+  - tenants-config-appset.yaml
+  - rh-managed-workspaces-config-appset.yaml
+  - external-secrets
+
+patches:
+  - path: patches/argocd-controller-memory-limit-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd-tenants-config
+  - path: patches/argocd-controller-memory-request-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd-tenants-config
+  - path: patches/argocd-controller-sharding-replica-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd-tenants-config
+  - path: patches/argocd-server-memory-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd-tenants-config

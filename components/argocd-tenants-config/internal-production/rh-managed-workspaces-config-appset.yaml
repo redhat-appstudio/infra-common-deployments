@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: rh-managed-workspaces-config
+spec:
+  generators:
+    - git:
+        repoURL: https://gitlab.cee.redhat.com/releng/konflux-release-data.git
+        revision: main
+        directories:
+          - path: tenants-config/auto-generated/cluster/stone-prod-p01/managed/*
+          - path: tenants-config/auto-generated/cluster/stone-prod-p02/managed/*
+          - path: tenants-config/auto-generated/cluster/stone-prd-rh01/managed/*
+          - path: tenants-config/auto-generated/cluster/kflux-ocp-p01/managed/*
+          - path: tenants-config/auto-generated/cluster/kflux-prd-rh02/managed/*
+          - path: tenants-config/auto-generated/cluster/kflux-prd-rh03/managed/*
+          - path: tenants-config/auto-generated/cluster/kflux-rhel-p01/managed/*
+          - path: tenants-config/auto-generated/cluster/kflux-osp-p01/managed/*
+  template:
+    metadata:
+      name: '{{path.basename}}-{{path[3]}}'
+      annotations:
+        argocd.argoproj.io/compare-options: ServerSideDiff=true,IncludeMutationWebhook=true
+    spec:
+      project: rh-managed-workspaces-config
+      source:
+        path: '{{path}}'
+        repoURL: https://gitlab.cee.redhat.com/releng/konflux-release-data.git
+        targetRevision: main
+      destination:
+        namespace: '{{path.basename}}'
+        name: '{{path[3]}}'
+      ignoreDifferences:
+        # needed because of IncludeMutationWebhook=true to avoid that ArgoCD
+        # considers OutOfSync the resources for which a MutatingWebHook
+        # introduces a resourveVersion in the output
+        - group: "*"
+          kind: "*"
+          jsonPointers:
+            - /metadata/resourceVersion
+        - kind: ServiceAccount
+          group: ""
+          jsonPointers:
+            - /secrets
+            - /imagePullSecrets
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+        retry:
+          limit: 10
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 3m

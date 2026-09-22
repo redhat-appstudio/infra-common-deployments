@@ -1,0 +1,6 @@
+- op: replace
+  path: /spec/server/resources/limits/memory
+  value: 1Gi
+- op: replace
+  path: /spec/server/resources/requests/memory
+  value: 1Gi

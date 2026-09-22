@@ -1,0 +1,3 @@
+- op: replace
+  path: /spec/controller/resources/requests/memory
+  value: 15Gi
