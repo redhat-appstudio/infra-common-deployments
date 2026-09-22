@@ -1,0 +1,145 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-multi-platform-controller
+spec:
+  vars:
+    - name: srcPath
+    - name: freightPath
+    - name: repoURL
+    - name: component
+    - name: targetRing
+    - name: controllerImageRepoURL
+      value: quay.io/konflux-ci/multi-platform-controller
+    - name: otpImageRepoURL
+      value: quay.io/konflux-ci/multi-platform-controller-otp-service
+  steps:
+    - uses: fail
+      as: validate-bundle
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'multi-platform-controller' || vars.component != ctx.targetFreight.origin.name || vars.controllerImageRepoURL
+        != 'quay.io/konflux-ci/multi-platform-controller' || vars.otpImageRepoURL != 'quay.io/konflux-ci/multi-platform-controller-otp-service'
+        || vars.targetRing not in ['ring-0', 'ring-1', 'ring-2', 'ring-3', 'ring-4'] || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$')
+        || !(imageFrom(vars.controllerImageRepoURL).Tag matches '^[0-9a-f]{40}$') }}
+      config:
+        message: Expected multi-platform-controller Freight with a Git commit and a SHA-tagged controller image, targeting Ring 0-4.
+    # A missing tag waits for the companion build; no Git edits start before it exists.
+    - uses: http
+      as: wait-for-otp-image
+      if: ${{ status('validate-bundle') == 'Skipped' }}
+      retry:
+        timeout: 2h
+        errorThreshold: 5
+      config:
+        method: GET
+        url: >-
+          https://quay.io/api/v1/repository/konflux-ci/multi-platform-controller-otp-service/tag/?specificTag=${{ imageFrom(vars.controllerImageRepoURL).Tag
+          }}&onlyActiveTags=true&limit=1
+        headers:
+          - name: Accept
+            value: application/json
+        pollInterval: 2m
+        timeout: 30s
+        successExpression: >-
+          response.status == 200 && len(response.body.tags ?? []) == 1 && response.body.tags[0].name == ${{ quote(imageFrom(vars.controllerImageRepoURL).Tag)
+          }} && (response.body.tags[0].manifest_digest ?? '') matches '^sha256:[0-9a-f]{64}$'
+        failureExpression: response.status in [400, 401, 403, 404]
+        errorExpression: >-
+          'Cannot verify matching OTP image ${{ imageFrom(vars.controllerImageRepoURL).Tag }} in quay.io/konflux-ci/multi-platform-controller-otp-service:
+          HTTP ' + string(response.status)
+    - uses: yaml-parse
+      as: read-previous
+      if: ${{ status('wait-for-otp-image') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        outputs:
+          - name: resources
+            fromExpression: resources ?? []
+          - name: controllerImages
+            fromExpression: filter(images ?? [], {.name == 'multi-platform-controller'})
+          - name: otpImages
+            fromExpression: filter(images ?? [], {.name == 'multi-platform-otp-server'})
+    - uses: fail
+      as: validate-layout
+      if: >-
+        ${{ status('read-previous') == 'Succeeded' && ('base-snapshot' not in task.outputs['read-previous'].resources || len(filter(task.outputs['read-previous'].resources,
+        {# startsWith 'https://github.com/konflux-ci/multi-platform-controller/deploy/operator?ref='})) != 1 || len(filter(task.outputs['read-previous'].resources,
+        {# startsWith 'https://github.com/konflux-ci/multi-platform-controller/deploy/otp?ref='})) != 1 || len(task.outputs['read-previous'].controllerImages)
+        != 1 || len(task.outputs['read-previous'].otpImages) != 1) }}
+      config:
+        message: Expected one controller image, one OTP image, their two upstream manifest refs, and base-snapshot in the ring Kustomization.
+    # Replace only the shared snapshot. Ring-specific host configuration stays intact.
+    - uses: delete
+      as: delete-old-base-snapshot
+      if: ${{ status('read-previous') == 'Succeeded' && status('validate-layout') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: copy
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-base-snapshot') == 'Succeeded' }}
+      config:
+        inPath: ${{ vars.freightPath }}/components/${{ vars.component }}/base
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: kustomize-set-image
+      as: update-images
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base
+        images:
+          - image: multi-platform-controller
+            newName: ${{ vars.controllerImageRepoURL }}
+            tag: ${{ quote(imageFrom(vars.controllerImageRepoURL).Tag) }}
+          - image: multi-platform-otp-server
+            newName: ${{ vars.otpImageRepoURL }}
+            tag: ${{ quote(imageFrom(vars.controllerImageRepoURL).Tag) }}
+    # Match refs by their resource URL, not an array position.
+    - uses: yaml-update
+      as: update-manifest-refs
+      if: ${{ status('update-images') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        updates:
+          - key: resources
+            value: >-
+              ${{ map(task.outputs['read-previous'].resources, {# startsWith 'https://github.com/konflux-ci/multi-platform-controller/deploy/operator?ref='
+              ? 'https://github.com/konflux-ci/multi-platform-controller/deploy/operator?ref=' + imageFrom(vars.controllerImageRepoURL).Tag
+              : (# startsWith 'https://github.com/konflux-ci/multi-platform-controller/deploy/otp?ref=' ? 'https://github.com/konflux-ci/multi-platform-controller/deploy/otp?ref='
+              + imageFrom(vars.controllerImageRepoURL).Tag : #)}) }}
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-bundle') == 'Skipped' && status('wait-for-otp-image') == 'Succeeded' && status('read-previous') == 'Succeeded'
+        && status('validate-layout') == 'Skipped' && status('delete-old-base-snapshot') == 'Succeeded' && status('copy-freight-manifests')
+        == 'Succeeded' && status('update-images') == 'Succeeded' && status('update-manifest-refs') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: |
+          Update the controller, OTP service and their manifests to the same source revision in ${{ vars.targetRing }}.
+
+          Shared monitoring/RBAC source: [${{ commitFrom(vars.repoURL).ID[0:12] }}](https://github.com/redhat-appstudio/infra-deployments/commit/${{ commitFrom(vars.repoURL).ID }}).
+        prChanges:
+          - kind: Controller image
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous'].controllerImages[0].digest ?? task.outputs['read-previous'].controllerImages[0].newTag
+              ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.controllerImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+          - kind: OTP service image
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous'].otpImages[0].digest ?? task.outputs['read-previous'].otpImages[0].newTag
+              ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.controllerImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+          - kind: Operator manifest ref
+            previous: >-
+              ${{ quote(split(find(task.outputs['read-previous'].resources, {# startsWith 'https://github.com/konflux-ci/multi-platform-controller/deploy/operator?ref='}),
+              '?ref=')[1]) }}
+            proposed: ${{ quote(imageFrom(vars.controllerImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+          - kind: OTP manifest ref
+            previous: >-
+              ${{ quote(split(find(task.outputs['read-previous'].resources, {# startsWith 'https://github.com/konflux-ci/multi-platform-controller/deploy/otp?ref='}),
+              '?ref=')[1]) }}
+            proposed: ${{ quote(imageFrom(vars.controllerImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
