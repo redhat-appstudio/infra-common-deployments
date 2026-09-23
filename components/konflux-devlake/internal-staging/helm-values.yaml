@@ -21,7 +21,7 @@ lake:
     DISABLED_REMOTE_PLUGINS: "true"
     LOGGING_DIR: "/tmp"
     LOGGING_LEVEL: "info"
-    IN_SECURE_SKIP_VERIFY: "true"
+    IN_SECURE_SKIP_VERIFY: "false"
     PIPELINE_MAX_PARALLEL: "4"
     CORS_ALLOW_ORIGIN: "https://konflux-devlake-ui-konflux-devlake.apps.rosa.kflux-c-stg-i01.qfla.p3.openshiftapps.com"
 
