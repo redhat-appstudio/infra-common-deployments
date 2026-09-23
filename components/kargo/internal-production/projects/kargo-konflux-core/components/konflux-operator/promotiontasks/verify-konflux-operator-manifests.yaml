@@ -1,0 +1,192 @@
+---
+# POC: Operator Ring 1 only. See ../README.md for proof boundaries.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: verify-konflux-operator-manifests
+spec:
+  vars:
+    - name: mergeConfirmed
+    - name: commitSHA
+  steps:
+    - uses: fail
+      as: validate-config
+      if: ${{ vars.mergeConfirmed != 'yes' || !(vars.commitSHA matches '^[0-9a-f]{40}$') || ctx.stage != 'ring-1-konflux-operator' }}
+      config:
+        message: This POC requires a confirmed merge SHA and Operator Ring 1.
+    - uses: compose-output
+      as: readiness-start
+      if: ${{ status('validate-config') == 'Skipped' }}
+      config:
+        startedAt: ${{ now().Format('2006-01-02T15:04:05Z07:00') }}
+    - uses: http
+      as: observe-deployment
+      if: ${{ status('readiness-start') == 'Succeeded' }}
+      retry:
+        timeout: 45m
+        errorThreshold: 3
+      config:
+        method: GET
+        url: &application-url https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/argocd-infra-deployments/applications/konflux-operator-stone-stage-p01
+        headers: &application-headers
+          - name: Authorization
+            value: Bearer ${{ secret('argocd-app-reader-token-staging').token }}
+        insecureSkipTLSVerify: true
+        pollInterval: 1m
+        timeout: 30s
+        successExpression: |
+          response.status == 200 &&
+          response.body.metadata.name == 'konflux-operator-stone-stage-p01' &&
+          response.body.metadata.deletionTimestamp == nil &&
+          response.body.spec.source.repoURL == 'https://github.com/redhat-appstudio/infra-deployments.git' &&
+          response.body.spec.source.path == 'components/konflux-operator/rings/ring-1/stone-stage-p01' &&
+          response.body.spec.source.targetRevision == 'main' &&
+          len(response.body.spec?.sources ?? []) == 0 &&
+          response.body.spec.source?.kustomize == nil &&
+          response.body.spec.source?.directory == nil &&
+          response.body.status?.sourceType == 'Kustomize' &&
+          response.body.spec.source?.plugin == nil &&
+          response.body.spec.source?.helm == nil &&
+          len(response.body.spec?.ignoreDifferences ?? []) == 0 &&
+          response.body.spec.destination.namespace == 'konflux-operator' &&
+          response.body.spec.destination.server == 'https://api.stone-stage-p01.hpmt.p1.openshiftapps.com:6443' &&
+          (response.body.spec.destination?.name ?? '') == '' &&
+          response.body.status?.sync?.comparedTo?.destination == response.body.spec.destination &&
+          response.body.status?.sync?.comparedTo?.source == response.body.spec.source &&
+          response.body.status?.sync?.status == 'Synced' &&
+          response.body.status?.health?.status == 'Healthy' &&
+          response.body.operation == nil &&
+          (response.body.status?.reconciledAt ?? '') != '' &&
+          date(response.body.status.reconciledAt) >= date(${{ quote(task.outputs['readiness-start'].startedAt) }}) &&
+          (response.body.status?.operationState == nil ||
+           (response.body.status.operationState.phase == 'Succeeded' &&
+           (response.body.status.operationState.finishedAt ?? '') != '' &&
+           date(response.body.status.reconciledAt) >= date(response.body.status.operationState.finishedAt))) &&
+          (response.body.status.sync.revision ?? '') matches '^[0-9a-f]{40}$'
+        failureExpression: response.status in [401, 403, 404]
+        errorExpression: "'Cannot inspect Operator staging Application: HTTP ' + string(response.status)"
+        outputs:
+          - name: revision
+            fromExpression: response.body.status.sync.revision
+          - name: destination
+            fromExpression: response.body.spec.destination
+          - name: applicationUID
+            fromExpression: response.body.metadata.uid
+    # Exact revision uses the existing proof. Only a different revision needs rendering.
+    - uses: git-clone
+      as: clone-revisions
+      if: ${{ status('observe-deployment') == 'Succeeded' && task.outputs['observe-deployment'].revision != vars.commitSHA }}
+      config:
+        repoURL: https://github.com/redhat-appstudio/infra-deployments.git
+        checkout:
+          - commit: ${{ vars.commitSHA }}
+            path: ./operator-readiness/expected
+          - commit: ${{ task.outputs['observe-deployment'].revision }}
+            path: ./operator-readiness/observed
+    - uses: kustomize-build
+      as: render-expected
+      if: ${{ status('clone-revisions') == 'Succeeded' }}
+      config:
+        path: ./operator-readiness/expected/components/konflux-operator/rings/ring-1/stone-stage-p01
+        outPath: ./operator-readiness/expected/.kargo-readiness-render.yaml
+    # Override ignore rules only in the disposable checkout so the render is tracked.
+    - uses: file-write
+      as: track-comparison-file
+      if: ${{ status('render-expected') == 'Succeeded' }}
+      config:
+        path: ./operator-readiness/expected/.gitignore
+        contents: "!/.kargo-readiness-render.yaml\n"
+        overwrite: true
+    # Local-only baseline: no branch is pushed and no PR is opened.
+    - uses: git-commit
+      as: record-expected-render
+      if: ${{ status('track-comparison-file') == 'Succeeded' }}
+      config:
+        path: ./operator-readiness/expected
+        message: Record expected Operator manifests for local readiness comparison
+    - uses: kustomize-build
+      as: render-observed
+      if: ${{ status('track-comparison-file') == 'Succeeded' && status('record-expected-render') in ['Succeeded', 'Skipped'] }}
+      config:
+        path: ./operator-readiness/observed/components/konflux-operator/rings/ring-1/stone-stage-p01
+        outPath: ./operator-readiness/expected/.kargo-readiness-render.yaml
+    # Skipped means git-commit found no changes. Guard the preceding render as well.
+    - uses: git-commit
+      as: compare-rendered-manifests
+      if: ${{ status('render-observed') == 'Succeeded' }}
+      config:
+        path: ./operator-readiness/expected
+        message: Record observed Operator manifests for local readiness comparison
+    - uses: fail
+      as: require-matching-manifests
+      if: ${{ status('compare-rendered-manifests') == 'Succeeded' }}
+      config:
+        message: The synchronized revision renders different Operator manifests than the promotion. Readiness is not verified.
+    - uses: compose-output
+      as: comparison
+      if: >-
+        ${{ status('observe-deployment') == 'Succeeded' && (task.outputs['observe-deployment'].revision == vars.commitSHA ||
+        (status('render-observed') == 'Succeeded' && status('compare-rendered-manifests') == 'Skipped')) }}
+      config:
+        verified: 'yes'
+        method: "${{ task.outputs['observe-deployment'].revision == vars.commitSHA ? 'exact-revision' : 'identical-rendered-manifests' }}"
+    # Never accept a revision that changed while the comparison was running.
+    - uses: http
+      as: confirm-deployment
+      if: ${{ status('comparison') == 'Succeeded' }}
+      retry:
+        timeout: 5m
+        errorThreshold: 3
+      config:
+        method: GET
+        url: *application-url
+        headers: *application-headers
+        insecureSkipTLSVerify: true
+        pollInterval: 1m
+        timeout: 30s
+        successExpression: |
+          response.status == 200 &&
+          response.body.metadata.name == 'konflux-operator-stone-stage-p01' &&
+          response.body.metadata.deletionTimestamp == nil &&
+          response.body.spec.source.repoURL == 'https://github.com/redhat-appstudio/infra-deployments.git' &&
+          response.body.spec.source.path == 'components/konflux-operator/rings/ring-1/stone-stage-p01' &&
+          response.body.spec.source.targetRevision == 'main' &&
+          len(response.body.spec?.sources ?? []) == 0 &&
+          response.body.spec.source?.kustomize == nil &&
+          response.body.spec.source?.directory == nil &&
+          response.body.status?.sourceType == 'Kustomize' &&
+          response.body.spec.source?.plugin == nil &&
+          response.body.spec.source?.helm == nil &&
+          len(response.body.spec?.ignoreDifferences ?? []) == 0 &&
+          response.body.spec.destination.namespace == 'konflux-operator' &&
+          response.body.spec.destination.server == 'https://api.stone-stage-p01.hpmt.p1.openshiftapps.com:6443' &&
+          (response.body.spec.destination?.name ?? '') == '' &&
+          response.body.status?.sync?.comparedTo?.destination == response.body.spec.destination &&
+          response.body.status?.sync?.comparedTo?.source == response.body.spec.source &&
+          response.body.status?.sync?.status == 'Synced' &&
+          response.body.status?.health?.status == 'Healthy' &&
+          response.body.operation == nil &&
+          (response.body.status?.reconciledAt ?? '') != '' &&
+          date(response.body.status.reconciledAt) >= date(${{ quote(task.outputs['readiness-start'].startedAt) }}) &&
+          (response.body.status?.operationState == nil ||
+           (response.body.status.operationState.phase == 'Succeeded' &&
+           (response.body.status.operationState.finishedAt ?? '') != '' &&
+           date(response.body.status.reconciledAt) >= date(response.body.status.operationState.finishedAt))) &&
+          (response.body.status.sync.revision ?? '') matches '^[0-9a-f]{40}$' &&
+          response.body.status.sync.revision == ${{ quote(task.outputs['observe-deployment'].revision) }} &&
+          response.body.metadata.uid == ${{ quote(task.outputs['observe-deployment'].applicationUID) }} &&
+          toJSON(response.body.spec.destination) == ${{ quote(toJSON(task.outputs['observe-deployment'].destination)) }}
+        failureExpression: |
+          response.status in [401, 403, 404] ||
+          (response.status == 200 && (
+            response.body.status?.sync?.revision != ${{ quote(task.outputs['observe-deployment'].revision) }} ||
+            response.body.metadata.uid != ${{ quote(task.outputs['observe-deployment'].applicationUID) }}))
+        errorExpression: "'Operator Application changed during verification or is unavailable; retry the promotion to compare its current revision'"
+    - uses: compose-output
+      as: result
+      if: ${{ status('confirm-deployment') == 'Succeeded' }}
+      config:
+        deploymentVerified: 'yes'
+        commitSHA: ${{ vars.commitSHA }}
+        deployedRevision: ${{ task.outputs['observe-deployment'].revision }}
+        verificationMethod: ${{ task.outputs['comparison'].method }}

@@ -122,16 +122,10 @@ spec:
             - name: mergeMode
               value: ${{ vars.mergeMode }}
         - task:
-            name: verify-argocd-deployment
+            name: verify-konflux-operator-manifests
           as: verify-deployment
           vars:
             - name: mergeConfirmed
               value: ${{ outputs['merge::result']?.mergeConfirmed ?? '' }}
             - name: commitSHA
               value: ${{ outputs['merge::result']?.mergeCommitSHA ?? '' }}
-            - name: component
-              value: ${{ vars.component }}
-            - name: clusters
-              value: stone-stage-p01
-            - name: tokenSecret
-              value: argocd-app-reader-token-staging

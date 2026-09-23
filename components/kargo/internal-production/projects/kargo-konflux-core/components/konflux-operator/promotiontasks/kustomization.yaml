@@ -5,3 +5,4 @@ resources:
   - konflux-operator-promote-ring-0.yaml
   - konflux-operator-promote-ring-1.yaml
   - konflux-operator-promote-ring-2.yaml
+  - verify-konflux-operator-manifests.yaml
