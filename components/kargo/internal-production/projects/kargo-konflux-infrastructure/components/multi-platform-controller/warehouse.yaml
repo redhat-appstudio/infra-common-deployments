@@ -1,0 +1,21 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: multi-platform-controller
+spec:
+  freightCreationPolicy: Automatic
+  interval: 2h0m0s
+  subscriptions:
+    - git:
+        repoURL: https://github.com/redhat-appstudio/infra-deployments.git
+        commitSelectionStrategy: NewestFromBranch
+        branch: main
+        includePaths:
+          - components/multi-platform-controller/base
+    - image:
+        repoURL: quay.io/konflux-ci/multi-platform-controller
+        imageSelectionStrategy: NewestBuild
+        discoveryLimit: 5
+        allowTagsRegexes:
+          - ^[0-9a-f]{40}$
