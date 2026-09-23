@@ -151,10 +151,19 @@ Keep these rules when extending or generating configuration:
 
 **Publication:** each project/component/ring uses one stable branch:
 `<project>/<component>/<targetRing>`. Native `git-push` replaces that branch with
-the newly prepared changes, and native `git-open-pr` reuses its open PR. A new
-Promotion for the same Freight therefore updates the existing PR instead of
-opening another one. CI checks the newly pushed SHA; an earlier passing result
-cannot approve a different head. No additional HTTP lookup is needed.
+the newly prepared changes. Native `git-open-pr` opens or reuses the PR using
+Kargo's configured Git credentials. It allows up to three errors within five
+minutes before trying recovery. Successful native publication adds no PAT reads.
+
+Only after native publication fails, a scoped PAT-backed lookup checks for an
+open PR on that branch with the exact pushed SHA, expected repository and `main`
+base. Recovery polls every two minutes for up to five minutes. Empty, stale or
+ambiguous results never permit CI or merge. `continueOnError` applies only to the
+native opener so verified recovery can succeed; an explicit failure step prevents
+unrecovered publication errors from being silently accepted.
+
+A new Promotion for the same Freight updates the existing PR. CI checks the
+newly pushed SHA; an earlier passing result cannot approve a different head.
 
 Kargo serializes Promotions within a Stage. Each branch must belong to exactly
 one Stage: do not configure two Stages with the same project/component/ring or
@@ -170,7 +179,9 @@ new changes can create a new PR on the same branch.
 
 **CI and merge:** required checks must pass for the published head SHA. Automatic
 mode uses native `git-merge-pr`; manual mode uses native `git-wait-for-pr`. HTTP
-checks verify the PR's head, base branch and resulting merge SHA. Missing or
+checks verify the PR's head, source branch, repositories, base branch and resulting merge SHA.
+The merge task defaults `sourceBranch` from the Stage's `component` and `targetRing`
+variables, matching the publisher's stable branch; no extra API call is needed. Missing or
 pending CI results wait; failed results block completion. Responses exceeding
 100 checks/statuses are rejected rather than approving a partial result set.
 

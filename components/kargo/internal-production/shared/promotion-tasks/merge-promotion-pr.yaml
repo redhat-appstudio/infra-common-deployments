@@ -13,6 +13,9 @@ spec:
     - name: prNumber
     - name: promotionAsNoOp
     - name: mergeMode
+    # Matches the publisher's stable branch; component/targetRing are Stage vars.
+    - name: sourceBranch
+      value: ${{ ctx.project + '/' + vars.component + '/' + vars.targetRing }}
   steps:
     - uses: fail
       as: validate-config
@@ -23,10 +26,13 @@ spec:
         message: Merge requires a passing CI result for this exact head SHA and valid publication outputs.
     - as: inspect-pr
       config:
-        errorExpression: '''Promotion PR is unavailable, closed without merging, or no longer contains the tested head SHA targeting main'''
+        errorExpression: '''Promotion PR is unavailable, closed without merging, or no longer contains the tested head SHA on the expected source branch targeting main'''
         failureExpression: |
           (response.status in [401, 404] || (response.status == 403 && response.header('X-RateLimit-Remaining') != '0' && response.header('Retry-After') == '' && !(lower(response.body?.message ?? '') contains 'rate limit'))) ||
           (response.status == 200 && (response.body.head.sha != ${{ quote(vars.headCommitSHA) }} ||
+          response.body.head.ref != ${{ quote(vars.sourceBranch) }} ||
+          response.body.head.repo.full_name != 'redhat-appstudio/infra-deployments' ||
+          response.body.base.repo.full_name != 'redhat-appstudio/infra-deployments' ||
           response.body.base.ref != 'main' || (response.body.state == 'closed' && response.body.merged == false)))
         headers:
           - name: Authorization
@@ -38,6 +44,9 @@ spec:
             name: mergeCommitSHA
         successExpression: |
           response.status == 200 && response.body.head.sha == ${{ quote(vars.headCommitSHA) }} &&
+          response.body.head.ref == ${{ quote(vars.sourceBranch) }} &&
+          response.body.head.repo.full_name == 'redhat-appstudio/infra-deployments' &&
+          response.body.base.repo.full_name == 'redhat-appstudio/infra-deployments' &&
           response.body.base.ref == 'main' && (response.body.state == 'open' || response.body.merged == true)
         timeout: 30s
         url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls/${{ vars.prNumber }}
@@ -71,10 +80,13 @@ spec:
     # Check that the native step returned the merge of the tested head and base.
     - as: verify-merged
       config:
-        errorExpression: '''PR merge verification failed: PR closed, inaccessible, or tested head/base changed'''
+        errorExpression: '''PR merge verification failed: PR closed, inaccessible, or tested head/source branch/base changed'''
         failureExpression: |
           (response.status in [401, 404] || (response.status == 403 && response.header('X-RateLimit-Remaining') != '0' && response.header('Retry-After') == '' && !(lower(response.body?.message ?? '') contains 'rate limit'))) ||
           (response.status == 200 && (response.body.head.sha != ${{ quote(vars.headCommitSHA) }} ||
+          response.body.head.ref != ${{ quote(vars.sourceBranch) }} ||
+          response.body.head.repo.full_name != 'redhat-appstudio/infra-deployments' ||
+          response.body.base.repo.full_name != 'redhat-appstudio/infra-deployments' ||
           response.body.base.ref != 'main' || (response.body.state == 'closed' && response.body.merged == false)))
         headers:
           - name: Authorization
@@ -82,6 +94,9 @@ spec:
         successExpression: |
           response.status == 200 && response.body.merged == true &&
           response.body.head.sha == ${{ quote(vars.headCommitSHA) }} &&
+          response.body.head.ref == ${{ quote(vars.sourceBranch) }} &&
+          response.body.head.repo.full_name == 'redhat-appstudio/infra-deployments' &&
+          response.body.base.repo.full_name == 'redhat-appstudio/infra-deployments' &&
           response.body.base.ref == 'main' && (response.body.merge_commit_sha ?? '') != '' &&
           response.body.merge_commit_sha == ${{ quote(vars.mergeMode == 'manual' ? task.outputs['wait-for-manual-merge'].commit : (task.outputs['auto-merge']?.commit ?? task.outputs['inspect-pr'].mergeCommitSHA)) }}
         timeout: 30s
