@@ -2,26 +2,26 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: ring-1-repository-validator
+  name: ring-3-repository-validator
   labels:
-    konflux-environment: staging
+    konflux-environment: production
   annotations:
-    kargo.akuity.io/color: yellow
+    kargo.akuity.io/color: red
 spec:
-  shard: infra-deployments-staging
+  shard: infra-deployments-production
   requestedFreight:
     - origin:
         kind: Warehouse
         name: repository-validator
       sources:
         stages:
-          - ring-0-repository-validator
+          - ring-2-repository-validator
   verification:
     analysisTemplates:
-      - name: kanary-staging
+      - name: kanary-production
     args:
       - name: clusters
-        value: stone-stage-p01
+        value: stone-prod-p02
       - name: expected-cluster-count
         value: '1'
   promotionTemplate:
@@ -34,9 +34,9 @@ spec:
         - name: component
           value: ${{ ctx.targetFreight.origin.name }}
         - name: targetRing
-          value: ring-1
+          value: ring-3
         - name: mergeMode
-          value: auto
+          value: manual
         - name: skipProwChecks
           value: 'true'
         - name: freightPath
@@ -101,7 +101,7 @@ spec:
               - kind: Freight
                 name: ${{ ctx.targetFreight.name }}
                 values:
-                  noOpRing1: ${{ outputs['publish::result'].promotionAsNoOp }}
+                  noOpRing3: ${{ outputs['publish::result'].promotionAsNoOp }}
         - task:
             name: verify-promotion-ci
           as: ci
@@ -143,6 +143,6 @@ spec:
             - name: component
               value: ${{ vars.component }}
             - name: clusters
-              value: stone-stage-p01
+              value: stone-prod-p02
             - name: tokenSecret
-              value: argocd-app-reader-token-staging
+              value: argocd-app-reader-token
