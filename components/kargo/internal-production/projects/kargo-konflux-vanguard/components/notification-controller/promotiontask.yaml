@@ -13,9 +13,9 @@ spec:
       as: validate-freight
       if: >-
         ${{ ctx.targetFreight.origin.name != 'notification-controller' || vars.component != ctx.targetFreight.origin.name ||
-        vars.targetRing != 'ring-1' || !(imageFrom('quay.io/konflux-ci/notification-service').Tag matches '^[0-9a-f]{40}$') }}
+        vars.targetRing not in ['ring-1', 'ring-2', 'ring-3', 'ring-4'] || !(imageFrom('quay.io/konflux-ci/notification-service').Tag matches '^[0-9a-f]{40}$') }}
       config:
-        message: Expected notification-controller Freight with a SHA-tagged notification-service image, targeting Ring 1.
+        message: Expected notification-controller Freight with a SHA-tagged notification-service image, targeting Rings 1–4.
     - uses: yaml-parse
       as: read-previous
       if: ${{ status('validate-freight') == 'Skipped' }}
@@ -53,7 +53,7 @@ spec:
         status('update-image-and-ref') == 'Succeeded' }}
       config:
         prepared: 'yes'
-        prSummary: Update the notification-service image and remote manifests to the same selected Freight SHA in Ring 1.
+        prSummary: Update the notification-service image and remote manifests to the same selected Freight SHA in ${{ vars.targetRing }}.
         prChanges:
           - kind: Image tag
             previous: ${{ quote(task.outputs['read-previous'].imageTag) }}
