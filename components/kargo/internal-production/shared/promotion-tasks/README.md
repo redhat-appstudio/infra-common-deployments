@@ -107,6 +107,23 @@ One call checks the whole configured group:
       value: stone-stg-rh01|stone-stage-p01
 ```
 
+For image-based readiness, optionally pass full Freight image references:
+
+```yaml
+    - name: expectedImages
+      value: quay.io/konflux-ci/konflux-operator:${{ imageFrom('quay.io/konflux-ci/konflux-operator').Tag }}
+```
+
+Separate multiple references with `|`. Every target Application must report all
+expected images in `status.summary.images`; other images, such as sidecars, are
+allowed. Use the exact reference Argo CD reports: tags and digests are not
+interchangeable. This replaces the exact Git revision check, so unrelated merges
+on `main` do not block readiness. It adds no GitHub API requests.
+
+Image checks do not verify non-image manifest changes or inspect running container
+digests independently. Omit `expectedImages` to retain exact-revision verification.
+Operator Ring 1 opts in; other callers retain their existing behavior.
+
 Cluster names are literal, unique, pipe-separated values: no regex, spaces or
 empty entries. The supported group size is 1–15 clusters. Expected Application
 names are `<component>-<cluster>`. The naming contract is:
@@ -135,7 +152,7 @@ Every task publishes its completion fields in a step named `result`.
 | [publish-promotion-pr](publish-promotion-pr.yaml) | `srcPath`, `component`, `targetRing`, `prepared`, `baseCommitSHA`, `mergeMode`, `skipProwChecks` | `published`, `promotionAsNoOp`, `baseCommitSHA`, `headCommitSHA`, `prNumber`, `prURL` |
 | [verify-promotion-ci](verify-promotion-ci.yaml) | `published`, `commitSHA`, `promotionAsNoOp`, `skipProwChecks`; `requiredProwChecks` when enabled | `passed`, `checkedSHA`, `promotionAsNoOp` |
 | [merge-promotion-pr](merge-promotion-pr.yaml) | `passed`, `checkedSHA`, `headCommitSHA`, `baseCommitSHA`, `prNumber`, `promotionAsNoOp`, `mergeMode` | `mergeConfirmed`, `mergeCommitSHA`, `promotionAsNoOp` |
-| [verify-argocd-deployment](verify-argocd-deployment.yaml) | `mergeConfirmed`, `commitSHA`, `component`, `clusters` | `deploymentVerified`, `commitSHA`, `appDetails` |
+| [verify-argocd-deployment](verify-argocd-deployment.yaml) | `mergeConfirmed`, `commitSHA`, `component`, `clusters`; optional `expectedImages` | `deploymentVerified`, `commitSHA`, `verificationMethod`, `expectedImages`, `appDetails` |
 
 Keep these rules when extending or generating configuration:
 
@@ -186,13 +203,14 @@ pending CI results wait; failed results block completion. Responses exceeding
 100 checks/statuses are rejected rather than approving a partial result set.
 
 **Readiness:** every configured Application must appear in the same complete
-response and be Healthy, Synced, at the expected revision, and not deleting or
+response and be Healthy, Synced, and not deleting or
 running an operation. Reconciliation must be newer than the fixed readiness-start
 boundary. Operation history, when present, must be successful and older than that
-reconciliation. An Application without operation history can pass.
+reconciliation. An Application without operation history can pass. It must either report every
+configured expected image or, when none are configured, match the expected revision.
 
 **No-op:** no Git changes means no new PR or CI run. Rings with readiness still
-verify the captured target revision. Existing `noOpRing0/1/2` Freight annotations
+verify the configured expected images or captured target revision. Existing `noOpRing0/1/2` Freight annotations
 are retained, but later tasks use fresh publication outputs instead of cached
 Freight metadata.
 

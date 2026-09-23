@@ -10,6 +10,9 @@ spec:
     - name: commitSHA
     - name: component
     - name: clusters
+    # Optional full image references, separated by |; empty retains exact-revision verification.
+    - name: expectedImages
+      value: ${{ '' }}
     - name: tokenSecret
       value: argocd-app-reader-token-staging
     - name: appsNamespace
@@ -20,10 +23,11 @@ spec:
       if: >-
         ${{ vars.mergeConfirmed != 'yes' || vars.commitSHA == '' || !(vars.component matches '^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$') || vars.clusters
         == '' || any(split(vars.clusters, '|'), {!(# matches '^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$')}) || len(uniq(split(vars.clusters, '|'))) !=
-        len(split(vars.clusters, '|')) || len(split(vars.clusters, '|')) > 15 }}
+        len(split(vars.clusters, '|')) || len(split(vars.clusters, '|')) > 15 || (vars.expectedImages != '' &&
+        any(split(vars.expectedImages, '|'), {# == '' || # matches '[[:space:]]'})) }}
       config:
         message: Readiness requires a confirmed revision, component prefix and 1–15 unique pipe-separated cluster names (no regex, spaces or empty
-          entries).
+          entries). Expected images must be full references separated by |, with no spaces or empty entries.
     # Persist the freshness boundary once, rather than moving it on every poll.
     - uses: compose-output
       as: readiness-start
@@ -64,7 +68,12 @@ spec:
                   date(.status.reconciledAt) >= date(.status.operationState.finishedAt)
                 )
               ) &&
-              .status.sync.revision == ${{ quote(vars.commitSHA) }}
+              (
+                ${{ quote(vars.expectedImages) }} == '' ?
+                  .status.sync.revision == ${{ quote(vars.commitSHA) }} :
+                  (let actualImages = .status?.summary?.images ?? [];
+                   all(split(${{ quote(vars.expectedImages) }}, '|'), {# in actualImages}))
+              )
             })
           })
         failureExpression: response.status in [401, 403, 404] || (response.status == 200 && (response.body.metadata?.continue ?? '') != '')
@@ -75,7 +84,7 @@ spec:
             fromExpression: |
               map(filter(response.body.items, {
                 .metadata.name in map(split(${{ quote(vars.clusters) }}, '|'), {${{ quote(vars.component) }} + '-' + #})
-              }), {.metadata.name + ' health=' + .status.health.status + ' revision=' + .status.sync.revision})
+              }), {.metadata.name + ' health=' + .status.health.status + ' revision=' + .status.sync.revision + ' images=' + join(.status?.summary?.images ?? [], ',')})
         timeout: 30s
     - uses: compose-output
       as: result
@@ -83,4 +92,6 @@ spec:
       config:
         deploymentVerified: 'yes'
         commitSHA: ${{ vars.commitSHA }}
+        verificationMethod: "${{ vars.expectedImages == '' ? 'exact-revision' : 'expected-images' }}"
+        expectedImages: ${{ vars.expectedImages }}
         appDetails: ${{ task.outputs['wait-for-sync'].appDetails }}

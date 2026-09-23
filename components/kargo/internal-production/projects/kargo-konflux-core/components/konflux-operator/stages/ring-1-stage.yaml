@@ -133,5 +133,7 @@ spec:
               value: ${{ vars.component }}
             - name: clusters
               value: stone-stage-p01
+            - name: expectedImages
+              value: quay.io/konflux-ci/konflux-operator:${{ imageFrom('quay.io/konflux-ci/konflux-operator').Tag }}
             - name: tokenSecret
               value: argocd-app-reader-token-staging
