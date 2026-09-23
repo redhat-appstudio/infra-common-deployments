@@ -34,7 +34,7 @@ spec:
       config:
         path: ${{ vars.srcPath }}
         message: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}'
-    # One branch per component/ring lets native git-open-pr reuse an open PR.
+    # One branch per component/ring lets subsequent Promotions update the same PR.
     # Kargo serializes Promotions within a Stage; CI must use this push's SHA.
     - uses: git-push
       as: push
@@ -46,6 +46,12 @@ spec:
     - uses: git-open-pr
       as: open-pr
       if: ${{ status('push') == 'Succeeded' }}
+      # Only the recovery path may turn an exhausted native error into success.
+      continueOnError: true
+      # Retry native discovery before spending requests on the PAT-backed fallback.
+      retry:
+        timeout: 5m
+        errorThreshold: 3
       config:
         repoURL: https://github.com/redhat-appstudio/infra-deployments.git
         sourceBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
@@ -79,6 +85,45 @@ spec:
           - ${{ vars.targetRing }}
           - automated-promotion
           - component/${{ vars.component }}
+    # Recovery only: adopt an existing PR after native discovery exhausts retries.
+    - uses: http
+      as: find-pr
+      if: ${{ status('push') == 'Succeeded' && status('open-pr') in ['Errored', 'Failed'] }}
+      retry:
+        timeout: 5m
+      config:
+        method: GET
+        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?state=open&base=main&head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}&per_page=2
+        headers: &github-headers
+          - name: Authorization
+            value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
+          - name: Accept
+            value: application/vnd.github+json
+        pollInterval: 2m
+        timeout: 30s
+        successExpression: |
+          response.status == 200 &&
+          len(response.body) == 1 && response.body[0].state == 'open' &&
+          response.body[0].head.repo.full_name == 'redhat-appstudio/infra-deployments' &&
+          response.body[0].base.repo.full_name == 'redhat-appstudio/infra-deployments' &&
+          response.body[0].head.ref == ${{ quote(ctx.project + '/' + vars.component + '/' + vars.targetRing) }} &&
+          response.body[0].base.ref == 'main' && response.body[0].head.sha == ${{ quote(task.outputs['push'].commit) }}
+        failureExpression: |
+          response.status in [401, 404] ||
+          (response.status == 403 && response.header('X-RateLimit-Remaining') != '0' && response.header('Retry-After') == '' && !(lower(response.body?.message ?? '') contains 'rate limit')) ||
+          (response.status == 200 && len(response.body) > 1)
+        errorExpression: "'Cannot resolve the promotion PR: HTTP ' + string(response.status) + '; require one open PR with the expected repository, branch, base and pushed SHA'"
+        outputs:
+          - name: prNumber
+            fromExpression: response.body[0].number
+          - name: prURL
+            fromExpression: response.body[0].html_url
+    # continueOnError must never hide a publication failure without proven recovery.
+    - uses: fail
+      as: require-published-pr
+      if: ${{ status('push') == 'Succeeded' && status('open-pr') in ['Errored', 'Failed'] && status('find-pr') != 'Succeeded' }}
+      config:
+        message: Native PR publication failed and no matching open PR could be recovered. CI and merge remain blocked.
     # A skipped PR can mean main already has the promoted tree. Verify, never assume.
     - uses: http
       as: read-converged-main
@@ -88,11 +133,7 @@ spec:
       config:
         method: GET
         url: https://api.github.com/repos/redhat-appstudio/infra-deployments/commits/main
-        headers: &id001
-          - name: Authorization
-            value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
-          - name: Accept
-            value: application/vnd.github+json
+        headers: *github-headers
         pollInterval: 2m
         timeout: 30s
         successExpression: response.status == 200 && (response.body.sha ?? '') != '' && (response.body.commit.tree.sha ?? '') != ''
@@ -112,7 +153,7 @@ spec:
       config:
         method: GET
         url: https://api.github.com/repos/redhat-appstudio/infra-deployments/commits/${{ task.outputs['push'].commit }}
-        headers: *id001
+        headers: *github-headers
         pollInterval: 2m
         timeout: 30s
         successExpression: response.status == 200 && response.body.commit.tree.sha == ${{ quote(task.outputs['read-converged-main'].treeSHA) }}
@@ -124,8 +165,9 @@ spec:
     - uses: compose-output
       as: result
       if: >-
-        ${{ status('validate-config') == 'Skipped' && (status('commit') == 'Skipped' || status('open-pr') == 'Succeeded' || status('verify-converged-tree')
-        == 'Succeeded') }}
+        ${{ status('validate-config') == 'Skipped' && (status('commit') == 'Skipped' ||
+        (status('find-pr') == 'Succeeded' && task.outputs['find-pr'].prNumber > 0) ||
+        status('open-pr') == 'Succeeded' || status('verify-converged-tree') == 'Succeeded') }}
       config:
         published: 'yes'
         promotionAsNoOp: '${{ (status(''commit'') == ''Skipped'' || status(''verify-converged-tree'') == ''Succeeded'') ? ''yes'' : ''no'' }}'
@@ -133,5 +175,7 @@ spec:
           }}'
         headCommitSHA: '${{ (status(''commit'') == ''Skipped'' || status(''verify-converged-tree'') == ''Succeeded'') ? '''' : task.outputs[''push''].commit
           }}'
-        prNumber: ${{ task.outputs['open-pr']?.pr?.id ?? 0 }}
-        prURL: ${{ task.outputs['open-pr']?.pr?.url ?? '' }}
+        prNumber: >-
+          ${{ (task.outputs['find-pr']?.prNumber ?? 0) > 0 ? task.outputs['find-pr'].prNumber : (task.outputs['open-pr']?.pr?.id ?? 0) }}
+        prURL: >-
+          ${{ (task.outputs['find-pr']?.prNumber ?? 0) > 0 ? task.outputs['find-pr'].prURL : (task.outputs['open-pr']?.pr?.url ?? '') }}
