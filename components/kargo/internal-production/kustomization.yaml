@@ -5,9 +5,9 @@ kind: Kustomization
 resources:
   - deployment
   - projects
-  - shard-rbac
-  - kargo-shared-secrets
-  - promotion-cleaner
+  - platform/shard-rbac
+  - platform/credentials
+  - platform/promotion-cleaner
 
 patches:
   - target:

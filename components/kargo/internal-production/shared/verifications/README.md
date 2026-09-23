@@ -1,4 +1,4 @@
-# kargo-shared-verifications
+# Shared verifications
 
 Kustomize Component that provides shared Argo Rollouts AnalysisTemplates to all
 Kargo projects. These templates run post-promotion verification to confirm
@@ -14,13 +14,18 @@ components are healthy before advancing to the next ring.
 Both query the `kanary_up` metric from RHOBS (Observatorium) via PromQL to verify
 that the Kanary sidecar reports all target clusters as healthy after promotion.
 
+The [conformance verification](konflux-conformance-tests/) also includes its
+AnalysisTemplate and a ConfigMap containing PipelineRun template data. Including
+this Component supplies definitions; it does not launch tests until a Stage uses them.
+
 ## Dependencies
 
 - `kargo-rhobs-staging` secret — RHOBS staging OAuth2 client credentials
 - `kargo-rhobs-production` secret — RHOBS production OAuth2 client credentials
 
-These secrets must exist in each project namespace. They should be added to
-`kargo-shared-secrets` when these verifications are used across all projects.
+These secrets must exist in each project namespace. Their ExternalSecrets are
+provisioned once under [platform credentials](../../platform/credentials/) and
+selected generated Secrets are replicated to projects.
 
 ## Stage usage
 
@@ -52,5 +57,5 @@ In a project's top-level `kustomization.yaml`:
 
 ```yaml
 components:
-  - ../../kargo-shared-verifications
+  - ../../shared/verifications
 ```

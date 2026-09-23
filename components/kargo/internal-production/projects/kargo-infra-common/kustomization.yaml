@@ -10,7 +10,7 @@ resources:
   - rover-group-sync
 
 components:
-  - ../../kargo-shared-verifications
+  - ../../shared/verifications
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

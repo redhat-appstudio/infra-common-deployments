@@ -59,5 +59,5 @@ repository as well as its tag; review that transition before merging.
 - Shared readiness requires the exact merge revision; later commits on `main`
   can cause a timeout even when the component is healthy.
 
-See the [shared workflow guide](../../../../kargo-shared-promotion-tasks/README.md)
+See the [shared workflow guide](../../../../shared/promotion-tasks/README.md)
 for task contracts, CI policy and troubleshooting.

@@ -31,7 +31,7 @@ image and remote source, not the entire deployment repository. Prow is not a
 notification-specific validation gate. Exact-revision readiness can time out if
 main advances before Argo observes the accepted revision.
 
-See the [shared workflow guide](../../../../kargo-shared-promotion-tasks/README.md)
+See the [shared workflow guide](../../../../shared/promotion-tasks/README.md)
 for branch ownership, merge and CI limitations.
 
 ## Production rings
