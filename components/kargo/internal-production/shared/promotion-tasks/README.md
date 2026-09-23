@@ -52,9 +52,9 @@ Changing to human merging requires an explicit `mergeMode: manual` choice.
 
 ## Start here when adding a component
 
-Use the [playground Ring 1 Stage](../projects/kargo-production-playground/components/dummy-deployment/stages/ring-1-stage.yaml)
+Use the [playground Ring 1 Stage](../../projects/kargo-production-playground/components/dummy-deployment/stages/ring-1-stage.yaml)
 as a complete example. For mandatory Prow, see the
-[Operator Ring 0 Stage](../projects/kargo-konflux-core/components/konflux-operator/stages/ring-0-stage.yaml).
+[Operator Ring 0 Stage](../../projects/kargo-konflux-core/components/konflux-operator/stages/ring-0-stage.yaml).
 
 1. Keep the component's Freight sources, shard and verification settings in its Stage.
 2. Clone the repository, then run a component preparation task against that checkout.
@@ -250,7 +250,7 @@ This directory is a Kustomize Component. Include it in a project's
 
 ```yaml
 components:
-  - ../../kargo-shared-promotion-tasks
+  - ../../shared/promotion-tasks
 ```
 
 Keep component-specific preparation tasks in their component directories. Shared

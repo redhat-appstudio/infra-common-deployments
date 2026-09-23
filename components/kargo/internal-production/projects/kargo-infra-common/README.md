@@ -298,14 +298,14 @@ also update the external config files.
 
 ## Example: Kargo Component (Reference)
 
-The [`kargo/`](../kargo/) directory is the reference implementation:
+The [`kargo/`](kargo/) directory is the reference implementation:
 
 - **Warehouse** — watches the Kargo Helm chart (OCI), Kargo image, and Dex
-  image: [`kargo/warehouse.yaml`](../kargo/warehouse.yaml)
+  image: [`kargo/warehouse.yaml`](kargo/warehouse.yaml)
 - **Promotion Task (staging)** — updates the Helm generator with chart version
-  and image tags: [`kargo/promotiontasks/kargo-promote-ring-1.yaml`](../kargo/promotiontasks/kargo-promote-ring-1.yaml)
+  and image tags: [`kargo/promotiontasks/kargo-promote-ring-1.yaml`](kargo/promotiontasks/kargo-promote-ring-1.yaml)
 - **Promotion Task (production)** — same pattern targeting production config:
-  [`kargo/promotiontasks/kargo-promote-ring-2.yaml`](../kargo/promotiontasks/kargo-promote-ring-2.yaml)
+  [`kargo/promotiontasks/kargo-promote-ring-2.yaml`](kargo/promotiontasks/kargo-promote-ring-2.yaml)
 
 ## Checklist
 

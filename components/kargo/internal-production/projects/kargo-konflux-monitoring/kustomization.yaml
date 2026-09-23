@@ -8,8 +8,8 @@ resources:
   - base
 
 components:
-  - ../../kargo-shared-promotion-tasks
-  - ../../kargo-shared-verifications
+  - ../../shared/promotion-tasks
+  - ../../shared/verifications
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

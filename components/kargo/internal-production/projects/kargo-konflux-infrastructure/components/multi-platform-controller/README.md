@@ -66,5 +66,5 @@ rollouts. PR descriptions show previous and proposed image tags and manifest ref
 - Shared readiness requires the captured merge revision. A newer `main` revision
   can cause a timeout even when the component is healthy.
 
-See the [shared workflow guide](../../../../kargo-shared-promotion-tasks/README.md)
+See the [shared workflow guide](../../../../shared/promotion-tasks/README.md)
 for task contracts and troubleshooting.

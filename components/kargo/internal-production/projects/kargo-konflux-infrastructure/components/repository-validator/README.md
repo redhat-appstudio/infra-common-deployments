@@ -72,4 +72,4 @@ A combined Warehouse selects a candidate pair, not an atomic cross-repository
 release. Production remains manually reviewed. Shared readiness's exact-revision
 check can time out if `main` advances before Argo CD observes the captured merge.
 
-See the [shared workflow guide](../../../../kargo-shared-promotion-tasks/README.md).
+See the [shared workflow guide](../../../../shared/promotion-tasks/README.md).

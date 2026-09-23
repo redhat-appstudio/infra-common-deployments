@@ -46,4 +46,4 @@ modified. Changes outside the watched base require a separate reviewed rollout.
 The shared tasks handle PR publication, exact-head CI, merge confirmation and
 readiness. Their existing limits still apply, including the exact Argo revision
 requirement when `main` advances. See the
-[shared workflow guide](../../../../kargo-shared-promotion-tasks/README.md).
+[shared workflow guide](../../../../shared/promotion-tasks/README.md).
