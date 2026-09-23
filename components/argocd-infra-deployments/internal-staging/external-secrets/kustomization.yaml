@@ -8,4 +8,4 @@ resources:
   - stg-p01-es.yaml
   - redhat-appstudio-es.yaml
   - lightwell-dev-es.yaml
-  - kflux-stg-p02-es.yaml
+  - kflux-stg-p02/externalsecret.yaml
