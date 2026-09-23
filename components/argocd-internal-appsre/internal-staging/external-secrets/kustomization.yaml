@@ -6,3 +6,4 @@ resources:
   - lightwell-dev-es.yaml
   - redhat-appstudio-es.yaml
   - stg-p01-es.yaml
+  - kflux-stg-p02-es.yaml
