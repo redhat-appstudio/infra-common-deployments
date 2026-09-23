@@ -100,12 +100,12 @@ spec:
       config:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
         updates:
-          - key: resources
-            value: >-
-              ${{ map(task.outputs['read-previous'].resources, {# startsWith 'https://github.com/konflux-ci/multi-platform-controller/deploy/operator?ref='
-              ? 'https://github.com/konflux-ci/multi-platform-controller/deploy/operator?ref=' + imageFrom(vars.controllerImageRepoURL).Tag
-              : (# startsWith 'https://github.com/konflux-ci/multi-platform-controller/deploy/otp?ref=' ? 'https://github.com/konflux-ci/multi-platform-controller/deploy/otp?ref='
-              + imageFrom(vars.controllerImageRepoURL).Tag : #)}) }}
+          - key: >-
+              resources.${{ findIndex(task.outputs['read-previous'].resources, {# startsWith 'https://github.com/konflux-ci/multi-platform-controller/deploy/operator?ref='}) }}
+            value: https://github.com/konflux-ci/multi-platform-controller/deploy/operator?ref=${{ imageFrom(vars.controllerImageRepoURL).Tag }}
+          - key: >-
+              resources.${{ findIndex(task.outputs['read-previous'].resources, {# startsWith 'https://github.com/konflux-ci/multi-platform-controller/deploy/otp?ref='}) }}
+            value: https://github.com/konflux-ci/multi-platform-controller/deploy/otp?ref=${{ imageFrom(vars.controllerImageRepoURL).Tag }}
     - uses: compose-output
       as: result
       if: >-
