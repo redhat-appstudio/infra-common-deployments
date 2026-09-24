@@ -16,15 +16,18 @@ spec:
       sources:
         stages:
           - ring-1-multi-platform-controller
-        requiredSoakTime: 24h0m0s
   verification:
     analysisTemplates:
       - name: kanary-production
     args:
       - name: clusters
-        value: stone-prod-p01|kflux-fedora-01|kflux-prd-rh03
+        value: stone-prod-p01|kflux-ocp-p01|kflux-rhel-p01|kflux-prd-rh03
       - name: expected-cluster-count
-        value: '3'
+        value: '4'
+      - name: check-count
+        value: '72'
+      - name: failure-limit
+        value: '14'
   promotionTemplate:
     spec:
       vars:
