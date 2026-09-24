@@ -4,4 +4,4 @@ kind: Kustomization
 resources:
   - promotiontask.yaml
   - stages
-  - warehouses
+  - warehouse.yaml
