@@ -49,6 +49,9 @@
       name: 'konflux-release-team'
     - kind: Group
       apiGroup: rbac.authorization.k8s.io
+      name: 'konflux-sre'
+    - kind: Group
+      apiGroup: rbac.authorization.k8s.io
       name: 'konflux-support-ops'
     - kind: Group
       apiGroup: rbac.authorization.k8s.io
