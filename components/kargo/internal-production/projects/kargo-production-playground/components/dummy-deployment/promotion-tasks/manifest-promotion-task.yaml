@@ -1,0 +1,58 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: dummy-deployment-promote-manifests
+spec:
+  vars:
+    - name: srcPath
+    - name: component
+    - name: ring
+    - name: baseManifestURL
+
+  steps:
+    # Get the original base manifest reference
+    # -- Ensure the output is a valid index (the reference was found)
+    - uses: yaml-parse
+      as: get-base-reference-index
+      if: ${{ ctx.targetFreight.origin.name == "dummy-deployment-manifest-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
+        outputs:
+        - name: baseManifestIndex
+          fromExpression: "string(findIndex(resources, # startsWith('${{ vars.baseManifestURL }}//components/${{ vars.component }}/base')))"
+    - uses: fail
+      as: base-manifest-ref-not-found
+      if: ${{ ctx.targetFreight.origin.name == "dummy-deployment-manifest-wh" && !(task.outputs['get-base-reference-index'].baseManifestIndex matches "^[0-9]+$") }}
+      config:
+        message: "Could not find resource '${{ vars.baseManifestURL }}//components/${{ vars.component }}/base' in resources list of ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml"
+    - uses: yaml-parse
+      as: read-previous-base-manifest-reference
+      if: ${{ ctx.targetFreight.origin.name == "dummy-deployment-manifest-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
+        outputs:
+          - name: prevBaseManifestRef
+            fromExpression: string(resources[${{ task.outputs['get-base-reference-index'].baseManifestIndex }}] ?? 'unknown')
+
+    # Update the original base manifest reference to the new one
+    - uses: yaml-update
+      as: update-base-manifest-ref
+      if: ${{ ctx.targetFreight.origin.name == "dummy-deployment-manifest-wh" && task.outputs['get-base-reference-index'].baseManifestIndex matches "^[0-9]+$" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
+        updates:
+          - key: "resources.${{ task.outputs['get-base-reference-index'].baseManifestIndex }}"
+            value: "${{ vars.baseManifestURL }}//components/${{ vars.component }}/base?ref=${{ commitFrom(vars.baseManifestURL, warehouse('dummy-deployment-manifest-wh')).ID }}"
+
+    # Create output values for the promotion PR
+    - uses: compose-output
+      as: create-values-for-pr
+      if: ${{ ctx.targetFreight.origin.name == "dummy-deployment-manifest-wh" && status('update-base-manifest-ref') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: Update the dummy-deployment base manifest reference in ${{ vars.ring }}.
+        prChanges:
+          - kind: Base manifest source
+            previous: ${{ task.outputs['read-previous-base-manifest-reference'].prevBaseManifestRef }}
+            proposed: "${{ vars.baseManifestURL }}//components/${{ vars.component }}/base?ref=${{ commitFrom(vars.baseManifestURL, warehouse('dummy-deployment-manifest-wh')).ID }}"
+            path: components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml

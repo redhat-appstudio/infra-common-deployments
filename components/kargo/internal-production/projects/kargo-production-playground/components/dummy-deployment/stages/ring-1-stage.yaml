@@ -12,7 +12,13 @@ spec:
   requestedFreight:
     - origin:
         kind: Warehouse
-        name: dummy-deployment
+        name: dummy-deployment-manifest-wh
+      sources:
+        stages:
+          - ring-0-dummy-deployment
+    - origin:
+        kind: Warehouse
+        name: dummy-deployment-image-wh
       sources:
         stages:
           - ring-0-dummy-deployment
@@ -33,7 +39,7 @@ spec:
         - name: repoURL
           value: https://github.com/redhat-appstudio/infra-deployments.git
         - name: component
-          value: ${{ ctx.targetFreight.origin.name }}
+          value: dummy-deployment
         - name: targetRing
           value: ring-1
         - name: mergeMode
@@ -50,11 +56,27 @@ spec:
               - branch: main
                 path: ${{ vars.srcPath }}
         - task:
-            name: dummy-deployment-promote-ring-1
-          as: promote
+            name: dummy-deployment-promote-image
+          as: promote-image
           vars:
             - name: srcPath
               value: ${{ vars.srcPath }}
+            - name: component
+              value: ${{ vars.component }}
+            - name: ring
+              value: ${{ vars.targetRing }}
+        - task:
+            name: dummy-deployment-promote-manifests
+          as: promote-manifests
+          vars:
+            - name: srcPath
+              value: ${{ vars.srcPath }}
+            - name: component
+              value: ${{ vars.component }}
+            - name: ring
+              value: ${{ vars.targetRing }}
+            - name: baseManifestURL
+              value: ${{ vars.repoURL }}
         - task:
             name: publish-promotion-pr
           as: publish
@@ -66,13 +88,16 @@ spec:
             - name: targetRing
               value: ${{ vars.targetRing }}
             - name: prSummary
-              value: ${{ outputs['promote::result']?.prSummary ?? '' }}
+              value: >-
+                ${{ outputs['promote-image::result']?.prepared == 'yes' && outputs['promote-manifests::result']?.prepared == 'yes'
+                ? 'Update the dummy-deployment image, external repo, and base manifest references in ' + vars.targetRing + '.'
+                : outputs['promote-image::result']?.prSummary ?? outputs['promote-manifests::result']?.prSummary ?? '' }}
             - name: prChanges
-              value: ${{ outputs['promote::result']?.prChanges ?? [] }}
+              value: ${{ outputs['promote-image::result']?.prChanges ?? outputs['promote-manifests::result']?.prChanges ?? [] }}
             - name: prCompareURL
-              value: ${{ outputs['promote::result']?.prCompareURL ?? '' }}
+              value: ${{ outputs['promote-image::result']?.prCompareURL ?? outputs['promote-manifests::result']?.prCompareURL ?? '' }}
             - name: prepared
-              value: ${{ outputs['promote::result']?.prepared ?? '' }}
+              value: ${{ outputs['promote-image::result']?.prepared ?? outputs['promote-manifests::result']?.prepared ?? '' }}
             - name: baseCommitSHA
               value: ${{ outputs['clone'].commits[vars.srcPath] }}
             - name: mergeMode
@@ -91,7 +116,7 @@ spec:
                   noOpRing1: ${{ outputs['publish::result'].promotionAsNoOp }}
         - task:
             name: verify-promotion-ci
-          as: ci
+          as: verify-ci
           vars:
             - name: published
               value: ${{ outputs['publish::result']?.published ?? '' }}

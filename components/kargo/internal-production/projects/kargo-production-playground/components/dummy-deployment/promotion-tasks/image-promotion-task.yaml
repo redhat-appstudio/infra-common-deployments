@@ -1,0 +1,79 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: dummy-deployment-promote-image
+spec:
+  vars:
+    - name: srcPath
+    - name: component
+    - name: ring
+    - name: imageRepoURL
+      value: quay.io/redhat-appstudio-qe/dummy-deployment
+    - name: externalRepoURL
+      value: https://github.com/flacatus/konflux-dummy-deploy
+
+  steps:
+    # Get the index of the external repo reference
+    # -- Ensure the output is a valid index (the reference was found)
+    - uses: yaml-parse
+      as: get-external-repo-index
+      if: ${{ ctx.targetFreight.origin.name == "dummy-deployment-image-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
+        outputs:
+        - name: externalRepoIndex
+          fromExpression: "string(findIndex(resources, # startsWith('${{ vars.externalRepoURL }}')))"
+    - uses: fail
+      as: external-repo-ref-not-found
+      if: ${{ ctx.targetFreight.origin.name == "dummy-deployment-image-wh" && !(task.outputs['get-external-repo-index'].externalRepoIndex matches "^[0-9]+$") }}
+      config:
+        message: "Could not find resource '${{ vars.externalRepoURL }}' in resources list of ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml"
+
+    # Get the previous image & external repo references
+    - uses: yaml-parse
+      as: read-previous-image-references
+      if: ${{ ctx.targetFreight.origin.name == "dummy-deployment-image-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
+        outputs:
+          - name: imageTag
+            fromExpression: string(images[0].newTag ?? 'unknown')
+          - name: externalRepoRef
+            fromExpression: string(resources[${{ task.outputs['get-external-repo-index'].externalRepoIndex }}] ?? 'unknown')
+
+    # Update the dummy-deployment image
+    - uses: kustomize-set-image
+      as: update-image
+      if: ${{ ctx.targetFreight.origin.name == "dummy-deployment-image-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base
+        images:
+          - image: ${{ vars.imageRepoURL }}
+            tag: ${{ imageFrom(vars.imageRepoURL).Tag }}
+
+    # Update the external repo reference
+    - uses: yaml-update
+      as: update-external-repo-ref
+      if: ${{ ctx.targetFreight.origin.name == "dummy-deployment-image-wh" && task.outputs['get-external-repo-index'].externalRepoIndex matches "^[0-9]+$" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
+        updates:
+          - key: "resources.${{ task.outputs['get-external-repo-index'].externalRepoIndex }}"
+            value: "${{ vars.externalRepoURL }}?ref=${{ imageFrom(vars.imageRepoURL).Tag }}"
+
+    # Create output values for the promotion PR
+    - uses: compose-output
+      as: create-values-for-pr
+      if: ${{ ctx.targetFreight.origin.name == "dummy-deployment-image-wh" && status('update-external-repo-ref') == 'Succeeded'  && status('update-image') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: Update the dummy-deployment image and external repo references in ${{ vars.ring }}.
+        prChanges:
+          - kind: Image tag
+            previous: ${{ quote(task.outputs['read-previous-image-references'].imageTag) }}
+            proposed: ${{ quote(imageFrom("quay.io/redhat-appstudio-qe/dummy-deployment").Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
+          - kind: External repo reference
+            previous: ${{ task.outputs['read-previous-image-references'].externalRepoRef }}
+            proposed: "${{ vars.externalRepoURL }}?ref=${{ imageFrom(vars.imageRepoURL).Tag }}"
+            path: components/${{ vars.component }}/rings/${{ vars.ring }}/base/kustomization.yaml
