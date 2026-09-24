@@ -86,10 +86,10 @@ spec:
           resources:
             limits:
               cpu: 500m
-              memory: 1Gi
+              memory: 2Gi
             requests:
               cpu: 10m
-              memory: 1Gi
+              memory: 2Gi
           env:
             - name: SERVICE_NAMESPACE
               valueFrom:
