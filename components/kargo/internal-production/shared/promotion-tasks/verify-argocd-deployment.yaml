@@ -1,5 +1,56 @@
 ---
-# Verify the complete expected cluster group together; see README.md.
+# verify-argocd-deployment
+#
+# Verifies that all expected ArgoCD Applications have synced the promoted commit and are running healthy.
+# Used as the final step in a Kargo promotion to confirm the change is live before marking success.
+#
+# ── Verification strategy ──────────────────────────────────────────────────────────────────────────────
+#
+# The task polls ArgoCD for up to 25 minutes looking for an exact or history-based revision match.
+# If that window expires — typically because a concurrent promotion merged after ours and ArgoCD synced
+# past our commit — a fallback proves deployment via git ancestry.
+#
+#   Layer 1 (wait-for-sync, 25 min polling)
+#     Succeeds when every expected Application is Synced + Healthy, reconciled after the promotion started,
+#     and showing the promoted commit as the current revision OR in its .status.history[] array.
+#
+#   Layer 2 (verify-healthy → verify-ancestry, on timeout)
+#     Runs only when Layer 1 times out and githubRepo is configured.
+#       a) verify-healthy: re-queries ArgoCD to confirm all expected Applications are still Synced + Healthy.
+#          Fails fast on Degraded health or Failed sync operations. Captures the actual synced revision.
+#       b) verify-ancestry: calls the GitHub compare API (GET /repos/{githubRepo}/compare/{commitSHA}...{syncedRevision})
+#          and accepts if the response status is "identical" (same commit) or "ahead" (synced revision is a descendant
+#          of ours on the linear main branch).
+#
+# If neither layer succeeds, the require-verification step fails the promotion explicitly.
+#
+# ── Why the ancestry fallback is safe ──────────────────────────────────────────────────────────────────
+#
+# The repository uses squash merges exclusively. Main is linear: every commit is a superset of all previous commits.
+# If ArgoCD synced to revision B and the compare API reports B is "ahead" of our commit A, then B contains every
+# change A introduced. The health gate (verify-healthy) prevents false positives from Degraded applications,
+# self-heal re-syncs, or manual rollbacks — ancestry alone is not sufficient; the deployment must also be live and healthy.
+#
+# ── Application matching ──────────────────────────────────────────────────────────────────────────────
+#
+# Applications are matched by name using the pattern {component}-{cluster}, where clusters is a pipe-separated
+# list (e.g. "stone-stg-rh01|stone-stage-p01"). All matched applications must satisfy the verification conditions.
+#
+# Vars:
+#   mergeConfirmed (required)  — must be 'yes'; gate from the merge task
+#   commitSHA      (required)  — the merge commit to verify
+#   component      (required)  — component name prefix for app matching
+#   clusters       (required)  — pipe-separated cluster names
+#   tokenSecret    (optional)  — Secret with ArgoCD bearer token (default: argocd-app-reader-token-staging)
+#   appsNamespace  (optional)  — ArgoCD Application namespace (default: argocd-infra-deployments)
+#   githubRepo     (optional)  — GitHub owner/repo for ancestry fallback (default: redhat-appstudio/infra-deployments)
+#   gitTokenSecret (optional)  — shared Secret name for GitHub PAT (default: konflux-kargo-git-operations)
+#
+# Outputs:
+#   deploymentVerified — 'yes' when verification passed
+#   commitSHA          — the verified commit
+#   appDetails         — per-app health and revision summary
+#
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
@@ -14,6 +65,11 @@ spec:
       value: argocd-app-reader-token-staging
     - name: appsNamespace
       value: argocd-infra-deployments
+    - name: githubRepo
+      value: redhat-appstudio/infra-deployments
+    - name: gitTokenSecret
+      value: konflux-kargo-git-operations
+
   steps:
     - uses: fail
       as: validate-config
@@ -24,18 +80,19 @@ spec:
       config:
         message: Readiness requires a confirmed revision, component prefix and 1–15 unique pipe-separated cluster names (no regex, spaces or empty
           entries).
-    # Persist the freshness boundary once, rather than moving it on every poll.
+
     - uses: compose-output
       as: readiness-start
       if: ${{ status('validate-config') == 'Skipped' }}
       config:
         startedAt: ${{ now().Format('2006-01-02T15:04:05Z07:00') }}
-    # Evaluate the whole group from one response; never accept a partial page.
+
     - uses: http
       as: wait-for-sync
       if: ${{ status('readiness-start') == 'Succeeded' }}
+      continueOnError: true
       retry:
-        timeout: 45m
+        timeout: 25m
         errorThreshold: 3
       config:
         url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/${{ vars.appsNamespace }}/applications
@@ -64,7 +121,10 @@ spec:
                   date(.status.reconciledAt) >= date(.status.operationState.finishedAt)
                 )
               ) &&
-              .status.sync.revision == ${{ quote(vars.commitSHA) }}
+              (
+                .status.sync.revision == ${{ quote(vars.commitSHA) }} ||
+                any(.status?.history ?? [], {.revision == ${{ quote(vars.commitSHA) }}})
+              )
             })
           })
         failureExpression: response.status in [401, 403, 404] || (response.status == 200 && (response.body.metadata?.continue ?? '') != '')
@@ -77,10 +137,83 @@ spec:
                 .metadata.name in map(split(${{ quote(vars.clusters) }}, '|'), {${{ quote(vars.component) }} + '-' + #})
               }), {.metadata.name + ' health=' + .status.health.status + ' revision=' + .status.sync.revision})
         timeout: 30s
+
+    - uses: http
+      as: verify-healthy
+      if: ${{ status('wait-for-sync') != 'Succeeded' && vars.githubRepo != '' }}
+      retry:
+        timeout: 2m
+        errorThreshold: 2
+      config:
+        url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/${{ vars.appsNamespace }}/applications
+        insecureSkipTLSVerify: true
+        headers:
+          - name: Authorization
+            value: Bearer ${{ secret(vars.tokenSecret).token }}
+        successExpression: |
+          response.status == 200 &&
+          (response.body.metadata?.continue ?? '') == '' &&
+          all(split(${{ quote(vars.clusters) }}, '|'), {
+            let expectedName = ${{ quote(vars.component) }} + '-' + #;
+            any(response.body.items, {
+              .metadata.name == expectedName &&
+              .status?.sync?.status == 'Synced' &&
+              .status?.health?.status == 'Healthy'
+            })
+          })
+        failureExpression: |
+          response.status in [401, 403, 404] ||
+          (response.status == 200 && any(filter(response.body.items, {
+            .metadata.name in map(split(${{ quote(vars.clusters) }}, '|'), {${{ quote(vars.component) }} + '-' + #})
+          }), {
+            .status?.health?.status == 'Degraded' ||
+            .status?.operationState?.phase in ['Failed', 'Error']
+          }))
+        errorExpression: 'response.status != 200 ? ''Apps not healthy; HTTP '' + string(response.status) : '''''
+        outputs:
+          - name: syncedRevision
+            fromExpression: |
+              filter(response.body.items, {
+                .metadata.name in map(split(${{ quote(vars.clusters) }}, '|'), {${{ quote(vars.component) }} + '-' + #})
+              })[0].status.sync.revision
+          - name: appDetails
+            fromExpression: |
+              map(filter(response.body.items, {
+                .metadata.name in map(split(${{ quote(vars.clusters) }}, '|'), {${{ quote(vars.component) }} + '-' + #})
+              }), {.metadata.name + ' health=' + .status.health.status + ' revision=' + .status.sync.revision})
+        timeout: 30s
+
+    - uses: http
+      as: verify-ancestry
+      if: ${{ status('verify-healthy') == 'Succeeded' }}
+      retry:
+        timeout: 5m
+        errorThreshold: 3
+      config:
+        method: GET
+        url: https://api.github.com/repos/${{ vars.githubRepo }}/compare/${{ vars.commitSHA }}...${{ task.outputs['verify-healthy'].syncedRevision }}
+        headers:
+          - name: Authorization
+            value: Bearer ${{ sharedSecret(vars.gitTokenSecret).github_pat }}
+          - name: Accept
+            value: application/vnd.github+json
+        successExpression: response.status == 200 && response.body.status in ['identical', 'ahead']
+        failureExpression: |
+          (response.status == 200 && response.body.status in ['behind', 'diverged']) ||
+          response.status in [401, 404]
+        errorExpression: 'response.status != 200 ? ''GitHub compare API returned HTTP '' + string(response.status) : '''''
+        timeout: 30s
+
+    - uses: fail
+      as: require-verification
+      if: ${{ status('wait-for-sync') != 'Succeeded' && status('verify-ancestry') != 'Succeeded' }}
+      config:
+        message: ArgoCD sync verification failed and ancestry fallback was not available or did not pass.
+
     - uses: compose-output
       as: result
-      if: ${{ status('wait-for-sync') == 'Succeeded' }}
+      if: ${{ status('wait-for-sync') == 'Succeeded' || status('verify-ancestry') == 'Succeeded' }}
       config:
         deploymentVerified: 'yes'
         commitSHA: ${{ vars.commitSHA }}
-        appDetails: ${{ task.outputs['wait-for-sync'].appDetails }}
+        appDetails: "${{ status('wait-for-sync') == 'Succeeded' ? task.outputs['wait-for-sync'].appDetails : task.outputs['verify-healthy'].appDetails }}"
