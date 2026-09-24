@@ -37,6 +37,12 @@ valuesInline:
     sharedResources:
       createNamespace: false
   controller:
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        memory: 4Gi
     shardName: infra-deployments-production
     argocd:
       integrationEnabled: true

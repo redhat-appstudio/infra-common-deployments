@@ -7,4 +7,10 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "0"
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-spec: {}
+spec:
+  controllerResources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 1Gi
