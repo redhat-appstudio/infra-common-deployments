@@ -2,6 +2,62 @@
 
 [Production overview](../README.md) · [Operations](operations.md) · [Verification](verifications.md)
 
+## Ring naming conventions
+
+All Kargo resources follow a strict naming scheme. Monitoring dashboards, alerts, promotion cleaners and automation scripts depend on these patterns — deviating silently breaks observability and tooling.
+
+### Stage names
+
+```
+ring-{N}-{component}
+```
+
+`N` is the ring number, `component` is the kebab-case component name matching the Warehouse origin. Examples: `ring-0-konflux-operator`, `ring-2-etcd-shield`.
+
+### Ring numbering and environment mapping
+
+| Ring | Environment | Shard | Color | Purpose |
+|---|---|---|---|---|
+| ring-0 | development | *(none — main controller)* | blue | Direct from Warehouse. Runs full CI including Prow. |
+| ring-1 | staging | infra-deployments-staging | yellow | Staging clusters. Kanary verification + conformance tests. |
+| ring-2 | production | infra-deployments-production | orange | First production ring. |
+| ring-3 | production | infra-deployments-production | red | Second production ring (wider blast radius). |
+| ring-4 | production | infra-deployments-production | purple | Final production ring (full fleet). |
+
+Not every component uses all five rings. A component with two clusters may only have ring-0 through ring-2.
+
+### Labels and annotations
+
+Every Stage must carry:
+
+```yaml
+labels:
+  konflux-environment: development | staging | production
+annotations:
+  kargo.akuity.io/color: blue | yellow | orange | red | purple
+```
+
+These are used by the Kargo UI, monitoring dashboards and promotion policies.
+
+### Other resource names
+
+| Resource | Pattern | Example |
+|---|---|---|
+| Warehouse | `{component}` | `konflux-operator` |
+| PromotionTask (prepare) | `{component}-promote-ring-{N}` | `konflux-operator-promote-ring-1` |
+| PR branch | `{project}/{component}/ring-{N}` | `kargo-konflux-core/konflux-operator/ring-0` |
+| ArgoCD Application | `{component}-{cluster}` | `konflux-operator-stone-stage-p01` |
+
+### Monitoring dependency
+
+The `konflux-environment` label and the `ring-{N}-{component}` stage name pattern are used by:
+- Grafana dashboards to filter promotion metrics by environment
+- Prometheus ServiceMonitor label selectors
+- Promotion cleaner to identify and group pending promotions
+- Alerting rules to route ring-specific incidents
+
+Renaming a stage or changing its labels without updating dashboards and alerts will cause silent monitoring gaps.
+
 ## Choose the deployment repository first
 
 - **infra-common-deployments:** follow the existing
