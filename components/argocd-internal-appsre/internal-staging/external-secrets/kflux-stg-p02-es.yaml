@@ -23,12 +23,9 @@ spec:
     name: kflux-stg-p02-secret
     template:
       engineVersion: v2
-      mergePolicy: Merge
+      # Replace so removed AppSet-selecting labels are dropped from the Secret
+      # (Merge can leave stale labels and Applications keep matching).
+      mergePolicy: Replace
       metadata:
         labels:
           argocd.argoproj.io/secret-type: cluster
-          appstudio.redhat.com/host-cluster: 'true'
-          appstudio.redhat.com/member-cluster: 'true'
-          appstudio.redhat.com/backup: 'true'
-          appstudio.redhat.com/internal-member-cluster: "true"
-          appstudio.redhat.com/toolchain-member: 'true'
