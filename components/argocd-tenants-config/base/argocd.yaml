@@ -167,10 +167,10 @@ spec:
       enabled: false
     resources:
       limits:
-        memory: 512Mi
+        memory: 1Gi
       requests:
         cpu: 125m
-        memory: 512Mi
+        memory: 1Gi
     route:
       enabled: true
       tls:
