@@ -12,6 +12,12 @@ valuesInline:
     repository: quay.io/konflux-ci/kargo
     tag: v1.11.3-0-g08a4d084
   api:
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        memory: 2Gi
     adminAccount:
       enabled: false
     secretManagementEnabled: false
@@ -38,6 +44,12 @@ valuesInline:
           - system:authenticated:oauth
       dex:
         enabled: true
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
         image:
           repository: quay.io/konflux-ci/dex
           tag: 51da7a2d36a03d846a646c988d38f37ac9f14cf3
@@ -61,9 +73,43 @@ valuesInline:
                 name: dex-client
                 key: token
   controller:
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        memory: 4Gi
     rollouts:
       integrationEnabled: true
       # Isolate Kargo AnalysisRuns from the cluster-scoped Argo Rollouts
       # controller (RolloutManager spec: {}). Unlabeled runs would be
       # reconciled by both controllers.
       controllerInstanceID: kargo
+  garbageCollector:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+  managementController:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+  webhooksServer:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+  externalWebhooksServer:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
