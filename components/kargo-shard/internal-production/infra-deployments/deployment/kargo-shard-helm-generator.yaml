@@ -43,6 +43,12 @@ valuesInline:
         memory: 512Mi
       limits:
         memory: 4Gi
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        additionalLabels:
+          monitoring.rhobs/stack: appstudio-federate-ms
     shardName: infra-deployments-production
     argocd:
       integrationEnabled: true

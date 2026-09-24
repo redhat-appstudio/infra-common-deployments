@@ -79,6 +79,12 @@ valuesInline:
         memory: 512Mi
       limits:
         memory: 4Gi
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        additionalLabels:
+          monitoring.rhobs/stack: appstudio-federate-ms
     rollouts:
       integrationEnabled: true
       # Isolate Kargo AnalysisRuns from the cluster-scoped Argo Rollouts
@@ -99,6 +105,12 @@ valuesInline:
         memory: 128Mi
       limits:
         memory: 512Mi
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        additionalLabels:
+          monitoring.rhobs/stack: appstudio-federate-ms
   webhooksServer:
     resources:
       requests:
@@ -106,6 +118,12 @@ valuesInline:
         memory: 128Mi
       limits:
         memory: 512Mi
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        additionalLabels:
+          monitoring.rhobs/stack: appstudio-federate-ms
   externalWebhooksServer:
     resources:
       requests:
