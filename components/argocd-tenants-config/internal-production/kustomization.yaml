@@ -33,9 +33,3 @@ patches:
       version: v1beta1
       kind: ArgoCD
       name: argocd-tenants-config
-  - path: patches/argocd-server-memory-patch.yaml
-    target:
-      group: argoproj.io
-      version: v1beta1
-      kind: ArgoCD
-      name: argocd-tenants-config
