@@ -1,7 +1,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: kueue-image-wh
+  name: kueue-wh
 spec:
   freightCreationPolicy: Automatic
   interval: 2h0m0s
@@ -12,3 +12,9 @@ spec:
         discoveryLimit: 5
         allowTagsRegexes:
           - ^[0-9a-f]{40}$
+    - git:
+      repoURL: https://github.com/redhat-appstudio/infra-deployments.git
+      commitSelectionStrategy: NewestFromBranch
+      branch: main
+      includePaths:
+        - 'components/kueue/base'

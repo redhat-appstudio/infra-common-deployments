@@ -11,12 +11,7 @@ spec:
   requestedFreight:
     - origin:
         kind: Warehouse
-        name: kueue-manifest-wh
-      sources:
-        direct: true
-    - origin:
-        kind: Warehouse
-        name: kueue-image-wh
+        name: kueue-wh
       sources:
         direct: true
   promotionTemplate:
@@ -24,6 +19,8 @@ spec:
       vars:
         - name: srcPath
           value: ./src
+        - name: baseDirSrcPath
+          value: ./base-dir
         - name: repoURL
           value: https://github.com/redhat-appstudio/infra-deployments.git
         - name: component
@@ -34,22 +31,29 @@ spec:
           value: base
       steps:
         - uses: git-clone
-          as: clone
+          as: clone-repo
           config:
             repoURL: ${{ vars.repoURL }}
             checkout:
               - branch: main
                 path: ${{ vars.srcPath }}
+        - uses: git-clone
+          as: clone-base-dir
+          config:
+            repoURL: ${{ vars.repoURL }}
+            checkout:
+              - commit: ${{ commitFrom(vars.repoURL).ID }}
+                path: ${{ vars.baseDirSrcPath }}
         - task:
             name: promote-kueue
           as: promote-kueue
           vars:
             - name: srcPath
               value: ${{ vars.srcPath }}
+            - name: baseDirSrcPath
+              value: ${{ vars.baseDirSrcPath }}
             - name: component
               value: ${{ vars.component }}
-            - name: prevRing
-              value: ${{ vars.prevRing }}
             - name: targetRing
               value: ${{ vars.targetRing }}
         - uses: git-commit

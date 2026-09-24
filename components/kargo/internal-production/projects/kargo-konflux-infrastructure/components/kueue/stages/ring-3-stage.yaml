@@ -12,14 +12,7 @@ spec:
   requestedFreight:
     - origin:
         kind: Warehouse
-        name: kueue-manifest-wh
-      sources:
-        stages:
-          - ring-2-kueue
-        requiredSoakTime: 48h0m0s
-    - origin:
-        kind: Warehouse
-        name: kueue-image-wh
+        name: kueue-wh
       sources:
         stages:
           - ring-2-kueue
@@ -39,32 +32,39 @@ spec:
       vars:
         - name: srcPath
           value: ./src
+        - name: baseDirSrcPath
+          value: ./base-dir
         - name: repoURL
           value: https://github.com/redhat-appstudio/infra-deployments.git
         - name: component
           value: kueue
         - name: targetRing
           value: ring-3
-        - name: prevRing
-          value: ring-2
       steps:
         - uses: git-clone
-          as: clone
+          as: clone-repo
           config:
             repoURL: ${{ vars.repoURL }}
             checkout:
               - branch: main
                 path: ${{ vars.srcPath }}
+        - uses: git-clone
+          as: clone-base-dir
+          config:
+            repoURL: ${{ vars.repoURL }}
+            checkout:
+              - commit: ${{ commitFrom(vars.repoURL).ID }}
+                path: ${{ vars.baseDirSrcPath }}
         - task:
             name: promote-kueue
           as: promote-kueue
           vars:
-            - name: prevRing
-              value: ${{ vars.prevRing }}
-            - name: targetRing
-              value: ${{ vars.targetRing }}
             - name: srcPath
               value: ${{ vars.srcPath }}
+            - name: baseDirSrcPath
+              value: ${{ vars.baseDirSrcPath }}
+            - name: targetRing
+              value: ${{ vars.targetRing }}
             - name: component
               value: ${{ vars.component }}
         - uses: git-commit
