@@ -34,18 +34,34 @@ spec:
       config:
         path: ${{ vars.srcPath }}
         message: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}'
-    # One branch per component/ring lets subsequent Promotions update the same PR.
-    # Kargo serializes Promotions within a Stage; CI must use this push's SHA.
+    # Guard: skip the push if the remote branch already has identical content.
+    # Kargo may re-execute completed steps during controller reconciliation,
+    # producing a new commit SHA that force-pushes over the original and resets CI.
+    - uses: http
+      as: check-branch-head
+      if: ${{ status('commit') == 'Succeeded' }}
+      continueOnError: true
+      config:
+        method: GET
+        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/compare/${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}...${{ task.outputs['commit'].commit }}
+        headers:
+          - name: Authorization
+            value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
+          - name: Accept
+            value: application/vnd.github+json
+        successExpression: response.status == 200 && response.body.status == 'identical'
+        failureExpression: response.status in [401, 403]
+        timeout: 15s
     - uses: git-push
       as: push
-      if: ${{ status('commit') == 'Succeeded' }}
+      if: ${{ status('commit') == 'Succeeded' && status('check-branch-head') != 'Succeeded' }}
       config:
         path: ${{ vars.srcPath }}
         targetBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
         force: true
     - uses: git-open-pr
       as: open-pr
-      if: ${{ status('push') == 'Succeeded' }}
+      if: ${{ status('push') == 'Succeeded' && status('check-branch-head') != 'Succeeded' }}
       # Only the recovery path may turn an exhausted native error into success.
       continueOnError: true
       # Retry native discovery before spending requests on the PAT-backed fallback.
@@ -88,7 +104,7 @@ spec:
     # Recovery only: adopt an existing PR after native discovery exhausts retries.
     - uses: http
       as: find-pr
-      if: ${{ status('push') == 'Succeeded' && status('open-pr') in ['Errored', 'Failed'] }}
+      if: ${{ (status('push') == 'Succeeded' && status('open-pr') in ['Errored', 'Failed']) || status('check-branch-head') == 'Succeeded' }}
       retry:
         timeout: 5m
       config:
@@ -107,7 +123,7 @@ spec:
           response.body[0].head.repo.full_name == 'redhat-appstudio/infra-deployments' &&
           response.body[0].base.repo.full_name == 'redhat-appstudio/infra-deployments' &&
           response.body[0].head.ref == ${{ quote(ctx.project + '/' + vars.component + '/' + vars.targetRing) }} &&
-          response.body[0].base.ref == 'main' && response.body[0].head.sha == ${{ quote(task.outputs['push'].commit) }}
+          response.body[0].base.ref == 'main'
         failureExpression: |
           response.status in [401, 404] ||
           (response.status == 403 && response.header('X-RateLimit-Remaining') != '0' && response.header('Retry-After') == '' && !(lower(response.body?.message ?? '') contains 'rate limit')) ||
@@ -118,16 +134,18 @@ spec:
             fromExpression: response.body[0].number
           - name: prURL
             fromExpression: response.body[0].html_url
+          - name: headSHA
+            fromExpression: response.body[0].head.sha
     # continueOnError must never hide a publication failure without proven recovery.
     - uses: fail
       as: require-published-pr
-      if: ${{ status('push') == 'Succeeded' && status('open-pr') in ['Errored', 'Failed'] && status('find-pr') != 'Succeeded' }}
+      if: ${{ (status('push') == 'Succeeded' || status('check-branch-head') == 'Succeeded') && status('open-pr') in ['Errored', 'Failed', 'Skipped'] && status('find-pr') != 'Succeeded' }}
       config:
         message: Native PR publication failed and no matching open PR could be recovered. CI and merge remain blocked.
     # A skipped PR can mean main already has the promoted tree. Verify, never assume.
     - uses: http
       as: read-converged-main
-      if: ${{ status('push') == 'Succeeded' && status('open-pr') == 'Skipped' }}
+      if: ${{ status('push') == 'Succeeded' && status('check-branch-head') != 'Succeeded' && status('open-pr') == 'Skipped' }}
       retry:
         timeout: 2h
       config:
@@ -167,14 +185,15 @@ spec:
       if: >-
         ${{ status('validate-config') == 'Skipped' && (status('commit') == 'Skipped' ||
         (status('find-pr') == 'Succeeded' && task.outputs['find-pr'].prNumber > 0) ||
-        status('open-pr') == 'Succeeded' || status('verify-converged-tree') == 'Succeeded') }}
+        status('open-pr') == 'Succeeded' || status('verify-converged-tree') == 'Succeeded' ||
+        status('check-branch-head') == 'Succeeded') }}
       config:
         published: 'yes'
         promotionAsNoOp: '${{ (status(''commit'') == ''Skipped'' || status(''verify-converged-tree'') == ''Succeeded'') ? ''yes'' : ''no'' }}'
         baseCommitSHA: '${{ status(''verify-converged-tree'') == ''Succeeded'' ? task.outputs[''read-converged-main''].commitSHA : vars.baseCommitSHA
           }}'
-        headCommitSHA: '${{ (status(''commit'') == ''Skipped'' || status(''verify-converged-tree'') == ''Succeeded'') ? '''' : task.outputs[''push''].commit
-          }}'
+        headCommitSHA: '${{ (status(''commit'') == ''Skipped'' || status(''verify-converged-tree'') == ''Succeeded'') ? '''' : (task.outputs[''push'']?.commit
+          ?? task.outputs[''find-pr'']?.headSHA ?? '''') }}'
         prNumber: >-
           ${{ (task.outputs['find-pr']?.prNumber ?? 0) > 0 ? task.outputs['find-pr'].prNumber : (task.outputs['open-pr']?.pr?.id ?? 0) }}
         prURL: >-
