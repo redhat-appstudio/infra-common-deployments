@@ -1,6 +1,8 @@
 ---
-# Kanary verification against staging Observatorium (RHOBS).
-# Used by ring-1 which targets staging clusters.
+# Kanary verification against staging Observatorium (RHOBS). Used by ring-1 which targets staging clusters.
+#
+# The monitoring duration is customizable per stage via the initial-delay, check-interval, check-count, and
+# failure-limit args. Defaults: 40m delay + 48 checks × 30m = ~24h monitoring with 80% pass rate.
 #
 # Example Stage spec.verification:
 #   analysisTemplates:
@@ -10,6 +12,8 @@
 #       value: stone-stg-rh01|stone-stage-p01
 #     - name: expected-cluster-count
 #       value: "2"
+#     - name: check-count           # optional: override for longer/shorter monitoring
+#       value: "96"                  # 96 × 30m = ~48h
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -22,6 +26,14 @@ spec:
       value: konflux-otel
     - name: types
       value: container-single-arch
+    - name: initial-delay
+      value: "40m"
+    - name: check-interval
+      value: "30m"
+    - name: check-count
+      value: "48"
+    - name: failure-limit
+      value: "9"
     - name: prometheus-address
       value: https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/rhtap
     - name: token-url
@@ -38,10 +50,10 @@ spec:
           key: client_secret
   metrics:
     - name: kanary-up
-      initialDelay: 40m
-      interval: 30m
-      count: 48
-      failureLimit: 9
+      initialDelay: "{{args.initial-delay}}"
+      interval: "{{args.check-interval}}"
+      count: "{{args.check-count}}"
+      failureLimit: "{{args.failure-limit}}"
       successCondition: len(result) > 0 && result[0] == {{args.expected-cluster-count}}
       provider:
         prometheus:

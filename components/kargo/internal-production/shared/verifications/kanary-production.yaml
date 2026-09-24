@@ -1,6 +1,8 @@
 ---
-# Reusable kanary verification against production Observatorium (RHOBS).
-# Stages pass clusters as a PromQL regex and expected-cluster-count.
+# Kanary verification against production Observatorium (RHOBS). Stages pass clusters as a PromQL regex and expected-cluster-count.
+#
+# The monitoring duration is customizable per stage via the initial-delay, check-interval, check-count, and
+# failure-limit args. Defaults: 40m delay + 1 check × 40m = ~1.3h monitoring (single pass required).
 #
 # Example Stage spec.verification:
 #   analysisTemplates:
@@ -10,6 +12,10 @@
 #       value: kflux-ocp-p01|kflux-prd-rh02
 #     - name: expected-cluster-count
 #       value: "2"
+#     - name: check-count           # optional: override for longer monitoring
+#       value: "48"                  # 48 × 40m = ~32h
+#     - name: failure-limit
+#       value: "9"                   # 80% pass rate for extended runs
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -22,6 +28,14 @@ spec:
       value: konflux-otel
     - name: types
       value: container-single-arch
+    - name: initial-delay
+      value: "40m"
+    - name: check-interval
+      value: "40m"
+    - name: check-count
+      value: "1"
+    - name: failure-limit
+      value: "1"
     - name: prometheus-address
       value: https://observatorium-mst.api.openshift.com/api/metrics/v1/rhtap
     - name: token-url
@@ -38,10 +52,10 @@ spec:
           key: client_secret
   metrics:
     - name: kanary-up
-      initialDelay: 40m
-      interval: 40m
-      consecutiveSuccessLimit: 1
-      failureLimit: 1
+      initialDelay: "{{args.initial-delay}}"
+      interval: "{{args.check-interval}}"
+      count: "{{args.check-count}}"
+      failureLimit: "{{args.failure-limit}}"
       successCondition: len(result) > 0 && result[0] == {{args.expected-cluster-count}}
       provider:
         prometheus:
