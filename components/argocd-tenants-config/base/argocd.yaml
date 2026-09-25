@@ -200,6 +200,8 @@ spec:
   initialSSHKnownHosts: {}
   sso:
     dex:
+      annotations:
+        ignore-check.kube-linter.io/unset-cpu-requirements: "no cpu limits"
       openShiftOAuth: true
       resources:
         limits:
@@ -292,6 +294,8 @@ spec:
         - '*'
   ha:
     enabled: true
+    annotations:
+      ignore-check.kube-linter.io/unset-cpu-requirements: "no cpu limits"
     resources:
       limits:
         memory: 256Mi
@@ -330,3 +334,7 @@ spec:
         value: "15"
       - name: ARGOCD_APPLICATION_CONTROLLER_REPO_SERVER_TIMEOUT_SECONDS
         value: "120"
+      - name: ARGOCD_CLUSTER_CACHE_LIST_PAGE_SIZE
+        value: "2000"
+      - name: ARGOCD_CLUSTER_CACHE_LIST_PAGE_BUFFER_SIZE
+        value: "4"

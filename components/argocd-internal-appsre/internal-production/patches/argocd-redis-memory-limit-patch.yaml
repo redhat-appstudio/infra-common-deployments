@@ -1,5 +1,0 @@
-- op: replace
-  path: /spec/redis/resources/limits
-  value:
-    cpu: 1000m
-    memory: 2Gi

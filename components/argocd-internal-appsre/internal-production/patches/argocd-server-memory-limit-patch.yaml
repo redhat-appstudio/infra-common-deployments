@@ -1,3 +1,0 @@
-- op: replace
-  path: /spec/server/resources/limits/memory
-  value: 256Mi

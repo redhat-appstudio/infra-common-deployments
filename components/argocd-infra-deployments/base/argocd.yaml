@@ -196,10 +196,10 @@ spec:
       enabled: false
     resources:
       limits:
-        memory: 512Mi
+        memory: 1Gi
       requests:
         cpu: 125m
-        memory: 128Mi
+        memory: 1Gi
     route:
       enabled: true
       tls:
@@ -229,14 +229,15 @@ spec:
   initialSSHKnownHosts: {}
   sso:
     dex:
+      annotations:
+        ignore-check.kube-linter.io/unset-cpu-requirements: "no cpu limits"
       openShiftOAuth: true
       resources:
         limits:
-          cpu: 500m
           memory: 256Mi
         requests:
           cpu: 250m
-          memory: 128Mi
+          memory: 256Mi
     provider: dex
   applicationSet:
     annotations:
@@ -246,7 +247,7 @@ spec:
         memory: 1Gi
       requests:
         cpu: 250m
-        memory: 512Mi
+        memory: 1Gi
     webhookServer:
       ingress:
         enabled: false
@@ -278,11 +279,15 @@ spec:
   repo:
     annotations:
       ignore-check.kube-linter.io/unset-cpu-requirements: "no cpu limits"
+    replicas: 3
+    env:
+      - name: ARGOCD_REPO_SERVER_PARALLELISM_LIMIT
+        value: "8"
     resources:
       limits:
         memory: 2Gi
       requests:
-        cpu: 250m
+        cpu: 1000m
         memory: 2Gi
   resourceExclusions: |
     - apiGroups:
@@ -307,23 +312,24 @@ spec:
         - '*'
   ha:
     enabled: true
+    annotations:
+      ignore-check.kube-linter.io/unset-cpu-requirements: "no cpu limits"
     resources:
       limits:
-        cpu: 500m
         memory: 256Mi
       requests:
         cpu: 250m
-        memory: 128Mi
+        memory: 256Mi
   tls:
     ca: {}
   redis:
     autotls: openshift
     resources:
       limits:
-        memory: 256Mi
+        memory: 2Gi
       requests:
-        cpu: 250m
-        memory: 128Mi
+        cpu: 500m
+        memory: 2Gi
   controller:
     annotations:
       ignore-check.kube-linter.io/unset-cpu-requirements: "no cpu limits"
@@ -336,10 +342,16 @@ spec:
         memory: 5Gi
     sharding:
       enabled: true
-      replicas: 3
+      replicas: 5
     env:
       - name: ARGOCD_CONTROLLER_SHARDING_ALGORITHM
         value: round-robin
+      - name: ARGOCD_CONTROLLER_STATUS_PROCESSORS
+        value: "30"
+      - name: ARGOCD_CONTROLLER_OPERATION_PROCESSORS
+        value: "15"
+      - name: ARGOCD_APPLICATION_CONTROLLER_REPO_SERVER_TIMEOUT_SECONDS
+        value: "120"
       - name: ARGOCD_CLUSTER_CACHE_LIST_PAGE_SIZE
         value: "2000"
       - name: ARGOCD_CLUSTER_CACHE_LIST_PAGE_BUFFER_SIZE
