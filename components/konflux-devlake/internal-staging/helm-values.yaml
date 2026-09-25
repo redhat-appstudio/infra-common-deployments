@@ -180,7 +180,7 @@ grafana:
 ui:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-frontend
-    tag: c424f39c664dce918e92eeb7da1dda7f62efca5f
+    tag: 978976c96765a6e3d0058c53911dce0d4c956d16
   securityContext: {}
   containerSecurityContext: {}
   basicAuth:
