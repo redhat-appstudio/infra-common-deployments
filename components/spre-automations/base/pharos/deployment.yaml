@@ -15,7 +15,9 @@ spec:
       labels:
         app: pharos
     spec:
-      serviceAccountName: pharos
+      # Reuse pharos-reader from PR #836 (SPRE-6614). Do not recreate a
+      # separate SA here; that one has no ClusterRoleBinding.
+      serviceAccountName: pharos-reader
       securityContext:
         runAsNonRoot: true
         seccompProfile:
@@ -89,7 +91,6 @@ spec:
                 - "ALL"
             readOnlyRootFilesystem: true
             runAsNonRoot: true
-            runAsUser: 1001
             seccompProfile:
               type: RuntimeDefault
       volumes:
