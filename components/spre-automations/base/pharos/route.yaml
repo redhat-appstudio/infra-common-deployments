@@ -1,0 +1,20 @@
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: pharos
+  labels:
+    app: pharos
+  annotations:
+    haproxy.router.openshift.io/timeout: 60s
+spec:
+  port:
+    targetPort: http
+  to:
+    kind: Service
+    name: pharos
+    weight: 100
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

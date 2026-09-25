@@ -1,0 +1,104 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pharos
+  labels:
+    app: pharos
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pharos
+  template:
+    metadata:
+      labels:
+        app: pharos
+    spec:
+      serviceAccountName: pharos
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: pharos
+          # Overlay pins the Konflux digest from SPRE-6612.
+          # Do not replace this with quay.io/geored/pharos.
+          image: quay.io/redhat-user-workloads/spre-tenant/pharos
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          env:
+            - name: LUMINO_TRANSPORT
+              value: streamable-http
+            - name: LUMINO_BIND_HOST
+              value: 0.0.0.0
+            - name: LUMINO_BIND_PORT
+              value: "8000"
+            - name: LUMINO_STATELESS_HTTP
+              value: "true"
+            - name: LUMINO_CONFIG
+              value: /etc/pharos/config.yaml
+            - name: LUMINO_HTTP_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: pharos-secrets
+                  key: LUMINO_HTTP_TOKEN
+                  # Secret is created by SPRE-6648 ExternalSecret. optional
+                  # so this Deployment can merge before that ticket lands.
+                  optional: true
+          volumeMounts:
+            - name: pharos-config
+              mountPath: /etc/pharos
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /opt/app-root/src/.cache
+            - name: logs
+              mountPath: /opt/app-root/src/logs
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - "ALL"
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+      volumes:
+        - name: pharos-config
+          configMap:
+            name: pharos-config
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
+        - name: logs
+          emptyDir: {}
