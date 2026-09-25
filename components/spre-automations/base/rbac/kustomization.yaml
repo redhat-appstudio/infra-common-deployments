@@ -6,3 +6,4 @@ resources:
   - pharos-reader-serviceaccount.yaml
   - pharos-reader-clusterrole.yaml
   - pharos-reader-clusterrolebinding.yaml
+  - pharos-reader-monitoring-clusterrolebinding.yaml

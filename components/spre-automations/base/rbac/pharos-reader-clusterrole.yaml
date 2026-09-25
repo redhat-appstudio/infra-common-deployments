@@ -86,4 +86,48 @@ rules:
       - localqueues
       - workloads
     verbs: [get, list, watch]
+  # AppStudio / Konflux domain resources — needed for Pharos application/component telemetry
+  - apiGroups: [appstudio.redhat.com]
+    resources:
+      - applications
+      - components
+      - snapshots
+      - releases
+      - releaseplans
+      - integrationtestscenarios
+    verbs: [get, list, watch]
+  # Pipelines as Code repositories
+  - apiGroups: [pipelinesascode.tekton.dev]
+    resources:
+      - repositories
+    verbs: [get, list, watch]
+  # Tekton triggers
+  - apiGroups: [triggers.tekton.dev]
+    resources:
+      - eventlisteners
+      - triggers
+      - triggerbindings
+      - triggertemplates
+    verbs: [get, list, watch]
+  # OpenShift routes — needed for ingress/service endpoint discovery
+  - apiGroups: [route.openshift.io]
+    resources:
+      - routes
+    verbs: [get, list, watch]
+  # Kubernetes ingresses
+  - apiGroups: [networking.k8s.io]
+    resources:
+      - ingresses
+    verbs: [get, list, watch]
+  # OpenShift builds
+  - apiGroups: [build.openshift.io]
+    resources:
+      - builds
+      - buildconfigs
+    verbs: [get, list, watch]
+  # OpenShift image streams
+  - apiGroups: [image.openshift.io]
+    resources:
+      - imagestreams
+    verbs: [get, list, watch]
   # secrets-read deliberately deferred — separate team decision (SPRE-6656)
