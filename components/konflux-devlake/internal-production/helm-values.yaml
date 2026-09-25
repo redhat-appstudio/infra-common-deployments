@@ -21,9 +21,11 @@ lake:
     DISABLED_REMOTE_PLUGINS: "true"
     LOGGING_DIR: "/tmp"
     LOGGING_LEVEL: "info"
-    IN_SECURE_SKIP_VERIFY: "true"
+    IN_SECURE_SKIP_VERIFY: "false"
     PIPELINE_MAX_PARALLEL: "50"
     CORS_ALLOW_ORIGIN: "https://konflux-devlake-ui-konflux-devlake.apps.rosa.kflux-c-prd-i01.7hyu.p3.openshiftapps.com"
+
+    DB_URL: "mysql://$(MYSQL_USER):$(MYSQL_PASSWORD)@$(MYSQL_SERVER):$(MYSQL_PORT)/$(MYSQL_DATABASE)?charset=$(DB_CHARSET)&parseTime=$(DB_PARSE_TIME)&loc=$(DB_LOCATION)&tls=custom&ca-cert=/etc/ssl/rds/rds-ca-bundle.pem"
 
     # API timeout - increase for large repositories with slow responses
     API_TIMEOUT: "240s"
@@ -43,6 +45,27 @@ lake:
     # - More API calls but avoids timeouts and missing data
     GITHUB_GRAPHQL_JOB_COLLECTION_MODE: "PAGINATING"
     GITHUB_GRAPHQL_JOB_PAGINATING_PAGE_SIZE: "100"
+  volumes:
+    - name: trusted-ca
+      configMap:
+        name: trusted-ca
+        items:
+          - key: ca-bundle.crt
+            path: tls-ca-bundle.pem
+    # File mount only — do not put AWS_RDS_CRTS into envFrom (exceeds 128KiB).
+    - name: rds-ca
+      secret:
+        secretName: konflux-devlake-rds-ca
+        items:
+          - key: AWS_RDS_CRTS
+            path: rds-ca-bundle.pem
+  volumeMounts:
+    - name: trusted-ca
+      mountPath: /etc/pki/ca-trust/extracted/pem
+      readOnly: true
+    - name: rds-ca
+      mountPath: /etc/ssl/rds
+      readOnly: true
   envFrom:
     - secretRef:
         name: konflux-devlake-secrets
@@ -83,6 +106,32 @@ grafana:
       allowed_domains: "redhat.com"
       allow_sign_up: true
       auto_login: false
+  datasources:
+    datasource.yml:
+      apiVersion: 1
+      datasources:
+        - name: mysql
+          type: mysql
+          url: $MYSQL_URL
+          database: $MYSQL_DATABASE
+          user: $MYSQL_USER
+          jsonData:
+            tlsAuth: false
+            tlsAuthWithCACert: true
+            tlsSkipVerify: false
+          secureJsonData:
+            password: $MYSQL_PASSWORD
+            tlsCACert: $__file{/etc/ssl/rds/rds-ca-bundle.pem}
+          editable: false
+  extraSecretMounts:
+    - name: rds-ca-certs
+      secretName: konflux-devlake-rds-ca
+      mountPath: /etc/ssl/rds
+      readOnly: true
+      defaultMode: 0440
+      items:
+        - key: AWS_RDS_CRTS
+          path: rds-ca-bundle.pem
 ui:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-frontend
