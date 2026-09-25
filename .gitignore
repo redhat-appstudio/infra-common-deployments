@@ -1,3 +1,8 @@
 # Ignore cached Helm charts
 components/**/charts/
 
+# Agent security
+.claude
+.cursor
+.vscode
+.agents
