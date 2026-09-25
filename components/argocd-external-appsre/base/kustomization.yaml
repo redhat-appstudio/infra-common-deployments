@@ -3,3 +3,4 @@ kind: Kustomization
 
 resources:
   - argocd.yaml
+  - all-application-sets-app.yaml
