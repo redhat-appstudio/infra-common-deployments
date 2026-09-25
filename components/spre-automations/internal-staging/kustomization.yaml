@@ -1,5 +1,15 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: spre-automations
 resources:
 - ../base
+- ../base/pharos
+# When SPRE-6612 lands, pin the digest here:
+# images:
+# - name: quay.io/redhat-user-workloads/spre-tenant/pharos
+#   newName: quay.io/redhat-user-workloads/spre-tenant/pharos
+#   digest: sha256:<konflux-digest>
+patches:
+- path: route-patch.yaml
+- path: replicas-patch.yaml
