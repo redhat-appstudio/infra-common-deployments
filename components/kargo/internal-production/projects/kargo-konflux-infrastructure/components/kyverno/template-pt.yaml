@@ -1,0 +1,128 @@
+# Template PromotionTask for Kyverno
+#
+# If adding a new cluster to an existing ring, copy and paste the indicated sections into the desired ring's
+# PromotionTask and fill out the templated values.
+#
+# If creating a new ring, copy and paste the entire PromotionTask and fill out the templated values for each
+# cluster in the ring.
+#
+# Templated Values
+# ----------------
+# N - the ring number (e.g. "1")
+# CLUSTER_NAME - the name of the cluster as it appears in the directory structure (e.g. "stone-stg-p02")
+# CUTE_NAME - the shortened version of the cluster name for use in the PromotionTask name e.g. "stg-p02"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-kyverno-images-ring-<N>
+spec:
+  vars:
+    - name: srcPath
+    - name: component
+    - name: targetRing
+      value: ring-<N>
+    - name: upstreamImageRepoURL
+      value: reg.kyverno.io/kyverno
+    - name: konfluxImageRepoURL
+      value: quay.io/konflux-ci/kyverno
+
+  steps:
+    # Get previous images for PR summary info
+    # --- COPY THIS WHOLE STEP ---
+    - uses: yaml-parse
+      as: read-previous-images-<CUTE_NAME>
+      if: ${{ ctx.targetFreight.origin.name == "kyverno-image-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/<CLUSTER_NAME>/kustomization.yaml
+        outputs:
+          - name: kyvernoImage<CUTE_NAME>
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyverno'})
+          - name: kyvernopreImage<CUTE_NAME>
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyvernopre'})
+          - name: backgroundControllerImage<CUTE_NAME>
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/background-controller'})
+          - name: cleanupControllerImage<CUTE_NAME>
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/cleanup-controller'})
+          - name: kyvernoCliImage<CUTE_NAME>
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyverno-cli'})
+    # --- COPY THIS WHOLE STEP ---
+    - uses: fail
+      as: validate-layout-<CUTE_NAME>
+      if: >-
+        ${{ status('read-previous-images-<CUTE_NAME>') == 'Succeeded' && (len(task.outputs['read-previous-images-<CUTE_NAME>'].kyvernoImage<CUTE_NAME>) != 1
+        || len(task.outputs['read-previous-images-<CUTE_NAME>'].kyvernopreImage<CUTE_NAME>) != 1
+        || len(task.outputs['read-previous-images-<CUTE_NAME>'].backgroundControllerImage<CUTE_NAME>) != 1
+        || len(task.outputs['read-previous-images-<CUTE_NAME>'].cleanupControllerImage<CUTE_NAME>) != 1
+        || len(task.outputs['read-previous-images-<CUTE_NAME>'].kyvernoCliImage<CUTE_NAME>) != 1) }}
+      config:
+        message: "Expected the following five Kyverno images: kyverno, kyvernopre, background-controller, cleanup-controller,
+          kyverno-cli in the <CLUSTER_NAME> Kustomization."
+
+    # Update all images
+    # --- COPY THIS WHOLE STEP ---
+    - uses: kustomize-set-image
+      as: update-images-<CUTE_NAME>
+      if: ${{ ctx.targetFreight.origin.name == "kyverno-image-wh" }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/<CLUSTER_NAME>
+        images:
+          - image: ${{ vars.kyvernoSourceImageRepoURL }}/kyverno
+            newName: ${{ vars.konfluxImageRepoURL }}/kyverno
+            tag: ${{ imageFrom(vars.konfluxImageRepoURL).Tag }}
+          - image: ${{ vars.upstreamImageRepoURL }}/kyvernopre
+            newName: ${{ vars.konfluxImageRepoURL }}/kyverno-init
+            tag: ${{ imageFrom(vars.konfluxImageRepoURL).Tag }}
+          - image: ${{ vars.upstreamImageRepoURL }}/background-controller
+            newName: ${{ vars.konfluxImageRepoURL }}/kyverno-background
+            tag: ${{ imageFrom(vars.konfluxImageRepoURL).Tag }}
+          - image: ${{ vars.upstreamImageRepoURL }}/cleanup-controller
+            newName: ${{ vars.konfluxImageRepoURL }}/kyverno-cleanup
+            tag: ${{ imageFrom(vars.konfluxImageRepoURL).Tag }}
+          - image: ${{ vars.upstreamImageRepoURL }}/kyverno-cli
+            newName: ${{ vars.konfluxImageRepoURL }}/kyverno-cli
+            tag: ${{ imageFrom(vars.konfluxImageRepoURL).Tag }}
+
+    # Outputs information for the PR summary
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('read-previous-images') == 'Succeeded' && status('validate-layout') == 'Succeeded'
+        && status('update-images') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: |
+          Update the Kyverno images to the same source reference in ${{ vars.targetRing }}.
+
+        prChanges:
+          # -- COPY THIS WHOLE SECTION ---
+          - kind: Kyverno image (<CUTE_NAME>)
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images-<CUTE_NAME>'].kyvernoImage<CUTE_NAME>[0].digest ??
+              task.outputs['read-previous-images-<CUTE_NAME>'].kyvernoImage<CUTE_NAME>[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.konfluxImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/<CLUSTER_NAME>/kustomization.yaml
+          - kind: Kyverno-init image (<CUTE_NAME>)
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images-<CUTE_NAME>'].kyvernopreImage<CUTE_NAME>[0].digest ??
+              task.outputs['read-previous-images-<CUTE_NAME>'].kyvernopreImage<CUTE_NAME>[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.konfluxImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/<CLUSTER_NAME>/kustomization.yaml
+          - kind: Background-controller image (<CUTE_NAME>)
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images-<CUTE_NAME>'].backgroundControllerImage<CUTE_NAME>[0].digest ??
+              task.outputs['read-previous-images-<CUTE_NAME>'].backgroundControllerImage<CUTE_NAME>[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.konfluxImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/<CLUSTER_NAME>/kustomization.yaml
+          - kind: Cleanup-controller image (<CUTE_NAME>)
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images-<CUTE_NAME>'].cleanupControllerImage<CUTE_NAME>[0].digest ??
+              task.outputs['read-previous-images-<CUTE_NAME>'].cleanupControllerImage<CUTE_NAME>[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.konfluxImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/<CLUSTER_NAME>/kustomization.yaml
+          - kind: Kyverno-cli image (<CUTE_NAME>)
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images-<CUTE_NAME>'].kyvernoCliImage<CUTE_NAME>[0].digest ??
+              task.outputs['read-previous-images-<CUTE_NAME>'].kyvernoCliImage<CUTE_NAME>[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.konfluxImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/<CLUSTER_NAME>/kustomization.yaml

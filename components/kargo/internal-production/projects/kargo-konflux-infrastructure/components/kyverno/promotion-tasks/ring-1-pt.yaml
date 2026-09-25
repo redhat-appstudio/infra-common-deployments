@@ -1,0 +1,372 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-kyverno-images-ring-1
+spec:
+  vars:
+    - name: srcPath
+    - name: component
+    - name: targetRing
+      value: ring-1
+    - name: upstreamImageRepoURL
+      value: reg.kyverno.io/kyverno
+    - name: kfluxImageRepoBaseURL
+      value: quay.io/konflux-ci/kyverno
+    - name: kfluxKyvernoImageRepoURL
+      value: quay.io/konflux-ci/kyverno/kyverno
+
+  steps:
+    # Validate the freight
+    - uses: fail
+      as: validate-freight
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'kyverno' || vars.component != ctx.targetFreight.origin.name ||
+        !(commitFrom(vars.kfluxKyvernoImageRepoURL).ID matches '^[0-9a-f]{40}$') }}
+      config:
+        message: Expected a kyverno Freight with SHA-tagged kyverno image.
+    # Wait for the other images to be available
+    # -- Kyverno Init image
+    - uses: http
+      as: wait-for-kyverno-init-image
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      retry:
+        timeout: 2h
+        errorThreshold: 5
+      config:
+        method: GET
+        url: >-
+          https://quay.io/api/v1/repository/konflux-ci/kyverno/kyverno-init/tag/?specificTag=${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag
+          }}&onlyActiveTags=true&limit=1
+        headers:
+          - name: Accept
+            value: application/json
+        pollInterval: 2m
+        timeout: 30s
+        successExpression: >-
+          response.status == 200 && len(response.body.tags ?? []) == 1 && response.body.tags[0].name == ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag)
+          }} && (response.body.tags[0].manifest_digest ?? '') matches '^sha256:[0-9a-f]{64}$'
+        failureExpression: response.status in [400, 401, 403, 404]
+        errorExpression: >-
+          'Cannot verify matching kyverno-init image ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }} in quay.io/konflux-ci/kyverno/kyverno-init:
+          HTTP ' + string(response.status)
+    # -- Kyverno Background image
+    - uses: http
+      as: wait-for-kyverno-background-image
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      retry:
+        timeout: 2h
+        errorThreshold: 5
+      config:
+        method: GET
+        url: >-
+          https://quay.io/api/v1/repository/konflux-ci/kyverno/kyverno-background/tag/?specificTag=${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag
+          }}&onlyActiveTags=true&limit=1
+        headers:
+          - name: Accept
+            value: application/json
+        pollInterval: 2m
+        timeout: 30s
+        successExpression: >-
+          response.status == 200 && len(response.body.tags ?? []) == 1 && response.body.tags[0].name == ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag)
+          }} && (response.body.tags[0].manifest_digest ?? '') matches '^sha256:[0-9a-f]{64}$'
+        failureExpression: response.status in [400, 401, 403, 404]
+        errorExpression: >-
+          'Cannot verify matching kyverno-background image ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }} in quay.io/konflux-ci/kyverno/kyverno-background:
+          HTTP ' + string(response.status)
+    # -- Kyverno CLI image
+    - uses: http
+      as: wait-for-kyverno-cli-image
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      retry:
+        timeout: 2h
+        errorThreshold: 5
+      config:
+        method: GET
+        url: >-
+          https://quay.io/api/v1/repository/konflux-ci/kyverno/kyverno-cli/tag/?specificTag=${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag
+          }}&onlyActiveTags=true&limit=1
+        headers:
+          - name: Accept
+            value: application/json
+        pollInterval: 2m
+        timeout: 30s
+        successExpression: >-
+          response.status == 200 && len(response.body.tags ?? []) == 1 && response.body.tags[0].name == ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag)
+          }} && (response.body.tags[0].manifest_digest ?? '') matches '^sha256:[0-9a-f]{64}$'
+        failureExpression: response.status in [400, 401, 403, 404]
+        errorExpression: >-
+          'Cannot verify matching kyverno-cli image ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }} in quay.io/konflux-ci/kyverno/kyverno-cli:
+          HTTP ' + string(response.status)
+    # -- Kyverno Cleanup image
+    - uses: http
+      as: wait-for-kyverno-cleanup-image
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      retry:
+        timeout: 2h
+        errorThreshold: 5
+      config:
+        method: GET
+        url: >-
+          https://quay.io/api/v1/repository/konflux-ci/kyverno/kyverno-cleanup/tag/?specificTag=${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag
+          }}&onlyActiveTags=true&limit=1
+        headers:
+          - name: Accept
+            value: application/json
+        pollInterval: 2m
+        timeout: 30s
+        successExpression: >-
+          response.status == 200 && len(response.body.tags ?? []) == 1 && response.body.tags[0].name == ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag)
+          }} && (response.body.tags[0].manifest_digest ?? '') matches '^sha256:[0-9a-f]{64}$'
+        failureExpression: response.status in [400, 401, 403, 404]
+        errorExpression: >-
+          'Cannot verify matching kyverno-cleanup image ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }} in quay.io/konflux-ci/kyverno/kyverno-cleanup:
+          HTTP ' + string(response.status)
+
+    # Get previous images for PR summary info
+    # -- stone-stage-p01
+    - uses: yaml-parse
+      as: read-previous-images-stg-p01
+      if: >-
+        ${{ status('wait-for-kyverno-init-image') == 'Succeeded' && status('wait-for-kyverno-background-image') == 'Succeeded' &&
+        status('wait-for-kyverno-cli-image') == 'Succeeded' && status('wait-for-kyverno-cleanup-image') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/stone-stage-p01/kustomization.yaml
+        outputs:
+          - name: kyvernoImageStgP01
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyverno'})
+          - name: kyvernopreImageStgP01
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyvernopre'})
+          - name: backgroundControllerImageStgP01
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/background-controller'})
+          - name: cleanupControllerImageStgP01
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/cleanup-controller'})
+          - name: kyvernoCliImageStgP01
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyverno-cli'})
+    - uses: fail
+      as: validate-layout-stg-p01
+      if: >-
+        ${{ status('read-previous-images-stg-p01') == 'Succeeded' && (len(task.outputs['read-previous-images-stg-p01'].kyvernoImageStgP01) != 1
+        || len(task.outputs['read-previous-images-stg-p01'].kyvernopreImageStgP01) != 1
+        || len(task.outputs['read-previous-images-stg-p01'].backgroundControllerImageStgP01) != 1
+        || len(task.outputs['read-previous-images-stg-p01'].cleanupControllerImageStgP01) != 1
+        || len(task.outputs['read-previous-images-stg-p01'].kyvernoCliImageStgP01) != 1) }}
+      config:
+        message: "Expected the following five Kyverno images: kyverno, kyvernopre, background-controller, cleanup-controller,
+          kyverno-cli in the stone-stage-p01 Kustomization."
+    # -- stone-stg-rh01
+    - uses: yaml-parse
+      as: read-previous-images-stg-rh01
+      if: >-
+        ${{ status('wait-for-kyverno-init-image') == 'Succeeded' && status('wait-for-kyverno-background-image') == 'Succeeded' &&
+        status('wait-for-kyverno-cli-image') == 'Succeeded' && status('wait-for-kyverno-cleanup-image') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/stone-stg-rh01/kustomization.yaml
+        outputs:
+          - name: kyvernoImageStgRH01
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyverno'})
+          - name: kyvernopreImageStgRH01
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyvernopre'})
+          - name: backgroundControllerImageStgRH01
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/background-controller'})
+          - name: cleanupControllerImageStgRH01
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/cleanup-controller'})
+          - name: kyvernoCliImageStgRH01
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyverno-cli'})
+    - uses: fail
+      as: validate-layout-stg-rh01
+      if: >-
+        ${{ status('read-previous-images-stg-rh01') == 'Succeeded' && (len(task.outputs['read-previous-images-stg-rh01'].kyvernoImageStgRH01) != 1
+        || len(task.outputs['read-previous-images-stg-rh01'].kyvernopreImageStgRH01) != 1
+        || len(task.outputs['read-previous-images-stg-rh01'].backgroundControllerImageStgRH01) != 1
+        || len(task.outputs['read-previous-images-stg-rh01'].cleanupControllerImageStgRH01) != 1
+        || len(task.outputs['read-previous-images-stg-rh01'].kyvernoCliImageStgRH01) != 1) }}
+      config:
+        message: "Expected the following five Kyverno images: kyverno, kyvernopre, background-controller, cleanup-controller,
+          kyverno-cli in the stone-stg-rh01 Kustomization."
+    # -- lightwell-dev
+    - uses: yaml-parse
+      as: read-previous-images-lw-dev
+      if: >-
+        ${{ status('wait-for-kyverno-init-image') == 'Succeeded' && status('wait-for-kyverno-background-image') == 'Succeeded' &&
+        status('wait-for-kyverno-cli-image') == 'Succeeded' && status('wait-for-kyverno-cleanup-image') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/lightwell-dev/kustomization.yaml
+        outputs:
+          - name: kyvernoImageLWDev
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyverno'})
+          - name: kyvernopreImageLWDev
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyvernopre'})
+          - name: backgroundControllerImageLWDev
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/background-controller'})
+          - name: cleanupControllerImageLWDev
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/cleanup-controller'})
+          - name: kyvernoCliImageLWDev
+            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyverno-cli'})
+    - uses: fail
+      as: validate-layout-lw-dev
+      if: >-
+        ${{ status('read-previous-images-lw-dev') == 'Succeeded' && (len(task.outputs['read-previous-images-lw-dev'].kyvernoImageLWDev) != 1
+        || len(task.outputs['read-previous-images-lw-dev'].kyvernopreImageLWDev) != 1
+        || len(task.outputs['read-previous-images-lw-dev'].backgroundControllerImageLWDev) != 1
+        || len(task.outputs['read-previous-images-lw-dev'].cleanupControllerImageLWDev) != 1
+        || len(task.outputs['read-previous-images-lw-dev'].kyvernoCliImageLWDev) != 1) }}
+      config:
+        message: "Expected the following five Kyverno images: kyverno, kyvernopre, background-controller, cleanup-controller,
+          kyverno-cli in the lightwell-dev Kustomization."
+
+    # Update all images
+    # -- stone-stage-p01
+    - uses: kustomize-set-image
+      as: update-images-stg-p01
+      if: ${{ status('read-previous-images-stg-p01') == 'Succeeded' && status('validate-layout-stg-p01') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/stone-stage-p01
+        images:
+          - image: ${{ vars.upstreamImageRepoURL }}/kyverno
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
+          - image: ${{ vars.upstreamImageRepoURL }}/kyvernopre
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-init
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
+          - image: ${{ vars.upstreamImageRepoURL }}/background-controller
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-background
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
+          - image: ${{ vars.upstreamImageRepoURL }}/cleanup-controller
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-cleanup
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
+          - image: ${{ vars.upstreamImageRepoURL }}/kyverno-cli
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-cli
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
+    # -- stone-stg-rh01
+    - uses: kustomize-set-image
+      as: update-images-stg-rh01
+      if: ${{ status('read-previous-images-stg-rh01') == 'Succeeded' && status('validate-layout-stg-rh01') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/stone-stg-rh01
+        images:
+          - image: ${{ vars.upstreamImageRepoURL }}/kyverno
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
+          - image: ${{ vars.upstreamImageRepoURL }}/kyvernopre
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-init
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
+          - image: ${{ vars.upstreamImageRepoURL }}/background-controller
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-background
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
+          - image: ${{ vars.upstreamImageRepoURL }}/cleanup-controller
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-cleanup
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
+          - image: ${{ vars.upstreamImageRepoURL }}/kyverno-cli
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-cli
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
+    # -- lightwell-dev
+    - uses: kustomize-set-image
+      as: update-images-lw-dev
+      if: ${{ status('read-previous-images-lw-dev') == 'Succeeded' && status('validate-layout-lw-dev') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/lightwell-dev
+        images:
+          - image: ${{ vars.upstreamImageRepoURL }}/kyverno
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
+          - image: ${{ vars.upstreamImageRepoURL }}/kyvernopre
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-init
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
+          - image: ${{ vars.upstreamImageRepoURL }}/background-controller
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-background
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
+          - image: ${{ vars.upstreamImageRepoURL }}/cleanup-controller
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-cleanup
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
+          - image: ${{ vars.upstreamImageRepoURL }}/kyverno-cli
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-cli
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
+
+    # Outputs information for the PR summary
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('update-images-stg-p01') == 'Succeeded' && status('update-images-stg-rh01') == 'Succeeded'
+        && status('update-images-lw-dev') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: |
+          Update the Kyverno images to the same source reference in ${{ vars.targetRing }}.
+
+        prChanges:
+          # -- stone-stage-p01
+          - kind: Kyverno image (stg-p01)
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images-stg-p01'].kyvernoImageStgP01[0].digest ??
+              task.outputs['read-previous-images-stg-p01'].kyvernoImageStgP01[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/stone-stage-p01/kustomization.yaml
+          - kind: Kyverno-init image (stg-p01)
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images-stg-p01'].kyvernopreImageStgP01[0].digest ??
+              task.outputs['read-previous-images-stg-p01'].kyvernopreImageStgP01[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/stone-stage-p01/kustomization.yaml
+          - kind: Background-controller image (stg-p01)
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images-stg-p01'].backgroundControllerImageStgP01[0].digest ??
+              task.outputs['read-previous-images-stg-p01'].backgroundControllerImageStgP01[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/stone-stage-p01/kustomization.yaml
+          - kind: Cleanup-controller image (stg-p01)
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images-stg-p01'].cleanupControllerImageStgP01[0].digest ??
+              task.outputs['read-previous-images-stg-p01'].cleanupControllerImageStgP01[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/stone-stage-p01/kustomization.yaml
+          # -- stone-stg-rh01
+          - kind: Kyverno image (stg-rh01)
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images-stg-rh01'].kyvernoImageStgRH01[0].digest ??
+              task.outputs['read-previous-images-stg-rh01'].kyvernoImageStgRH01[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/stone-stg-rh01/kustomization.yaml
+          - kind: Kyverno-init image (stg-rh01)
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images-stg-rh01'].kyvernopreImageStgRH01[0].digest ??
+              task.outputs['read-previous-images-stg-rh01'].kyvernopreImageStgRH01[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/stone-stg-rh01/kustomization.yaml
+          - kind: Background-controller image (stg-rh01)
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images-stg-rh01'].backgroundControllerImageStgRH01[0].digest ??
+              task.outputs['read-previous-images-stg-rh01'].backgroundControllerImageStgRH01[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/stone-stg-rh01/kustomization.yaml
+          - kind: Cleanup-controller image (stg-rh01)
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images-stg-rh01'].cleanupControllerImageStgRH01[0].digest ??
+              task.outputs['read-previous-images-stg-rh01'].cleanupControllerImageStgRH01[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/stone-stg-rh01/kustomization.yaml
+          # -- lightwell-dev
+          - kind: Kyverno image (lw-dev)
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images-lw-dev'].kyvernoImageLWDev[0].digest ??
+              task.outputs['read-previous-images-lw-dev'].kyvernoImageLWDev[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/lightwell-dev/kustomization.yaml
+          - kind: Kyverno-init image (lw-dev)
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images-lw-dev'].kyvernopreImageLWDev[0].digest ??
+              task.outputs['read-previous-images-lw-dev'].kyvernopreImageLWDev[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/lightwell-dev/kustomization.yaml
+          - kind: Background-controller image (lw-dev)
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images-lw-dev'].backgroundControllerImageLWDev[0].digest ??
+              task.outputs['read-previous-images-lw-dev'].backgroundControllerImageLWDev[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/lightwell-dev/kustomization.yaml
+          - kind: Cleanup-controller image (lw-dev)
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images-lw-dev'].cleanupControllerImageLWDev[0].digest ??
+              task.outputs['read-previous-images-lw-dev'].cleanupControllerImageLWDev[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/lightwell-dev/kustomization.yaml
