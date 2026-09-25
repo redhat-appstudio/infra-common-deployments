@@ -229,8 +229,6 @@ spec:
   initialSSHKnownHosts: {}
   sso:
     dex:
-      annotations:
-        ignore-check.kube-linter.io/unset-cpu-requirements: "no cpu limits"
       openShiftOAuth: true
       resources:
         limits:
@@ -312,8 +310,6 @@ spec:
         - '*'
   ha:
     enabled: true
-    annotations:
-      ignore-check.kube-linter.io/unset-cpu-requirements: "no cpu limits"
     resources:
       limits:
         memory: 256Mi
