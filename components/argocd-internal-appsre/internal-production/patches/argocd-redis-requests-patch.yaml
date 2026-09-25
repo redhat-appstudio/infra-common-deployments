@@ -1,5 +1,0 @@
-- op: replace
-  path: /spec/redis/resources/requests
-  value:
-    memory: 1Gi
-    cpu: 500m

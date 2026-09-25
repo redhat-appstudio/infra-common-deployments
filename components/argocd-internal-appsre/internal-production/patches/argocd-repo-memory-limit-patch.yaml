@@ -1,3 +1,0 @@
-- op: replace
-  path: /spec/repo/resources/limits/memory
-  value: 4Gi
