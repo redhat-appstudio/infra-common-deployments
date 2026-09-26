@@ -42,7 +42,7 @@ spec:
         - name: repoURL
           value: https://github.com/redhat-appstudio/infra-deployments.git
         - name: component
-          value: etcd-defrag-rd
+          value: etcd-defrag
         - name: targetRing
           value: ring-3
         - name: prevRing
