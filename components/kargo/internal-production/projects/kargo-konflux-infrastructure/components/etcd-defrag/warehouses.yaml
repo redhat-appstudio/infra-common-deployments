@@ -12,7 +12,7 @@ spec:
         commitSelectionStrategy: NewestFromBranch
         branch: main
         includePaths:
-          - 'configs/etcd-defrag-rd/base'
+          - 'configs/etcd-defrag/base'
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
