@@ -12,10 +12,11 @@ spec:
   requestedFreight:
     - origin:
         kind: Warehouse
-        name: kyverno-image-wh
+        name: kyverno-wh
       sources:
         stages:
           - ring-1-kyverno
+        requiredSoakTime: 24h0m0s
   promotionTemplate:
     spec:
       vars:
@@ -28,7 +29,7 @@ spec:
         - name: targetRing
           value: ring-2
         - name: mergeMode
-          value: auto
+          value: manual
         # Preserve the existing policy: this ring skips Prow.
         - name: skipProwChecks
           value: 'true'
@@ -46,6 +47,8 @@ spec:
           vars:
             - name: srcPath
               value: ${{ vars.srcPath }}
+            - name: component
+              value: ${{ vars.component }}
         - task:
             name: publish-promotion-pr
           as: publish
@@ -121,6 +124,6 @@ spec:
             - name: component
               value: ${{ vars.component }}
             - name: clusters
-              value: kflux-lw-p01
+              value: kflux-fedora-01|kflux-lw-p01|kflux-ocp-p01|kflux-osp-p01|kflux-prd-rh03|kflux-rhel-p01|stone-prod-p01
             - name: tokenSecret
               value: argocd-app-reader-token

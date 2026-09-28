@@ -21,8 +21,8 @@ spec:
     - uses: fail
       as: validate-freight
       if: >-
-        ${{ ctx.targetFreight.origin.name != 'kyverno' || vars.component != ctx.targetFreight.origin.name ||
-        !(commitFrom(vars.kfluxKyvernoImageRepoURL).ID matches '^[0-9a-f]{40}$') }}
+        ${{ ctx.targetFreight.origin.name != 'kyverno-wh' || vars.component + '-wh' != ctx.targetFreight.origin.name ||
+        !(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag matches '^[0-9a-f]{40}$') }}
       config:
         message: Expected a kyverno Freight with SHA-tagged kyverno image.
     # Wait for the other images to be available
@@ -134,15 +134,15 @@ spec:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/kflux-prd-rh02/kustomization.yaml
         outputs:
           - name: kyvernoImage
-            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyverno'})
+            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno'})
           - name: kyvernopreImage
-            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyvernopre'})
+            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyvernopre'})
           - name: backgroundControllerImage
-            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/background-controller'})
+            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/background-controller'})
           - name: cleanupControllerImage
-            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/cleanup-controller'})
+            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/cleanup-controller'})
           - name: kyvernoCliImage
-            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyverno-cli'})
+            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno-cli'})
     - uses: fail
       as: validate-layout
       if: >-
@@ -183,7 +183,7 @@ spec:
     - uses: compose-output
       as: result
       if: >-
-        ${{ status('read-previous-images') == 'Succeeded' && status('validate-layout') == 'Succeeded'
+        ${{ status('read-previous-images') == 'Succeeded' && status('validate-layout') == 'Skipped'
         && status('update-images') == 'Succeeded' }}
       config:
         prepared: 'yes'
@@ -214,5 +214,11 @@ spec:
             previous: >-
               ${{ quote(string(task.outputs['read-previous-images'].cleanupControllerImage[0].digest ??
               task.outputs['read-previous-images'].cleanupControllerImage[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/kflux-prd-rh02/kustomization.yaml
+          - kind: Kyverno-cli image
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous-images'].kyvernoCliImage[0].digest ??
+              task.outputs['read-previous-images'].kyvernoCliImage[0].newTag ?? 'not configured')) }}
             proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
             path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/kflux-prd-rh02/kustomization.yaml

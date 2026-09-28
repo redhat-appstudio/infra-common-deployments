@@ -12,7 +12,7 @@ spec:
   requestedFreight:
     - origin:
         kind: Warehouse
-        name: kyverno-image-wh
+        name: kyverno-wh
       sources:
         stages:
           - ring-0-kyverno
@@ -57,6 +57,8 @@ spec:
           vars:
             - name: srcPath
               value: ${{ vars.srcPath }}
+            - name: component
+              value: ${{ vars.component }}
         - task:
             name: publish-promotion-pr
           as: publish
@@ -132,6 +134,6 @@ spec:
             - name: component
               value: ${{ vars.component }}
             - name: clusters
-              value: stone-stage-p01
+              value: stone-stage-p01|stone-stg-rh01|lightwell-dev
             - name: tokenSecret
               value: argocd-app-reader-token-staging

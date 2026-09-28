@@ -2,13 +2,13 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: kyverno-image-wh
+  name: kyverno-wh
 spec:
   freightCreationPolicy: Automatic
   interval: 2h0m0s
   subscriptions:
     - image:
-        repoURL: quay.io/konflux-ci/kyverno
+        repoURL: quay.io/konflux-ci/kyverno/kyverno
         imageSelectionStrategy: NewestBuild
         discoveryLimit: 5
         allowTagsRegexes:

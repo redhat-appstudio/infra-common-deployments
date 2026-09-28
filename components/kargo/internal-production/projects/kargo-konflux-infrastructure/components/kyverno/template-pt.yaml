@@ -10,7 +10,9 @@
 # ----------------
 # N - the ring number (e.g. "1")
 # CLUSTER_NAME - the name of the cluster as it appears in the directory structure (e.g. "stone-stg-p02")
-# CUTE_NAME - the shortened version of the cluster name for use in the PromotionTask name e.g. "stg-p02"
+# CLUSTER_CUTE_NAME - the shortened version of the cluster name for use in the PromotionTask name e.g. "stg-p02"
+# CLUSTER_IMAGE_NAME - the Kargo output safe version of the cluster name for use in the read-previous-images-
+#                      -<CLUSTER_CUTE_NAME> outputs
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
@@ -24,37 +26,147 @@ spec:
       value: ring-<N>
     - name: upstreamImageRepoURL
       value: reg.kyverno.io/kyverno
-    - name: konfluxImageRepoURL
+    - name: kfluxImageRepoBaseURL
       value: quay.io/konflux-ci/kyverno
+    - name: kfluxKyvernoImageRepoURL
+      value: quay.io/konflux-ci/kyverno/kyverno
 
   steps:
+    # Validate the freight
+    - uses: fail
+      as: validate-freight
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'kyverno-wh' || vars.component + '-wh' != ctx.targetFreight.origin.name ||
+        !(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag matches '^[0-9a-f]{40}$') }}
+      config:
+        message: Expected a kyverno Freight with SHA-tagged kyverno image.
+    # Wait for the other images to be available
+    # -- Kyverno Init image
+    - uses: http
+      as: wait-for-kyverno-init-image
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      retry:
+        timeout: 2h
+        errorThreshold: 5
+      config:
+        method: GET
+        url: >-
+          https://quay.io/api/v1/repository/konflux-ci/kyverno/kyverno-init/tag/?specificTag=${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag
+          }}&onlyActiveTags=true&limit=1
+        headers:
+          - name: Accept
+            value: application/json
+        pollInterval: 2m
+        timeout: 30s
+        successExpression: >-
+          response.status == 200 && len(response.body.tags ?? []) == 1 && response.body.tags[0].name == ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag)
+          }} && (response.body.tags[0].manifest_digest ?? '') matches '^sha256:[0-9a-f]{64}$'
+        failureExpression: response.status in [400, 401, 403, 404]
+        errorExpression: >-
+          'Cannot verify matching kyverno-init image ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }} in quay.io/konflux-ci/kyverno/kyverno-init:
+          HTTP ' + string(response.status)
+    # -- Kyverno Background image
+    - uses: http
+      as: wait-for-kyverno-background-image
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      retry:
+        timeout: 2h
+        errorThreshold: 5
+      config:
+        method: GET
+        url: >-
+          https://quay.io/api/v1/repository/konflux-ci/kyverno/kyverno-background/tag/?specificTag=${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag
+          }}&onlyActiveTags=true&limit=1
+        headers:
+          - name: Accept
+            value: application/json
+        pollInterval: 2m
+        timeout: 30s
+        successExpression: >-
+          response.status == 200 && len(response.body.tags ?? []) == 1 && response.body.tags[0].name == ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag)
+          }} && (response.body.tags[0].manifest_digest ?? '') matches '^sha256:[0-9a-f]{64}$'
+        failureExpression: response.status in [400, 401, 403, 404]
+        errorExpression: >-
+          'Cannot verify matching kyverno-background image ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }} in quay.io/konflux-ci/kyverno/kyverno-background:
+          HTTP ' + string(response.status)
+    # -- Kyverno CLI image
+    - uses: http
+      as: wait-for-kyverno-cli-image
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      retry:
+        timeout: 2h
+        errorThreshold: 5
+      config:
+        method: GET
+        url: >-
+          https://quay.io/api/v1/repository/konflux-ci/kyverno/kyverno-cli/tag/?specificTag=${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag
+          }}&onlyActiveTags=true&limit=1
+        headers:
+          - name: Accept
+            value: application/json
+        pollInterval: 2m
+        timeout: 30s
+        successExpression: >-
+          response.status == 200 && len(response.body.tags ?? []) == 1 && response.body.tags[0].name == ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag)
+          }} && (response.body.tags[0].manifest_digest ?? '') matches '^sha256:[0-9a-f]{64}$'
+        failureExpression: response.status in [400, 401, 403, 404]
+        errorExpression: >-
+          'Cannot verify matching kyverno-cli image ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }} in quay.io/konflux-ci/kyverno/kyverno-cli:
+          HTTP ' + string(response.status)
+    # -- Kyverno Cleanup image
+    - uses: http
+      as: wait-for-kyverno-cleanup-image
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      retry:
+        timeout: 2h
+        errorThreshold: 5
+      config:
+        method: GET
+        url: >-
+          https://quay.io/api/v1/repository/konflux-ci/kyverno/kyverno-cleanup/tag/?specificTag=${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag
+          }}&onlyActiveTags=true&limit=1
+        headers:
+          - name: Accept
+            value: application/json
+        pollInterval: 2m
+        timeout: 30s
+        successExpression: >-
+          response.status == 200 && len(response.body.tags ?? []) == 1 && response.body.tags[0].name == ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag)
+          }} && (response.body.tags[0].manifest_digest ?? '') matches '^sha256:[0-9a-f]{64}$'
+        failureExpression: response.status in [400, 401, 403, 404]
+        errorExpression: >-
+          'Cannot verify matching kyverno-cleanup image ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }} in quay.io/konflux-ci/kyverno/kyverno-cleanup:
+          HTTP ' + string(response.status)
+
     # Get previous images for PR summary info
     # --- COPY THIS WHOLE STEP ---
     - uses: yaml-parse
-      as: read-previous-images-<CUTE_NAME>
-      if: ${{ ctx.targetFreight.origin.name == "kyverno-image-wh" }}
+      as: read-previous-images-<CLUSTER_CUTE_NAME>
+      if: >-
+        ${{ status('wait-for-kyverno-init-image') == 'Succeeded' && status('wait-for-kyverno-background-image') == 'Succeeded' &&
+        status('wait-for-kyverno-cli-image') == 'Succeeded' && status('wait-for-kyverno-cleanup-image') == 'Succeeded' }}
       config:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/<CLUSTER_NAME>/kustomization.yaml
         outputs:
-          - name: kyvernoImage<CUTE_NAME>
-            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyverno'})
-          - name: kyvernopreImage<CUTE_NAME>
-            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyvernopre'})
-          - name: backgroundControllerImage<CUTE_NAME>
-            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/background-controller'})
-          - name: cleanupControllerImage<CUTE_NAME>
-            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/cleanup-controller'})
-          - name: kyvernoCliImage<CUTE_NAME>
-            fromExpression: filter(images ?? [], {.name == 'vars.upstreamImageRepoURL' + '/kyverno-cli'})
+          - name: kyvernoImage<CLUSTER_IMAGE_NAME>
+            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno'})
+          - name: kyvernopreImage<CLUSTER_IMAGE_NAME>
+            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyvernopre'})
+          - name: backgroundControllerImage<CLUSTER_IMAGE_NAME>
+            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/background-controller'})
+          - name: cleanupControllerImage<CLUSTER_IMAGE_NAME>
+            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/cleanup-controller'})
+          - name: kyvernoCliImage<CLUSTER_IMAGE_NAME>
+            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno-cli'})
     # --- COPY THIS WHOLE STEP ---
     - uses: fail
-      as: validate-layout-<CUTE_NAME>
+      as: validate-layout-<CLUSTER_CUTE_NAME>
       if: >-
-        ${{ status('read-previous-images-<CUTE_NAME>') == 'Succeeded' && (len(task.outputs['read-previous-images-<CUTE_NAME>'].kyvernoImage<CUTE_NAME>) != 1
-        || len(task.outputs['read-previous-images-<CUTE_NAME>'].kyvernopreImage<CUTE_NAME>) != 1
-        || len(task.outputs['read-previous-images-<CUTE_NAME>'].backgroundControllerImage<CUTE_NAME>) != 1
-        || len(task.outputs['read-previous-images-<CUTE_NAME>'].cleanupControllerImage<CUTE_NAME>) != 1
-        || len(task.outputs['read-previous-images-<CUTE_NAME>'].kyvernoCliImage<CUTE_NAME>) != 1) }}
+        ${{ status('read-previous-images-<CLUSTER_CUTE_NAME>') == 'Succeeded' && (len(task.outputs['read-previous-images-<CLUSTER_CUTE_NAME>'].kyvernoImage<CLUSTER_IMAGE_NAME>) != 1
+        || len(task.outputs['read-previous-images-<CLUSTER_CUTE_NAME>'].kyvernopreImage<CLUSTER_IMAGE_NAME>) != 1
+        || len(task.outputs['read-previous-images-<CLUSTER_CUTE_NAME>'].backgroundControllerImage<CLUSTER_IMAGE_NAME>) != 1
+        || len(task.outputs['read-previous-images-<CLUSTER_CUTE_NAME>'].cleanupControllerImage<CLUSTER_IMAGE_NAME>) != 1
+        || len(task.outputs['read-previous-images-<CLUSTER_CUTE_NAME>'].kyvernoCliImage<CLUSTER_IMAGE_NAME>) != 1) }}
       config:
         message: "Expected the following five Kyverno images: kyverno, kyvernopre, background-controller, cleanup-controller,
           kyverno-cli in the <CLUSTER_NAME> Kustomization."
@@ -62,33 +174,41 @@ spec:
     # Update all images
     # --- COPY THIS WHOLE STEP ---
     - uses: kustomize-set-image
-      as: update-images-<CUTE_NAME>
-      if: ${{ ctx.targetFreight.origin.name == "kyverno-image-wh" }}
+      as: update-images-<CLUSTER_CUTE_NAME>
+      if: ${{ status('read-previous-images-<CLUSTER_CUTE_NAME>') == 'Succeeded' && status('validate-layout-<CLUSTER_CUTE_NAME>') == 'Skipped' }}
       config:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/<CLUSTER_NAME>
         images:
-          - image: ${{ vars.kyvernoSourceImageRepoURL }}/kyverno
-            newName: ${{ vars.konfluxImageRepoURL }}/kyverno
-            tag: ${{ imageFrom(vars.konfluxImageRepoURL).Tag }}
+          - image: ${{ vars.upstreamImageRepoURL }}/kyverno
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
           - image: ${{ vars.upstreamImageRepoURL }}/kyvernopre
-            newName: ${{ vars.konfluxImageRepoURL }}/kyverno-init
-            tag: ${{ imageFrom(vars.konfluxImageRepoURL).Tag }}
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-init
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
           - image: ${{ vars.upstreamImageRepoURL }}/background-controller
-            newName: ${{ vars.konfluxImageRepoURL }}/kyverno-background
-            tag: ${{ imageFrom(vars.konfluxImageRepoURL).Tag }}
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-background
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
           - image: ${{ vars.upstreamImageRepoURL }}/cleanup-controller
-            newName: ${{ vars.konfluxImageRepoURL }}/kyverno-cleanup
-            tag: ${{ imageFrom(vars.konfluxImageRepoURL).Tag }}
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-cleanup
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
           - image: ${{ vars.upstreamImageRepoURL }}/kyverno-cli
-            newName: ${{ vars.konfluxImageRepoURL }}/kyverno-cli
-            tag: ${{ imageFrom(vars.konfluxImageRepoURL).Tag }}
+            newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-cli
+            tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
 
     # Outputs information for the PR summary
+    # NOTE: validate-layout-<CLUSTER_CUTE_NAME> is a fail-only guard: its if-condition is true only when
+    # the layout is WRONG, causing the step to fail. When the layout is correct the step is Skipped,
+    # so the condition below uses == 'Skipped', not == 'Succeeded'.
+    #
+    # When adding a second cluster, extend the condition with:
+    #   && status('read-previous-images-<CLUSTER_CUTE_NAME_2>') == 'Succeeded'
+    #   && status('validate-layout-<CLUSTER_CUTE_NAME_2>') == 'Skipped'
+    #   && status('update-images-<CLUSTER_CUTE_NAME_2>') == 'Succeeded'
     - uses: compose-output
       as: result
       if: >-
-        ${{ status('read-previous-images') == 'Succeeded' && status('validate-layout') == 'Succeeded'
-        && status('update-images') == 'Succeeded' }}
+        ${{ status('read-previous-images-<CLUSTER_CUTE_NAME>') == 'Succeeded' && status('validate-layout-<CLUSTER_CUTE_NAME>') == 'Skipped'
+        && status('update-images-<CLUSTER_CUTE_NAME>') == 'Succeeded' }}
       config:
         prepared: 'yes'
         prSummary: |
@@ -96,33 +216,33 @@ spec:
 
         prChanges:
           # -- COPY THIS WHOLE SECTION ---
-          - kind: Kyverno image (<CUTE_NAME>)
+          - kind: Kyverno image (<CLUSTER_CUTE_NAME>)
             previous: >-
-              ${{ quote(string(task.outputs['read-previous-images-<CUTE_NAME>'].kyvernoImage<CUTE_NAME>[0].digest ??
-              task.outputs['read-previous-images-<CUTE_NAME>'].kyvernoImage<CUTE_NAME>[0].newTag ?? 'not configured')) }}
-            proposed: ${{ quote(imageFrom(vars.konfluxImageRepoURL).Tag) }}
+              ${{ quote(string(task.outputs['read-previous-images-<CLUSTER_CUTE_NAME>'].kyvernoImage<CLUSTER_IMAGE_NAME>[0].digest ??
+              task.outputs['read-previous-images-<CLUSTER_CUTE_NAME>'].kyvernoImage<CLUSTER_IMAGE_NAME>[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
             path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/<CLUSTER_NAME>/kustomization.yaml
-          - kind: Kyverno-init image (<CUTE_NAME>)
+          - kind: Kyverno-init image (<CLUSTER_CUTE_NAME>)
             previous: >-
-              ${{ quote(string(task.outputs['read-previous-images-<CUTE_NAME>'].kyvernopreImage<CUTE_NAME>[0].digest ??
-              task.outputs['read-previous-images-<CUTE_NAME>'].kyvernopreImage<CUTE_NAME>[0].newTag ?? 'not configured')) }}
-            proposed: ${{ quote(imageFrom(vars.konfluxImageRepoURL).Tag) }}
+              ${{ quote(string(task.outputs['read-previous-images-<CLUSTER_CUTE_NAME>'].kyvernopreImage<CLUSTER_IMAGE_NAME>[0].digest ??
+              task.outputs['read-previous-images-<CLUSTER_CUTE_NAME>'].kyvernopreImage<CLUSTER_IMAGE_NAME>[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
             path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/<CLUSTER_NAME>/kustomization.yaml
-          - kind: Background-controller image (<CUTE_NAME>)
+          - kind: Background-controller image (<CLUSTER_CUTE_NAME>)
             previous: >-
-              ${{ quote(string(task.outputs['read-previous-images-<CUTE_NAME>'].backgroundControllerImage<CUTE_NAME>[0].digest ??
-              task.outputs['read-previous-images-<CUTE_NAME>'].backgroundControllerImage<CUTE_NAME>[0].newTag ?? 'not configured')) }}
-            proposed: ${{ quote(imageFrom(vars.konfluxImageRepoURL).Tag) }}
+              ${{ quote(string(task.outputs['read-previous-images-<CLUSTER_CUTE_NAME>'].backgroundControllerImage<CLUSTER_IMAGE_NAME>[0].digest ??
+              task.outputs['read-previous-images-<CLUSTER_CUTE_NAME>'].backgroundControllerImage<CLUSTER_IMAGE_NAME>[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
             path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/<CLUSTER_NAME>/kustomization.yaml
-          - kind: Cleanup-controller image (<CUTE_NAME>)
+          - kind: Cleanup-controller image (<CLUSTER_CUTE_NAME>)
             previous: >-
-              ${{ quote(string(task.outputs['read-previous-images-<CUTE_NAME>'].cleanupControllerImage<CUTE_NAME>[0].digest ??
-              task.outputs['read-previous-images-<CUTE_NAME>'].cleanupControllerImage<CUTE_NAME>[0].newTag ?? 'not configured')) }}
-            proposed: ${{ quote(imageFrom(vars.konfluxImageRepoURL).Tag) }}
+              ${{ quote(string(task.outputs['read-previous-images-<CLUSTER_CUTE_NAME>'].cleanupControllerImage<CLUSTER_IMAGE_NAME>[0].digest ??
+              task.outputs['read-previous-images-<CLUSTER_CUTE_NAME>'].cleanupControllerImage<CLUSTER_IMAGE_NAME>[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
             path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/<CLUSTER_NAME>/kustomization.yaml
-          - kind: Kyverno-cli image (<CUTE_NAME>)
+          - kind: Kyverno-cli image (<CLUSTER_CUTE_NAME>)
             previous: >-
-              ${{ quote(string(task.outputs['read-previous-images-<CUTE_NAME>'].kyvernoCliImage<CUTE_NAME>[0].digest ??
-              task.outputs['read-previous-images-<CUTE_NAME>'].kyvernoCliImage<CUTE_NAME>[0].newTag ?? 'not configured')) }}
-            proposed: ${{ quote(imageFrom(vars.konfluxImageRepoURL).Tag) }}
+              ${{ quote(string(task.outputs['read-previous-images-<CLUSTER_CUTE_NAME>'].kyvernoCliImage<CLUSTER_IMAGE_NAME>[0].digest ??
+              task.outputs['read-previous-images-<CLUSTER_CUTE_NAME>'].kyvernoCliImage<CLUSTER_IMAGE_NAME>[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag) }}
             path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/<CLUSTER_NAME>/kustomization.yaml
