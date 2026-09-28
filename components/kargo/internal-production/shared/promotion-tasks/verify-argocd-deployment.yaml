@@ -95,7 +95,7 @@ spec:
         timeout: 25m
         errorThreshold: 3
       config:
-        url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/${{ vars.appsNamespace }}/applications?labelSelector=app.kubernetes.io/part-of=${{ vars.component }}
+        url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/${{ vars.appsNamespace }}/applications
         insecureSkipTLSVerify: true
         headers:
           - name: Authorization
@@ -145,7 +145,7 @@ spec:
         timeout: 2m
         errorThreshold: 2
       config:
-        url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/${{ vars.appsNamespace }}/applications?labelSelector=app.kubernetes.io/part-of=${{ vars.component }}
+        url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/${{ vars.appsNamespace }}/applications
         insecureSkipTLSVerify: true
         headers:
           - name: Authorization
