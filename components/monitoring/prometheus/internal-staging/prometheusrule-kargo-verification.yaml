@@ -2,7 +2,9 @@ apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   name: kargo-verification
-  namespace: openshift-user-workload-monitoring
+  namespace: kargo
+  labels:
+    openshift.io/prometheus-rule-evaluation-scope: leaf-prometheus
 spec:
   groups:
     - name: kargo_verification
