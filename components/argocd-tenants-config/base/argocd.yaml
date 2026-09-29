@@ -239,6 +239,7 @@ spec:
         g, konflux-migration, role:konflux-argocd-devs
         g, konflux-mintmaker-team, role:konflux-argocd-devs
         g, konflux-o11y, role:konflux-argocd-devs
+        g, konflux-pipeline-service, role:konflux-argocd-devs
         g, konflux-qe, role:konflux-argocd-devs
         g, konflux-release-team, role:konflux-argocd-devs
         g, konflux-support-ops, role:konflux-argocd-devs
