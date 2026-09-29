@@ -1,0 +1,24 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: crossplane-control-plane
+spec:
+  freightCreationPolicy: Automatic
+  interval: 2h0m0s
+  subscriptions:
+    - git:
+        repoURL: https://github.com/konflux-ci/crossplane-control-plane.git
+        commitSelectionStrategy: NewestFromBranch
+        branch: main
+        discoveryLimit: 5
+    - git:
+        repoURL: https://github.com/redhat-appstudio/infra-deployments.git
+        commitSelectionStrategy: NewestFromBranch
+        branch: main
+        includePaths:
+          - components/crossplane-control-plane/base
+    - image:
+        repoURL: quay.io/konflux-ci/task-runner
+        imageSelectionStrategy: NewestBuild
+        discoveryLimit: 5

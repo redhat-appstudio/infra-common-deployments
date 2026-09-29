@@ -39,6 +39,16 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-1-smee-client
       autoPromotionEnabled: true
+    - stage: ring-0-crossplane-control-plane
+      autoPromotionEnabled: true
+    - stage: ring-1-crossplane-control-plane
+      autoPromotionEnabled: true
+    - stage: ring-2-crossplane-control-plane
+      autoPromotionEnabled: true
+    - stage: ring-3-crossplane-control-plane
+      autoPromotionEnabled: true
+    - stage: ring-4-crossplane-control-plane
+      autoPromotionEnabled: true
     - stage: ring-0-crossplane-config
       autoPromotionEnabled: true
     - stage: ring-1-crossplane-config
