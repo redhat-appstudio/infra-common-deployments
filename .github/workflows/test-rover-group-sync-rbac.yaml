@@ -1,0 +1,40 @@
+name: Test Rover Group Sync RBAC
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'components/rover-group-sync/**'
+      - 'hack/test-rover-group-sync-rbac.py'
+      - '.github/workflows/test-rover-group-sync-rbac.yaml'
+
+jobs:
+  test-rover-group-sync-rbac:
+    name: Test rover-group-sync ClusterRole least-privilege
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up Python 3
+        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PyYAML
+
+      - name: Check prerequisites
+        run: |
+          python hack/test-rover-group-sync-rbac.py --check-setup
+
+      - name: Run rover-group-sync RBAC tests
+        run: |
+          python hack/test-rover-group-sync-rbac.py --verbose
+
+      - name: Report success
+        if: success()
+        run: |
+          echo "✅ rover-group-sync ClusterRole is least-privilege and in sync with the LDAP filter"
