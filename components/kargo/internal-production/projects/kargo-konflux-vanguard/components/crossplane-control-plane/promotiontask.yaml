@@ -1,0 +1,114 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-crossplane-control-plane
+spec:
+  vars:
+    - name: srcPath
+    - name: freightPath
+    - name: repoURL
+    - name: component
+    - name: targetRing
+    - name: upstreamRepoURL
+      value: https://github.com/konflux-ci/crossplane-control-plane.git
+    - name: taskRunnerImageRepoURL
+      value: quay.io/konflux-ci/task-runner
+
+  steps:
+    - uses: fail
+      as: validate-freight
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'crossplane-control-plane' || vars.component != ctx.targetFreight.origin.name
+        || vars.targetRing not in ['ring-0', 'ring-1', 'ring-2', 'ring-3', 'ring-4']
+        || !(commitFrom(vars.upstreamRepoURL).ID matches '^[0-9a-f]{40}$')
+        || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$') }}
+      config:
+        message: Expected crossplane-control-plane Freight with upstream and infra-deployments Git commits, targeting Ring 0-4.
+
+    - uses: yaml-parse
+      as: read-previous
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        outputs:
+          - name: resources
+            fromExpression: resources ?? []
+          - name: images
+            fromExpression: filter(images ?? [], {.name == vars.taskRunnerImageRepoURL})
+          - name: crossplaneRefIndex
+            fromExpression: "string(findIndex(resources ?? [], # startsWith('https://github.com/konflux-ci/crossplane-control-plane/crossplane?ref=')))"
+          - name: configRefIndex
+            fromExpression: "string(findIndex(resources ?? [], # startsWith('https://github.com/konflux-ci/crossplane-control-plane/config?ref=')))"
+
+    - uses: fail
+      as: validate-layout
+      if: >-
+        ${{ status('read-previous') == 'Succeeded' && (
+        !(task.outputs['read-previous'].crossplaneRefIndex matches '^[0-9]+$') ||
+        !(task.outputs['read-previous'].configRefIndex matches '^[0-9]+$') ||
+        len(task.outputs['read-previous'].images) != 1) }}
+      config:
+        message: Expected crossplane and config upstream refs plus one task-runner image in the ring Kustomization.
+
+    - uses: delete
+      as: delete-old-base-snapshot
+      if: ${{ status('read-previous') == 'Succeeded' && status('validate-layout') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+
+    - uses: copy
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-base-snapshot') == 'Succeeded' }}
+      config:
+        inPath: ${{ vars.freightPath }}/components/${{ vars.component }}/base
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+
+    - uses: yaml-update
+      as: update-upstream-refs
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        updates:
+          - key: "resources.${{ task.outputs['read-previous'].crossplaneRefIndex }}"
+            value: "https://github.com/konflux-ci/crossplane-control-plane/crossplane?ref=${{ commitFrom(vars.upstreamRepoURL).ID }}"
+          - key: "resources.${{ task.outputs['read-previous'].configRefIndex }}"
+            value: "https://github.com/konflux-ci/crossplane-control-plane/config?ref=${{ commitFrom(vars.upstreamRepoURL).ID }}"
+
+    - uses: kustomize-set-image
+      as: update-image
+      if: ${{ status('update-upstream-refs') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base
+        images:
+          - image: ${{ vars.taskRunnerImageRepoURL }}
+            newName: ${{ vars.taskRunnerImageRepoURL }}
+            tag: ${{ imageFrom(vars.taskRunnerImageRepoURL).Tag }}
+            digest: ${{ imageFrom(vars.taskRunnerImageRepoURL).Digest }}
+
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-freight') == 'Skipped' && status('read-previous') == 'Succeeded'
+        && status('validate-layout') == 'Skipped' && status('copy-freight-manifests') == 'Succeeded'
+        && status('update-upstream-refs') == 'Succeeded' && status('update-image') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: >-
+          Update crossplane-control-plane upstream refs, task-runner image, and base snapshot in ${{ vars.targetRing }}.
+        prChanges:
+          - kind: Upstream crossplane ref
+            previous: >-
+              ${{ quote(find(task.outputs['read-previous'].resources, {# startsWith('https://github.com/konflux-ci/crossplane-control-plane/crossplane?ref=')})) }}
+            proposed: "https://github.com/konflux-ci/crossplane-control-plane/crossplane?ref=${{ commitFrom(vars.upstreamRepoURL).ID }}"
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+          - kind: Upstream config ref
+            previous: >-
+              ${{ quote(find(task.outputs['read-previous'].resources, {# startsWith('https://github.com/konflux-ci/crossplane-control-plane/config?ref=')})) }}
+            proposed: "https://github.com/konflux-ci/crossplane-control-plane/config?ref=${{ commitFrom(vars.upstreamRepoURL).ID }}"
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+          - kind: Task runner image
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous'].images[0].digest ?? task.outputs['read-previous'].images[0].newTag ?? 'unknown')) }}
+            proposed: "${{ imageFrom(vars.taskRunnerImageRepoURL).Digest }}"
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
