@@ -58,7 +58,7 @@ spec:
             - name: srcPath
               value: ${{ vars.srcPath }}
             - name: componentPath
-              value: components/smee-client-rd
+              value: components/smee-client
             - name: targetRing
               value: ${{ vars.targetRing }}
             - name: freightPath

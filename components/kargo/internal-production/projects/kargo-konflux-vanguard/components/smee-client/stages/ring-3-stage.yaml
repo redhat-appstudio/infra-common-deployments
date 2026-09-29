@@ -2,18 +2,28 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
-  name: ring-0-smee-client
+  name: ring-3-smee-client
   labels:
-    konflux-environment: development
+    konflux-environment: production
   annotations:
-    kargo.akuity.io/color: blue
+    kargo.akuity.io/color: red
 spec:
+  shard: infra-deployments-production
   requestedFreight:
     - origin:
         kind: Warehouse
         name: smee-client
       sources:
-        direct: true
+        stages:
+          - ring-2-smee-client
+  verification:
+    analysisTemplates:
+      - name: kanary-production
+    args:
+      - name: clusters
+        value: stone-prod-p02
+      - name: expected-cluster-count
+        value: "1"
   promotionTemplate:
     spec:
       vars:
@@ -24,13 +34,11 @@ spec:
         - name: component
           value: ${{ ctx.targetFreight.origin.name }}
         - name: targetRing
-          value: ring-0
+          value: ring-3
         - name: mergeMode
-          value: auto
+          value: manual
         - name: skipProwChecks
-          value: 'false'
-        - name: requiredProwChecks
-          value: ^ci/prow/appstudio-operator-overlay-e2e-tests$
+          value: 'true'
         - name: freightPath
           value: ./freight
       steps:
@@ -43,6 +51,7 @@ spec:
                 path: ${{ vars.srcPath }}
               - commit: ${{ commitFrom(vars.repoURL).ID }}
                 path: ${{ vars.freightPath }}
+
         - task:
             name: prepare-smee-client-bundle
           as: promote
@@ -57,6 +66,7 @@ spec:
               value: ${{ vars.freightPath }}
             - name: repoURL
               value: ${{ vars.repoURL }}
+
         - task:
             name: publish-promotion-pr
           as: publish
@@ -81,6 +91,7 @@ spec:
               value: ${{ vars.mergeMode }}
             - name: skipProwChecks
               value: ${{ quote(vars.skipProwChecks) }}
+
         - uses: set-metadata
           as: annotate-freight-as-no-op
           if: ${{ outputs['publish::result']?.published == 'yes' }}
@@ -89,7 +100,8 @@ spec:
               - kind: Freight
                 name: ${{ ctx.targetFreight.name }}
                 values:
-                  noOpRing0: "${{ outputs['publish::result'].promotionAsNoOp == 'yes' ? 'true' : 'false' }}"
+                  noOpRing3: "${{ outputs['publish::result'].promotionAsNoOp == 'yes' ? 'true' : 'false' }}"
+
         - task:
             name: verify-promotion-ci
           as: ci
@@ -102,8 +114,7 @@ spec:
               value: ${{ outputs['publish::result']?.promotionAsNoOp ?? '' }}
             - name: skipProwChecks
               value: ${{ quote(vars.skipProwChecks) }}
-            - name: requiredProwChecks
-              value: ${{ vars.requiredProwChecks }}
+
         - task:
             name: merge-promotion-pr
           as: merge
@@ -122,3 +133,18 @@ spec:
               value: ${{ outputs['publish::result']?.promotionAsNoOp ?? '' }}
             - name: mergeMode
               value: ${{ vars.mergeMode }}
+
+        - task:
+            name: verify-argocd-deployment
+          as: verify-deployment
+          vars:
+            - name: mergeConfirmed
+              value: ${{ outputs['merge::result']?.mergeConfirmed ?? '' }}
+            - name: commitSHA
+              value: ${{ outputs['merge::result']?.mergeCommitSHA ?? '' }}
+            - name: component
+              value: ${{ vars.component }}
+            - name: clusters
+              value: stone-prod-p02
+            - name: tokenSecret
+              value: argocd-app-reader-token

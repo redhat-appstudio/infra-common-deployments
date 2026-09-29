@@ -12,7 +12,7 @@ spec:
         commitSelectionStrategy: NewestFromBranch
         branch: main
         includePaths:
-          - components/smee-client-rd/base
+          - components/smee-client/base
     - image:
         repoURL: ghcr.io/chmouel/gosmee
         semverConstraint: ^0.28.0
