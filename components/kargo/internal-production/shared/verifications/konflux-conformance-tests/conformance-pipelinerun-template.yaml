@@ -32,6 +32,7 @@ data:
             steps:
             - name: tests
               image: quay.io/konflux-ci/conformance-tests:latest
+              imagePullPolicy: Always
               securityContext:
                 allowPrivilegeEscalation: false
               computeResources:
