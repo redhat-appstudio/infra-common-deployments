@@ -28,7 +28,9 @@ spec:
         - name: mergeMode
           value: auto
         - name: skipProwChecks
-          value: "true"
+          value: 'false'
+        - name: requiredProwChecks
+          value: ^ci/prow/appstudio-operator-overlay-e2e-tests$
         - name: freightPath
           value: ./freight
       steps:
@@ -102,6 +104,8 @@ spec:
               value: ${{ outputs['publish::result']?.promotionAsNoOp ?? '' }}
             - name: skipProwChecks
               value: ${{ quote(vars.skipProwChecks) }}
+            - name: requiredProwChecks
+              value: ${{ vars.requiredProwChecks }}
         - task:
             name: merge-promotion-pr
           as: merge
