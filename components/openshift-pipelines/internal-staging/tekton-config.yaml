@@ -23,5 +23,5 @@ spec:
         git-resolver-config:
           data:
             fetch-timeout: "2m"
-  results:
+  result:
     disabled: true
