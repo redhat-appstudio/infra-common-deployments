@@ -75,16 +75,16 @@ spec:
           - key: "resources.${{ task.outputs['read-previous'].configRefIndex }}"
             value: "https://github.com/konflux-ci/crossplane-control-plane/config?ref=${{ commitFrom(vars.upstreamRepoURL).ID }}"
 
-    - uses: kustomize-set-image
+    - uses: yaml-update
       as: update-image
       if: ${{ status('update-upstream-refs') == 'Succeeded' }}
       config:
-        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base
-        images:
-          - image: ${{ vars.taskRunnerImageRepoURL }}
-            newName: ${{ vars.taskRunnerImageRepoURL }}
-            tag: ${{ imageFrom(vars.taskRunnerImageRepoURL).Tag }}
-            digest: ${{ imageFrom(vars.taskRunnerImageRepoURL).Digest }}
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        updates:
+          - key: images.0.newTag
+            value: ${{ imageFrom(vars.taskRunnerImageRepoURL).Tag }}
+          - key: images.0.digest
+            value: ${{ imageFrom(vars.taskRunnerImageRepoURL).Digest }}
 
     - uses: compose-output
       as: result
