@@ -20,6 +20,8 @@ spec:
       value: ${{ [] }}
     - name: prCompareURL
       value: ${{ '' }}
+    - name: extraPRLabels
+      value: ${{ [] }}
   steps:
     - uses: fail
       as: validate-config
@@ -81,10 +83,7 @@ spec:
           </details>
 
           ${{ len(vars.prChanges) > 0 ? 'Previous values reflect Git configuration, not necessarily the running deployment.' : '' }}
-        labels:
-          - ${{ vars.targetRing }}
-          - automated-promotion
-          - component/${{ vars.component }}
+        labels: ${{ ['automated-promotion', vars.targetRing, 'component/' + vars.component] + vars.extraPRLabels }}
     # Recovery only: adopt an existing PR after native discovery exhausts retries.
     - uses: http
       as: find-pr

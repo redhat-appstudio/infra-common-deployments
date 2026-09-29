@@ -81,6 +81,8 @@ spec:
               value: ${{ vars.mergeMode }}
             - name: skipProwChecks
               value: ${{ quote(vars.skipProwChecks) }}
+            - name: extraPRLabels
+              value: ${{ ['team/konflux-vanguard'] }}
         - uses: set-metadata
           as: annotate-freight-as-no-op
           if: ${{ outputs['publish::result']?.published == 'yes' }}
