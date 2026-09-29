@@ -22,7 +22,7 @@ data:
         kargo.akuity.io/verification: "true"
     spec:
       timeouts:
-        pipeline: 30m
+        pipeline: 50m
       taskRunTemplate:
         serviceAccountName: conformance-test-runner
       pipelineSpec:
@@ -31,7 +31,7 @@ data:
           taskSpec:
             steps:
             - name: tests
-              image: registry.access.redhat.com/ubi9/go-toolset:1.26
+              image: quay.io/konflux-ci/conformance-tests:latest
               securityContext:
                 allowPrivilegeEscalation: false
               computeResources:
@@ -54,43 +54,13 @@ data:
                 value: testrepo
               - name: TEST_ENVIRONMENT
                 value: upstream
-              - name: GOFLAGS
-                value: "-count=1"
-              - name: GOPATH
-                value: /tmp/gopath
-              - name: HOME
-                value: /tmp
-              - name: GOMAXPROCS
-                value: "4"
               - name: GITHUB_TOKEN
                 value: __GITHUB_TOKEN__
-              script: |
-                #!/bin/bash
-                set -euo pipefail
-
-                # ── install CLI tools ────────────────────────────
-                mkdir -p /tmp/bin && export PATH="/tmp/bin:${PATH}"
-                curl -sSL "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz" \
-                  | tar xz -C /tmp/bin oc kubectl
-                chmod +x /tmp/bin/oc /tmp/bin/kubectl
-                curl -sSL "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64" \
-                  -o /tmp/bin/jq && chmod +x /tmp/bin/jq
-
-                echo "──────────────────────────────────────────────────"
-                echo " Conformance Test Runner"
-                echo " Identity:  $(kubectl auth whoami 2>/dev/null | grep Username | awk '{print $2}' || echo unknown)"
-                echo " App NS:    ${E2E_APPLICATIONS_NAMESPACE}"
-                echo " Managed NS: ${E2E_MANAGED_NAMESPACE}"
-                echo "──────────────────────────────────────────────────"
-
-                # ── clone test source and run ────────────────────
-                git clone --depth=1 --branch=main \
-                  https://github.com/konflux-ci/konflux-ci.git /tmp/src
-                cd /tmp/src/test/go-tests
-
-                CUSTOM_DOCKER_BUILD_OCI_TA_MIN_PIPELINE_BUNDLE=$(grep -A1 'name: docker-build-oci-ta-min' \
-                  /tmp/src/operator/pkg/manifests/build-service/manifests.yaml \
-                  | grep 'bundle:' | sed 's/.*bundle: *//' | tr -d ' \r')
-                export CUSTOM_DOCKER_BUILD_OCI_TA_MIN_PIPELINE_BUNDLE
-
-                go test -v -timeout 25m -count=1 -p 1 ./tests/conformance/...
+              command:
+              - /usr/local/bin/conformance.test
+              args:
+              - -ginkgo.vv
+              - -test.timeout
+              - 45m
+              - -test.count
+              - "1"
