@@ -2,7 +2,7 @@
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Warehouse
 metadata:
-  name: etcd-shield-manifest-wh
+  name: etcd-defrag
 spec:
   freightCreationPolicy: Automatic
   interval: 2h0m0s
@@ -12,19 +12,10 @@ spec:
         commitSelectionStrategy: NewestFromBranch
         branch: main
         includePaths:
-          - 'components/etcd-shield/base'
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Warehouse
-metadata:
-  name: etcd-shield-image-wh
-spec:
-  freightCreationPolicy: Automatic
-  interval: 2h0m0s
-  subscriptions:
+          - configs/etcd-defrag/base
     - image:
-        repoURL: quay.io/konflux-ci/etcd-shield
+        repoURL: quay.io/konflux-ci/etcd-defrag
         imageSelectionStrategy: NewestBuild
         discoveryLimit: 5
         allowTagsRegexes:
-          - ^[0-9a-f]{40}$
+          - ^[0-9a-f]{64}$
