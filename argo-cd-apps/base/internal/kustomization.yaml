@@ -7,6 +7,7 @@ resources:
   - argocd-infra-deployments
   - argocd-internal-appsre
   - argocd-tenants-config
+  - iib
   - internal-services
   - openshift-pipelines
   - kargo
@@ -21,3 +22,4 @@ resources:
   - rover-group-sync
   - kueue
   - spre-automations
+
