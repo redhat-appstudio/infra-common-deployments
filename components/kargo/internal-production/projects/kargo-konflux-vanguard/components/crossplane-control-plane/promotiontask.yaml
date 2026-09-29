@@ -40,6 +40,8 @@ spec:
             fromExpression: "string(findIndex(resources ?? [], # startsWith('https://github.com/konflux-ci/crossplane-control-plane/crossplane?ref=')))"
           - name: configRefIndex
             fromExpression: "string(findIndex(resources ?? [], # startsWith('https://github.com/konflux-ci/crossplane-control-plane/config?ref=')))"
+          - name: examplesRefIndex
+            fromExpression: "string(findIndex(resources ?? [], # startsWith('https://github.com/konflux-ci/crossplane-control-plane/examples/provider-kubernetes-in-cluster?ref=')))"
 
     - uses: fail
       as: validate-layout
@@ -74,6 +76,15 @@ spec:
             value: "https://github.com/konflux-ci/crossplane-control-plane/crossplane?ref=${{ commitFrom(vars.upstreamRepoURL).ID }}"
           - key: "resources.${{ task.outputs['read-previous'].configRefIndex }}"
             value: "https://github.com/konflux-ci/crossplane-control-plane/config?ref=${{ commitFrom(vars.upstreamRepoURL).ID }}"
+
+    - uses: yaml-update
+      as: update-examples-ref
+      if: ${{ status('update-upstream-refs') == 'Succeeded' && task.outputs['read-previous'].examplesRefIndex matches '^[0-9]+$' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        updates:
+          - key: "resources.${{ task.outputs['read-previous'].examplesRefIndex }}"
+            value: "https://github.com/konflux-ci/crossplane-control-plane/examples/provider-kubernetes-in-cluster?ref=${{ commitFrom(vars.upstreamRepoURL).ID }}"
 
     - uses: yaml-update
       as: update-image
