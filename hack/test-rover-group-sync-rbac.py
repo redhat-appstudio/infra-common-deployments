@@ -43,8 +43,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 COMPONENT_DIR = REPO_ROOT / "components" / "rover-group-sync"
 
 # Add "internal-production" here in the same change that tightens
-# internal-production/base/rbac.yaml (staging-first promotion, see
-# skills/pr-workflow.md).
+# internal-production/base/rbac.yaml. Staging lands first, per the repo's
+# staging-first promotion convention.
 ENVIRONMENTS = ["internal-staging"]
 
 CLUSTER_ROLE_NAME = "rover-group-sync-cr"
