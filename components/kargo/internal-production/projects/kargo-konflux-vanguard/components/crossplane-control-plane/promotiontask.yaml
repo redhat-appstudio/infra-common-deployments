@@ -35,7 +35,7 @@ spec:
           - name: resources
             fromExpression: resources ?? []
           - name: images
-            fromExpression: filter(images ?? [], {.name == vars.taskRunnerImageRepoURL})
+            fromExpression: filter(images ?? [], {.name == 'quay.io/konflux-ci/task-runner'})
           - name: crossplaneRefIndex
             fromExpression: "string(findIndex(resources ?? [], # startsWith('https://github.com/konflux-ci/crossplane-control-plane/crossplane?ref=')))"
           - name: configRefIndex
