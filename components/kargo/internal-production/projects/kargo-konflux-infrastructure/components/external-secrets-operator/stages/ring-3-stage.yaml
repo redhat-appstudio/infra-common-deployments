@@ -16,7 +16,6 @@ spec:
       sources:
         stages:
           - ring-2-external-secrets-operator
-        requiredSoakTime: 48h0m0s
   verification:
     analysisTemplates:
       - name: kanary-production

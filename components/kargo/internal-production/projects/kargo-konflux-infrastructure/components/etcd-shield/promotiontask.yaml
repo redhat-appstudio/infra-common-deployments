@@ -1,42 +1,80 @@
+---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
 metadata:
-  name: promote-etcd-shield-manifests
+  name: prepare-etcd-shield
 spec:
   vars:
     - name: srcPath
+    - name: freightPath
+    - name: repoURL
     - name: component
-    - name: prevRing
     - name: targetRing
     - name: imageRepoURL
       value: quay.io/konflux-ci/etcd-shield
 
   steps:
+    - uses: fail
+      as: validate-freight
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'etcd-shield' || vars.component != ctx.targetFreight.origin.name
+        || vars.targetRing not in ['ring-0', 'ring-1', 'ring-2', 'ring-3', 'ring-4']
+        || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$')
+        || !(imageFrom(vars.imageRepoURL).Tag matches '^[0-9a-f]{40}$') }}
+      config:
+        message: Expected etcd-shield Freight with a Git commit and a SHA-tagged image, targeting Ring 0-4.
+
+    - uses: yaml-parse
+      as: read-previous
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        outputs:
+          - name: images
+            fromExpression: filter(images ?? [], {.name == 'quay.io/konflux-ci/etcd-shield'})
+
+    - uses: fail
+      as: validate-layout
+      if: >-
+        ${{ status('read-previous') == 'Succeeded' && len(task.outputs['read-previous'].images) != 1 }}
+      config:
+        message: Expected one etcd-shield image in the ring Kustomization.
+
+    - uses: delete
+      as: delete-old-base-snapshot
+      if: ${{ status('read-previous') == 'Succeeded' && status('validate-layout') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+
+    - uses: copy
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-base-snapshot') == 'Succeeded' }}
+      config:
+        inPath: ${{ vars.freightPath }}/components/${{ vars.component }}/base
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+
     - uses: kustomize-set-image
       as: update-image
-      if: ${{ ctx.targetFreight.origin.name == "etcd-shield-image-wh" }}
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
       config:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base
         images:
           - image: ${{ vars.imageRepoURL }}
             tag: ${{ imageFrom(vars.imageRepoURL).Tag }}
 
-    - uses: delete
-      as: delete-old-base-snapshot-folder
-      if: ${{ ctx.targetFreight.origin.name == "etcd-shield-manifest-wh" }}
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-freight') == 'Skipped' && status('read-previous') == 'Succeeded'
+        && status('validate-layout') == 'Skipped' && status('copy-freight-manifests') == 'Succeeded'
+        && status('update-image') == 'Succeeded' }}
       config:
-        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
-
-    - uses: copy
-      as: copy-tier-1-folder
-      if: ${{ ctx.targetFreight.origin.name == "etcd-shield-manifest-wh" && vars.prevRing == "base" }}
-      config:
-        inPath: ${{ vars.srcPath }}/components/${{ vars.component }}/base
-        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
-
-    - uses: copy
-      as: copy-prev-ring-base-snapshot-folder
-      if: ${{ ctx.targetFreight.origin.name == "etcd-shield-manifest-wh" && vars.prevRing != "base" }}
-      config:
-        inPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.prevRing }}/base/base-snapshot
-        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+        prepared: 'yes'
+        prSummary: >-
+          Update etcd-shield image and base snapshot in ${{ vars.targetRing }}.
+        prChanges:
+          - kind: Image tag
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous'].images[0].newTag ?? 'unknown')) }}
+            proposed: ${{ quote(imageFrom(vars.imageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
