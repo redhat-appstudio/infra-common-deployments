@@ -8,4 +8,4 @@ images:
   digest: sha256:8fbae7b4fd12ff4a4ad3de7fc1a4693c415ec2cd6feca077bcc355d1dc2fecde
 
 resources:
-  - ../base
+- base
