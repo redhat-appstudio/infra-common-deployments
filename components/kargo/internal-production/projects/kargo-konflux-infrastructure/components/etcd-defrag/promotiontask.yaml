@@ -77,6 +77,6 @@ spec:
         prChanges:
           - kind: Image tag
             previous: >-
-              ${{ quote(string(task.outputs['read-previous'].images[0].newTag ?? 'unknown')) }}
+              ${{ len(task.outputs['read-previous'].images) > 0 ? quote(string(task.outputs['read-previous'].images[0].newTag ?? 'unknown')) : '"none"' }}
             proposed: ${{ quote(imageFrom(vars.imageRepoURL).Tag) }}
             path: ${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
