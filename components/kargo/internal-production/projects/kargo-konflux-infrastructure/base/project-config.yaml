@@ -43,6 +43,16 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-4-kueue
       autoPromotionEnabled: true
+    - stage: ring-0-kyverno
+      autoPromotionEnabled: true
+    - stage: ring-1-kyverno
+      autoPromotionEnabled: true
+    - stage: ring-2-kyverno
+      autoPromotionEnabled: true
+    - stage: ring-3-kyverno
+      autoPromotionEnabled: true
+    - stage: ring-4-kyverno
+      autoPromotionEnabled: true
     - stage: ring-0-repository-validator
       autoPromotionEnabled: true
     - stage: ring-1-repository-validator

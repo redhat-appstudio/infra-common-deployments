@@ -11,6 +11,7 @@ resources:
   - components/etcd-shield
   - components/external-secrets-operator
   - components/kueue
+  - components/kyverno
   - components/multi-platform-controller
   - components/repository-validator
 
