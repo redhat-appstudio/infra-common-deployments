@@ -10,6 +10,20 @@ The container image and entrypoint script are maintained in the [infrastructure]
 
 `Secret`s spawned from `ExternalSecret`s in the `external-secrets/` directory are mounted into a `CronJob` along with a `ConfigMap` generated using the file(s) in the `config/` directory. The `CronJob` runs in the associated `Namspace` using the associated `ServiceAccount`.
 
+## RBAC
+
+The `ServiceAccount` is bound to a `ClusterRole` that grants only `get` on `user.openshift.io/groups`, restricted by `resourceNames` to the groups the job reads. The job runs `oc adm groups sync` without `--confirm`, so it only ever `GET`s each `Group` by name and never writes `Group` objects.
+
+Because `groupNameAttributes` is `cn`, each `Group` object name equals its LDAP CN. **When you add or remove a CN in the `groupsQuery` filter of `base/config/ldap-sync-config.yaml`, update `resourceNames` in `base/rbac.yaml` in the same change** — otherwise the `GET` for the new group is denied and the sync run fails. Note that `internal-staging` and `internal-production` each carry their own copy of both files.
+
+> **Note:** `internal-staging` is tightened as described above. `internal-production` still grants `verbs: ["*"]` and is tightened in a follow-up PR once staging has validated.
+
+`hack/test-rover-group-sync-rbac.py` enforces this in CI for every environment listed in its `ENVIRONMENTS` constant, and can be run locally:
+
+```bash
+python hack/test-rover-group-sync-rbac.py --verbose
+```
+
 ## Default Behavior
 
 **Schedule:** every 15 minutes

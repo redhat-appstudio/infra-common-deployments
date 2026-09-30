@@ -4,9 +4,47 @@ kind: ClusterRole
 metadata:
   name: rover-group-sync-cr
 rules:
+  # The CronJob runs `oc adm groups sync` without --confirm, so it only ever
+  # GETs each Group by name; it never writes Group objects. resourceNames must
+  # stay in sync with the CNs in the groupsQuery filter of
+  # config/ldap-sync-config.yaml -- a missing name makes the GET fail with 403
+  # and the sync run errors out. hack/test-rover-group-sync-rbac.py enforces
+  # this in CI.
   - apiGroups: ["user.openshift.io"]
     resources: ["groups"]
-    verbs: ["*"]
+    verbs: ["get"]
+    resourceNames:
+      - ai-konflux-user-support
+      - exd-sp-cwf-isv
+      - konflux-admins
+      - konflux-build
+      - konflux-build-admins
+      - konflux-contributors
+      - konflux-cost-management-admins
+      - konflux-devprod
+      - konflux-ec
+      - konflux-grafana-viewers
+      - konflux-infra
+      - konflux-integration
+      - konflux-kubearchive
+      - konflux-migration
+      - konflux-mintmaker-team
+      - konflux-o11y
+      - konflux-o11y-admins
+      - konflux-operator-foundry
+      - konflux-performance
+      - konflux-pipeline-service
+      - konflux-qe
+      - konflux-qe-admins
+      - konflux-release-team
+      - konflux-sre
+      - konflux-support
+      - konflux-support-ops
+      - konflux-ui
+      - konflux-vanguard
+      - plm-poe
+      - sp-resilience-team
+      - test-platform-ci-admins
 ---
 apiVersion: v1
 kind: ServiceAccount
