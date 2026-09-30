@@ -12,7 +12,7 @@ spec:
   requestedFreight:
     - origin:
         kind: Warehouse
-        name: kyverno-wh
+        name: kyverno
       sources:
         stages:
           - ring-1-kyverno

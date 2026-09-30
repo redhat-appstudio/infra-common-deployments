@@ -21,7 +21,7 @@ spec:
     - uses: fail
       as: validate-freight
       if: >-
-        ${{ ctx.targetFreight.origin.name != 'kyverno-wh' || vars.component + '-wh' != ctx.targetFreight.origin.name ||
+        ${{ ctx.targetFreight.origin.name != vars.component ||
         !(imageFrom(vars.kfluxKyvernoImageRepoURL).Tag matches '^[0-9a-f]{40}$') }}
       config:
         message: Expected a kyverno Freight with SHA-tagged kyverno image.

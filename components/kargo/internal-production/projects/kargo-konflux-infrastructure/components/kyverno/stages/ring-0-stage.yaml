@@ -11,7 +11,7 @@ spec:
   requestedFreight:
     - origin:
         kind: Warehouse
-        name: kyverno-wh
+        name: kyverno
       sources:
         direct: true
   promotionTemplate:
