@@ -11,6 +11,7 @@ spec:
       rules:
         # Live AnalysisRun count per Kargo project, component, ring, and phase.
         # Drops unique AnalysisRun names (promotion-id.freight-sha).
+        # Deployed in argo-rollouts so UWM enforcedNamespaceLabel matches the scrape namespace.
         - record: kargo:verification:count
           expr: |
             sum by (exported_namespace, component, stage, phase) (
