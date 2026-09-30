@@ -39,6 +39,9 @@ spec:
           jsonPointers:
             - /metadata/resourceVersion
       syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true
