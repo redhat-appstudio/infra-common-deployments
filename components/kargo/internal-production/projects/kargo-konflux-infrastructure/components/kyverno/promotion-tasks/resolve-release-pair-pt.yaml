@@ -1,0 +1,103 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: resolve-kyverno-release-pair
+spec:
+  vars:
+    - name: imageTag
+    - name: chartVersion
+  steps:
+    - uses: fail
+      as: validate-input
+      if: >-
+        ${{ !(vars.imageTag matches '^[0-9a-f]{40}$') ||
+        !(vars.chartVersion matches '^3\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$') }}
+      config:
+        message: Expected a SHA-tagged Kyverno image and a stable Kyverno 3.x chart version.
+    - uses: http-download
+      as: fetch-konflux-source-commit
+      if: ${{ status('validate-input') == 'Skipped' }}
+      config:
+        url: https://api.github.com/repos/konflux-ci/kyverno/git/commits/${{ vars.imageTag }}
+        outPath: ./kyverno-source-commit.json
+        headers:
+          - name: Accept
+            value: application/vnd.github+json
+    - uses: json-parse
+      as: read-konflux-source-tree-sha
+      if: ${{ status('fetch-konflux-source-commit') == 'Succeeded' }}
+      config:
+        path: ./kyverno-source-commit.json
+        outputs:
+          - name: treeSHA
+            fromExpression: tree.sha
+    - uses: fail
+      as: validate-konflux-source-tree-sha
+      if: >-
+        ${{ status('read-konflux-source-tree-sha') == 'Succeeded' &&
+        !(task.outputs['read-konflux-source-tree-sha'].treeSHA matches '^[0-9a-f]{40}$') }}
+      config:
+        message: Could not resolve the Konflux source tree for the selected image commit.
+    - uses: http-download
+      as: fetch-konflux-source-tree
+      if: >-
+        ${{ status('read-konflux-source-tree-sha') == 'Succeeded' &&
+        status('validate-konflux-source-tree-sha') == 'Skipped' }}
+      config:
+        url: https://api.github.com/repos/konflux-ci/kyverno/git/trees/${{ task.outputs['read-konflux-source-tree-sha'].treeSHA }}
+        outPath: ./kyverno-source-tree.json
+        headers:
+          - name: Accept
+            value: application/vnd.github+json
+    - uses: json-parse
+      as: read-upstream-submodule-revision
+      if: ${{ status('fetch-konflux-source-tree') == 'Succeeded' }}
+      config:
+        path: ./kyverno-source-tree.json
+        outputs:
+          - name: sourceRevision
+            fromExpression: filter(tree, {.path == 'kyverno' && .type == 'commit'})[0].sha
+    - uses: fail
+      as: validate-upstream-submodule-revision
+      if: >-
+        ${{ status('read-upstream-submodule-revision') == 'Succeeded' &&
+        !(task.outputs['read-upstream-submodule-revision'].sourceRevision matches '^[0-9a-f]{40}$') }}
+      config:
+        message: Could not resolve the Kyverno upstream source commit pinned by the selected Konflux image.
+    - uses: http-download
+      as: fetch-upstream-chart-metadata
+      if: >-
+        ${{ status('read-upstream-submodule-revision') == 'Succeeded' &&
+        status('validate-upstream-submodule-revision') == 'Skipped' }}
+      config:
+        url: https://raw.githubusercontent.com/kyverno/kyverno/${{ task.outputs['read-upstream-submodule-revision'].sourceRevision }}/charts/kyverno/Chart.yaml
+        outPath: ./kyverno-upstream-chart.yaml
+    - uses: yaml-parse
+      as: read-upstream-chart-metadata
+      if: ${{ status('fetch-upstream-chart-metadata') == 'Succeeded' }}
+      config:
+        path: ./kyverno-upstream-chart.yaml
+        outputs:
+          - name: chartVersion
+            fromExpression: version
+          - name: appVersion
+            fromExpression: appVersion
+    - uses: fail
+      as: validate-chart-pair
+      if: >-
+        ${{ status('read-upstream-chart-metadata') == 'Succeeded' &&
+        (task.outputs['read-upstream-chart-metadata'].chartVersion != vars.chartVersion ||
+        !(task.outputs['read-upstream-chart-metadata'].appVersion matches '^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$')) }}
+      config:
+        message: The selected Kyverno Helm chart does not match the chart and app versions pinned by the selected image source.
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('read-upstream-chart-metadata') == 'Succeeded' &&
+        status('validate-chart-pair') == 'Skipped' }}
+      config:
+        prepared: 'yes'
+        chartVersion: ${{ task.outputs['read-upstream-chart-metadata'].chartVersion }}
+        appVersion: ${{ task.outputs['read-upstream-chart-metadata'].appVersion }}
+        sourceRevision: ${{ task.outputs['read-upstream-submodule-revision'].sourceRevision }}

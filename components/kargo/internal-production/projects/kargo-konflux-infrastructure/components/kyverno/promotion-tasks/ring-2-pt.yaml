@@ -15,6 +15,9 @@ spec:
       value: quay.io/konflux-ci/kyverno
     - name: kfluxKyvernoImageRepoURL
       value: quay.io/konflux-ci/kyverno/kyverno
+    - name: chartVersion
+    - name: appVersion
+    - name: sourceRevision
 
   steps:
     # Validate the freight
@@ -491,6 +494,63 @@ spec:
             newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-cli
             tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
 
+    - uses: yaml-update
+      as: update-chart-version-fedora-01
+      if: ${{ status('update-images-fedora-01') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/kyverno/rings/ring-2/kflux-fedora-01/kyverno-helm-generator.yaml
+        updates:
+          - key: version
+            value: ${{ vars.chartVersion }}
+    - uses: yaml-update
+      as: update-chart-version-lw-p01
+      if: ${{ status('update-images-lw-p01') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/kyverno/rings/ring-2/kflux-lw-p01/kyverno-helm-generator.yaml
+        updates:
+          - key: version
+            value: ${{ vars.chartVersion }}
+    - uses: yaml-update
+      as: update-chart-version-ocp-p01
+      if: ${{ status('update-images-ocp-p01') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/kyverno/rings/ring-2/kflux-ocp-p01/kyverno-helm-generator.yaml
+        updates:
+          - key: version
+            value: ${{ vars.chartVersion }}
+    - uses: yaml-update
+      as: update-chart-version-osp-p01
+      if: ${{ status('update-images-osp-p01') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/kyverno/rings/ring-2/kflux-osp-p01/kyverno-helm-generator.yaml
+        updates:
+          - key: version
+            value: ${{ vars.chartVersion }}
+    - uses: yaml-update
+      as: update-chart-version-prd-rh03
+      if: ${{ status('update-images-prd-rh03') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/kyverno/rings/ring-2/kflux-prd-rh03/kyverno-helm-generator.yaml
+        updates:
+          - key: version
+            value: ${{ vars.chartVersion }}
+    - uses: yaml-update
+      as: update-chart-version-rhel-p01
+      if: ${{ status('update-images-rhel-p01') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/kyverno/rings/ring-2/kflux-rhel-p01/kyverno-helm-generator.yaml
+        updates:
+          - key: version
+            value: ${{ vars.chartVersion }}
+    - uses: yaml-update
+      as: update-chart-version-prd-p01
+      if: ${{ status('update-images-prd-p01') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/kyverno/rings/ring-2/stone-prod-p01/kyverno-helm-generator.yaml
+        updates:
+          - key: version
+            value: ${{ vars.chartVersion }}
+
     # Outputs information for the PR summary
     - uses: compose-output
       as: result
@@ -505,11 +565,18 @@ spec:
         && status('update-images-prd-rh03') == 'Succeeded' && status('read-previous-images-rhel-p01') == 'Succeeded'
         && status('validate-layout-rhel-p01') == 'Skipped' && status('update-images-rhel-p01') == 'Succeeded'
         && status('read-previous-images-prd-p01') == 'Succeeded' && status('validate-layout-prd-p01') == 'Skipped'
-        && status('update-images-prd-p01') == 'Succeeded' }}
+        && status('update-images-prd-p01') == 'Succeeded'
+        && status('update-chart-version-fedora-01') == 'Succeeded'
+        && status('update-chart-version-lw-p01') == 'Succeeded'
+        && status('update-chart-version-ocp-p01') == 'Succeeded'
+        && status('update-chart-version-osp-p01') == 'Succeeded'
+        && status('update-chart-version-prd-rh03') == 'Succeeded'
+        && status('update-chart-version-rhel-p01') == 'Succeeded'
+        && status('update-chart-version-prd-p01') == 'Succeeded' }}
       config:
         prepared: 'yes'
         prSummary: |
-          Update the Kyverno images to the same source reference in ${{ vars.targetRing }}.
+          Update Kyverno images and chart in ${{ vars.targetRing }}; validated pair: chart ${{ vars.chartVersion }} / app ${{ vars.appVersion }} (source ${{ vars.sourceRevision }}).
 
         prChanges:
           # -- kflux-fedora-01

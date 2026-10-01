@@ -6,6 +6,11 @@
 # If creating a new ring, copy and paste the entire PromotionTask and fill out the templated values for each
 # cluster in the ring.
 #
+# In addition to the ring task, the Stage must call resolve-kyverno-release-pair
+# with imageTag and chartVersion, then pass chartVersion, appVersion, and
+# sourceRevision into the ring task. Add a yaml-update step for the new cluster's
+# kyverno-helm-generator.yaml and include it in compose-output's success condition.
+#
 # Templated Values
 # ----------------
 # N - the ring number (e.g. "1")

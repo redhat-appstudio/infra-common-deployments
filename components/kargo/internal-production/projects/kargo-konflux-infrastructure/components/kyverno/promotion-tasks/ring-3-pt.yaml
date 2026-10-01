@@ -15,6 +15,9 @@ spec:
       value: quay.io/konflux-ci/kyverno
     - name: kfluxKyvernoImageRepoURL
       value: quay.io/konflux-ci/kyverno/kyverno
+    - name: chartVersion
+    - name: appVersion
+    - name: sourceRevision
 
   steps:
     # Validate the freight
@@ -231,17 +234,36 @@ spec:
             newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-cli
             tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
 
+    - uses: yaml-update
+      as: update-chart-version-prd-rh01
+      if: ${{ status('update-images-prd-rh01') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/kyverno/rings/ring-3/stone-prd-rh01/kyverno-helm-generator.yaml
+        updates:
+          - key: version
+            value: ${{ vars.chartVersion }}
+    - uses: yaml-update
+      as: update-chart-version-prod-p02
+      if: ${{ status('update-images-prd-p02') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/kyverno/rings/ring-3/stone-prod-p02/kyverno-helm-generator.yaml
+        updates:
+          - key: version
+            value: ${{ vars.chartVersion }}
+
     # Outputs information for the PR summary
     - uses: compose-output
       as: result
       if: >-
         ${{ status('read-previous-images-prd-rh01') == 'Succeeded' && status('validate-layout-prd-rh01') == 'Skipped'
         && status('update-images-prd-rh01') == 'Succeeded' && status('read-previous-images-prd-p02') == 'Succeeded'
-        && status('validate-layout-prd-p02') == 'Skipped' && status('update-images-prd-p02') == 'Succeeded' }}
+        && status('validate-layout-prd-p02') == 'Skipped' && status('update-images-prd-p02') == 'Succeeded'
+        && status('update-chart-version-prd-rh01') == 'Succeeded'
+        && status('update-chart-version-prod-p02') == 'Succeeded' }}
       config:
         prepared: 'yes'
         prSummary: |
-          Update the Kyverno images to the same source reference in ${{ vars.targetRing }}.
+          Update Kyverno images and chart in ${{ vars.targetRing }}; validated pair: chart ${{ vars.chartVersion }} / app ${{ vars.appVersion }} (source ${{ vars.sourceRevision }}).
 
         prChanges:
           # -- stone-prd-rh01

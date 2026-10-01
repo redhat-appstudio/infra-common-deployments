@@ -1,6 +1,6 @@
 # Kyverno Promotions
 
-One Warehouse tracks the SHA-tagged kyverno image from Quay. The kyverno SHA sets **all image tags**. The other 4 images (kyverno-init, kyverno-background, kyverno-cleanup, and kyverno-cli) are not selected independently: the promotion tasks wait up to two hours
+One Warehouse tracks the SHA-tagged kyverno image from Quay and the Kyverno Helm chart. The promotion resolves the upstream chart's `version` and `appVersion` from the exact source revision pinned by the selected Konflux image and fails closed unless the chart version in Freight matches. The kyverno SHA sets **all image tags**. The other 4 images (kyverno-init, kyverno-background, kyverno-cleanup, and kyverno-cli) are not selected independently: the promotion tasks wait up to two hours
 for that exact tag to appear in the public Quay repository before making changes with Git.
 
 
@@ -26,10 +26,11 @@ Each ring prepares the selected Freight against current `main`:
 
 1. Verify that each of the 4 other image repositories has an image with the same SHA tag as the kyverno image.
 2. Verify that each cluster's Kustomize file already has the necessary 5 kyverno image entries.
-3. Set all 5 kyverno images (in each cluster's Kustomize file) to the selected image SHA.
-4. Use shared tasks for PR publication, CI, merge and Argo CD readiness. PR descriptions will show previous and proposed image tags.
+3. Resolve and verify the matching Helm chart version and app version against the exact upstream source commit.
+4. Set all 5 kyverno images (in each cluster's Kustomize file) to the selected image SHA and update each cluster's Helm generator to the paired chart version.
+5. Use shared tasks for PR publication, CI, merge and Argo CD readiness. PR descriptions include the chart version, app version, and source revision.
 
-Helm values and the Helm generator stay in their existing cluster locations and are not copied across rings. Changes to those resources need separate reviewed rollouts and are not managed by Kargo.
+Helm values stay in their existing cluster locations and are not copied across rings. The chart version in each Helm generator is updated with its matching image promotion.
 
 ## Operational limits
 
