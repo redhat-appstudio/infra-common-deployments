@@ -20,6 +20,8 @@ spec:
         url: https://api.github.com/repos/konflux-ci/kyverno/git/commits/${{ vars.imageTag }}
         outPath: ./kyverno-source-commit.json
         headers:
+          - name: Authorization
+            value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
           - name: Accept
             value: application/vnd.github+json
     - uses: json-parse
@@ -46,6 +48,8 @@ spec:
         url: https://api.github.com/repos/konflux-ci/kyverno/git/trees/${{ task.outputs['read-konflux-source-tree-sha'].treeSHA }}
         outPath: ./kyverno-source-tree.json
         headers:
+          - name: Authorization
+            value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
           - name: Accept
             value: application/vnd.github+json
     - uses: json-parse
@@ -85,8 +89,8 @@ spec:
       as: validate-chart-pair
       if: >-
         ${{ status('read-upstream-chart-metadata') == 'Succeeded' &&
-        (!(task.outputs['read-upstream-chart-metadata'].chartVersion matches '^3\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') ||
-        !(task.outputs['read-upstream-chart-metadata'].appVersion matches '^v\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$')) }}
+        (!(task.outputs['read-upstream-chart-metadata'].chartVersion matches '^3\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$') ||
+        !(task.outputs['read-upstream-chart-metadata'].appVersion matches '^v\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$')) }}
       config:
         message: The Kyverno chart and app versions pinned by the selected image source are invalid.
     - uses: http-download
