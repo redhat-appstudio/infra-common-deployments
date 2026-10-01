@@ -46,8 +46,6 @@ spec:
           vars:
             - name: imageTag
               value: ${{ imageFrom('quay.io/konflux-ci/kyverno/kyverno').Tag }}
-            - name: chartVersion
-              value: ${{ chartFrom('https://kyverno.github.io/kyverno/', 'kyverno').Version }}
         - task:
             name: promote-kyverno-images-ring-3
           as: promote

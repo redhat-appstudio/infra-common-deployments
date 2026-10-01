@@ -6,15 +6,13 @@ metadata:
 spec:
   vars:
     - name: imageTag
-    - name: chartVersion
   steps:
     - uses: fail
       as: validate-input
       if: >-
-        ${{ !(vars.imageTag matches '^[0-9a-f]{40}$') ||
-        !(vars.chartVersion matches '^3\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$') }}
+        ${{ !(vars.imageTag matches '^[0-9a-f]{40}$') }}
       config:
-        message: Expected a SHA-tagged Kyverno image and a stable Kyverno 3.x chart version.
+        message: Expected a SHA-tagged Kyverno image.
     - uses: http-download
       as: fetch-konflux-source-commit
       if: ${{ status('validate-input') == 'Skipped' }}
@@ -87,15 +85,40 @@ spec:
       as: validate-chart-pair
       if: >-
         ${{ status('read-upstream-chart-metadata') == 'Succeeded' &&
-        (task.outputs['read-upstream-chart-metadata'].chartVersion != vars.chartVersion ||
-        !(task.outputs['read-upstream-chart-metadata'].appVersion matches '^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$')) }}
+        (!(task.outputs['read-upstream-chart-metadata'].chartVersion matches '^3\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') ||
+        !(task.outputs['read-upstream-chart-metadata'].appVersion matches '^v\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$')) }}
       config:
-        message: The selected Kyverno Helm chart does not match the chart and app versions pinned by the selected image source.
-    - uses: compose-output
-      as: result
+        message: The Kyverno chart and app versions pinned by the selected image source are invalid.
+    - uses: http-download
+      as: fetch-helm-chart-index
       if: >-
         ${{ status('read-upstream-chart-metadata') == 'Succeeded' &&
         status('validate-chart-pair') == 'Skipped' }}
+      config:
+        url: https://kyverno.github.io/kyverno/index.yaml
+        outPath: ./kyverno-helm-index.yaml
+    - uses: yaml-parse
+      as: read-published-chart-versions
+      if: ${{ status('fetch-helm-chart-index') == 'Succeeded' }}
+      config:
+        path: ./kyverno-helm-index.yaml
+        outputs:
+          - name: chartEntries
+            fromExpression: entries.kyverno ?? []
+    - uses: fail
+      as: validate-published-chart-pair
+      if: >-
+        ${{ status('read-published-chart-versions') == 'Succeeded' &&
+        len(filter(task.outputs['read-published-chart-versions'].chartEntries, {
+        .version == task.outputs['read-upstream-chart-metadata'].chartVersion &&
+        .appVersion == task.outputs['read-upstream-chart-metadata'].appVersion})) != 1 }}
+      config:
+        message: The Kyverno chart version and app version pinned by the selected image source are not published together.
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('read-published-chart-versions') == 'Succeeded' &&
+        status('validate-published-chart-pair') == 'Skipped' }}
       config:
         prepared: 'yes'
         chartVersion: ${{ task.outputs['read-upstream-chart-metadata'].chartVersion }}

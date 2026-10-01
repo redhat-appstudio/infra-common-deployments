@@ -13,16 +13,10 @@ spec:
         discoveryLimit: 5
         allowTagsRegexes:
           - ^[0-9a-f]{40}$
-    - chart:
-        repoURL: https://kyverno.github.io/kyverno/
-        name: kyverno
-        semverConstraint: ^3.0.0
-        discoveryLimit: 5
-  # Kargo exposes the chart version, not its appVersion. The PromotionTask
-  # resolves both fields from the exact upstream source pinned by the selected
-  # Konflux image and rejects the Freight unless the chart matches that pair.
+  # The selected image's pinned upstream source determines its chart and app
+  # versions. The PromotionTask verifies this exact pair is published in the
+  # Helm repository before any cluster manifests are changed.
   freightCreationCriteria:
     expression: |
       imageFrom('quay.io/konflux-ci/kyverno/kyverno') != nil &&
-      (imageFrom('quay.io/konflux-ci/kyverno/kyverno').Tag matches '^[0-9a-f]{40}$') &&
-      chartFrom('https://kyverno.github.io/kyverno/', 'kyverno') != nil
+      (imageFrom('quay.io/konflux-ci/kyverno/kyverno').Tag matches '^[0-9a-f]{40}$')

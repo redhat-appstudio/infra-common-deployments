@@ -1,6 +1,6 @@
 # Kyverno Promotions
 
-One Warehouse tracks the SHA-tagged kyverno image from Quay and the Kyverno Helm chart. The promotion resolves the upstream chart's `version` and `appVersion` from the exact source revision pinned by the selected Konflux image and fails closed unless the chart version in Freight matches. The kyverno SHA sets **all image tags**. The other 4 images (kyverno-init, kyverno-background, kyverno-cleanup, and kyverno-cli) are not selected independently: the promotion tasks wait up to two hours
+One Warehouse tracks the SHA-tagged kyverno image from Quay. The promotion resolves the upstream chart's `version` and `appVersion` from the exact source revision pinned by the selected Konflux image, then verifies that exact pair exists in the published Helm repository before changing manifests. This avoids selecting the chart independently from the image. The kyverno SHA sets **all image tags**. The other 4 images (kyverno-init, kyverno-background, kyverno-cleanup, and kyverno-cli) are not selected independently: the promotion tasks wait up to two hours
 for that exact tag to appear in the public Quay repository before making changes with Git.
 
 
