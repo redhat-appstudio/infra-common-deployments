@@ -199,6 +199,7 @@ spec:
         prSummary: |
           Update the Kyverno images and Helm chart in ${{ vars.targetRing }}.
           Validated release pair: chart ${{ vars.chartVersion }} / app ${{ vars.appVersion }} (source ${{ vars.sourceRevision }}).
+          Kyverno release: https://github.com/konflux-ci/kyverno/releases/tag/${{ vars.appVersion }}-1
 
         prChanges:
           - kind: Kyverno image

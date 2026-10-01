@@ -39,7 +39,7 @@ spec:
         - name: targetRing
           value: ring-1
         - name: mergeMode
-          value: auto
+          value: manual
         # Preserve the existing policy: this ring skips Prow.
         - name: skipProwChecks
           value: 'true'

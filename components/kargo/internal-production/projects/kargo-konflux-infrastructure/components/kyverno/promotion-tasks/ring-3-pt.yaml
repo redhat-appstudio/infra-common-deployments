@@ -264,6 +264,7 @@ spec:
         prepared: 'yes'
         prSummary: |
           Update Kyverno images and chart in ${{ vars.targetRing }}; validated pair: chart ${{ vars.chartVersion }} / app ${{ vars.appVersion }} (source ${{ vars.sourceRevision }}).
+          Kyverno release: https://github.com/konflux-ci/kyverno/releases/tag/${{ vars.appVersion }}-1
 
         prChanges:
           # -- stone-prd-rh01
