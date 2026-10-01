@@ -149,15 +149,15 @@ spec:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/<CLUSTER_NAME>/kustomization.yaml
         outputs:
           - name: kyvernoImage<CLUSTER_IMAGE_NAME>
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyverno'})
           - name: kyvernopreImage<CLUSTER_IMAGE_NAME>
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyvernopre'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyvernopre'})
           - name: backgroundControllerImage<CLUSTER_IMAGE_NAME>
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/background-controller'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/background-controller'})
           - name: cleanupControllerImage<CLUSTER_IMAGE_NAME>
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/cleanup-controller'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/cleanup-controller'})
           - name: kyvernoCliImage<CLUSTER_IMAGE_NAME>
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno-cli'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyverno-cli'})
     # --- COPY THIS WHOLE STEP ---
     - uses: fail
       as: validate-layout-<CLUSTER_CUTE_NAME>

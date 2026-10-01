@@ -134,15 +134,15 @@ spec:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/kflux-fedora-01/kustomization.yaml
         outputs:
           - name: kyvernoImageFedora01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyverno'})
           - name: kyvernopreImageFedora01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyvernopre'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyvernopre'})
           - name: backgroundControllerImageFedora01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/background-controller'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/background-controller'})
           - name: cleanupControllerImageFedora01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/cleanup-controller'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/cleanup-controller'})
           - name: kyvernoCliImageFedora01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno-cli'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyverno-cli'})
     - uses: fail
       as: validate-layout-fedora-01
       if: >-
@@ -164,15 +164,15 @@ spec:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/kflux-lw-p01/kustomization.yaml
         outputs:
           - name: kyvernoImageLwP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyverno'})
           - name: kyvernopreImageLwP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyvernopre'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyvernopre'})
           - name: backgroundControllerImageLwP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/background-controller'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/background-controller'})
           - name: cleanupControllerImageLwP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/cleanup-controller'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/cleanup-controller'})
           - name: kyvernoCliImageLwP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno-cli'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyverno-cli'})
     - uses: fail
       as: validate-layout-lw-p01
       if: >-
@@ -194,15 +194,15 @@ spec:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/kflux-ocp-p01/kustomization.yaml
         outputs:
           - name: kyvernoImageOcpP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyverno'})
           - name: kyvernopreImageOcpP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyvernopre'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyvernopre'})
           - name: backgroundControllerImageOcpP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/background-controller'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/background-controller'})
           - name: cleanupControllerImageOcpP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/cleanup-controller'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/cleanup-controller'})
           - name: kyvernoCliImageOcpP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno-cli'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyverno-cli'})
     - uses: fail
       as: validate-layout-ocp-p01
       if: >-
@@ -224,15 +224,15 @@ spec:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/kflux-osp-p01/kustomization.yaml
         outputs:
           - name: kyvernoImageOspP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyverno'})
           - name: kyvernopreImageOspP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyvernopre'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyvernopre'})
           - name: backgroundControllerImageOspP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/background-controller'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/background-controller'})
           - name: cleanupControllerImageOspP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/cleanup-controller'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/cleanup-controller'})
           - name: kyvernoCliImageOspP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno-cli'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyverno-cli'})
     - uses: fail
       as: validate-layout-osp-p01
       if: >-
@@ -254,15 +254,15 @@ spec:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/kflux-prd-rh03/kustomization.yaml
         outputs:
           - name: kyvernoImagePrdRH03
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyverno'})
           - name: kyvernopreImagePrdRH03
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyvernopre'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyvernopre'})
           - name: backgroundControllerImagePrdRH03
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/background-controller'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/background-controller'})
           - name: cleanupControllerImagePrdRH03
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/cleanup-controller'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/cleanup-controller'})
           - name: kyvernoCliImagePrdRH03
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno-cli'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyverno-cli'})
     - uses: fail
       as: validate-layout-prd-rh03
       if: >-
@@ -284,15 +284,15 @@ spec:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/kflux-rhel-p01/kustomization.yaml
         outputs:
           - name: kyvernoImageRhelP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyverno'})
           - name: kyvernopreImageRhelP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyvernopre'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyvernopre'})
           - name: backgroundControllerImageRhelP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/background-controller'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/background-controller'})
           - name: cleanupControllerImageRhelP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/cleanup-controller'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/cleanup-controller'})
           - name: kyvernoCliImageRhelP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno-cli'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyverno-cli'})
     - uses: fail
       as: validate-layout-rhel-p01
       if: >-
@@ -314,15 +314,15 @@ spec:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/stone-prod-p01/kustomization.yaml
         outputs:
           - name: kyvernoImagePrdP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyverno'})
           - name: kyvernopreImagePrdP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyvernopre'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyvernopre'})
           - name: backgroundControllerImagePrdP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/background-controller'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/background-controller'})
           - name: cleanupControllerImagePrdP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/cleanup-controller'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/cleanup-controller'})
           - name: kyvernoCliImagePrdP01
-            fromExpression: filter(images ?? [], {.name == vars.upstreamImageRepoURL + '/kyverno-cli'})
+            fromExpression: filter(images ?? [], {.name == 'reg.kyverno.io/kyverno/kyverno-cli'})
     - uses: fail
       as: validate-layout-prd-p01
       if: >-
