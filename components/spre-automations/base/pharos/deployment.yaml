@@ -5,6 +5,9 @@ metadata:
   name: pharos
   labels:
     app: pharos
+  annotations:
+    ignore-check.kube-linter.io/latest-tag: "Digest is pinned in the internal-staging overlay once SPRE-6612 produces a Konflux build"
+    ignore-check.kube-linter.io/non-existent-service-account: "pharos-reader is defined in base/rbac (SPRE-6614); base/pharos is rendered standalone by the scan"
 spec:
   replicas: 1
   selector:
