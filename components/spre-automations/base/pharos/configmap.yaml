@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pharos-config
+  labels:
+    app: pharos
+data:
+  # LUMINO_CONFIG=/etc/pharos/config.yaml
+  # cluster_registry stays empty until KFLUXINFRA-4572 tokens land in
+  # Vault and SPRE-6648 mounts them. In-cluster SA is the default
+  # kubernetes source (this stage cluster only).
+  config.yaml: |
+    profile: konflux
+    sources:
+      kubernetes:
+        discover_contexts: false
+        credential_ref_roots:
+          - /var/run/pharos-credentials
+        credential_ref_env_allowlist: []
+        cluster_registry: {}

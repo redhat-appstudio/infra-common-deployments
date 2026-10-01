@@ -1,0 +1,7 @@
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: pharos
+spec:
+  host: pharos-spre-automations.apps.rosa.kflux-c-stg-i01.qfla.p3.openshiftapps.com
