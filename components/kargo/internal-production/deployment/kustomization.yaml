@@ -77,6 +77,42 @@ patches:
               securityContext:
                 runAsUser: null
 
+  # Grant management-controller and api cluster-scoped Lease visibility so they
+  # can discover shard controllers whose Leases live outside the kargo namespace.
+  # Ring-1 Stages use shard: infra-deployments-staging (Lease in kargo-shard-infra-deployments).
+  # Ring-2+ Stages use shard: infra-deployments-production (Lease in kargo-shard-infra-deployments-production).
+  # Without this the control plane marks every sharded Stage "controller is dead or non-existent".
+  - target:
+      kind: ClusterRole
+      name: kargo-management-controller
+    patch: |-
+      - op: add
+        path: /rules/-
+        value:
+          apiGroups:
+            - coordination.k8s.io
+          resources:
+            - leases
+          verbs:
+            - get
+            - list
+            - watch
+  - target:
+      kind: ClusterRole
+      name: kargo-api
+    patch: |-
+      - op: add
+        path: /rules/-
+        value:
+          apiGroups:
+            - coordination.k8s.io
+          resources:
+            - leases
+          verbs:
+            - get
+            - list
+            - watch
+
   # OpenShift OwnerReferencesPermissionEnforcement fix (upstream: akuity/kargo#5945)
   # JSON patch appends finalizer permissions so blockOwnerDeletion in ownerReferences works.
   - target:
