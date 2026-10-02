@@ -207,11 +207,6 @@ spec:
       - '{__name__="kube_deployment_status_replicas_available", namespace="internal-services"}'
       - '{__name__="kube_deployment_spec_replicas", namespace="internal-services"}'
 
-      # Namespace: codecov
-      - '{__name__="kube_deployment_status_replicas_ready", namespace="codecov"}'
-      - '{__name__="kube_deployment_status_replicas_available", namespace="codecov"}'
-      - '{__name__="kube_deployment_spec_replicas", namespace="codecov"}'
-
       # Namespace: kargo and kargo-*
       - '{__name__="kube_deployment_status_replicas_ready", namespace=~"kargo.*"}'
       - '{__name__="kube_deployment_status_replicas_available", namespace=~"kargo.*"}'
