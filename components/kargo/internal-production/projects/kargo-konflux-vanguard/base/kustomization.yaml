@@ -6,3 +6,4 @@ resources:
   - project.yaml
   - project-config.yaml
   - rbac
+  - external-secrets

@@ -1,0 +1,127 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: caching-proxy-regression-
+  namespace: verification-vanguard-proxy-runner
+  labels:
+    app.kubernetes.io/name: caching-proxy-regression
+    app.kubernetes.io/part-of: konflux-verifications
+    verification.konflux-ci.dev/suite: caching-proxy-regression
+spec:
+  timeouts:
+    pipeline: 20m
+  taskRunTemplate:
+    serviceAccountName: verification-runner
+  pipelineSpec:
+    tasks:
+      - name: verify-proxy
+        taskSpec:
+          volumes:
+            - name: proxy-config
+              emptyDir: {}
+            - name: build-workspace
+              emptyDir: {}
+            - name: proxy-ca-bundle
+              configMap:
+                name: caching-ca-bundle
+                items:
+                  - key: ca-bundle.crt
+                    path: ca-bundle.crt
+          steps:
+            - name: read-cluster-config
+              image: quay.io/konflux-ci/task-runner:3.1.2@sha256:e272c1e1c60a4ecc72ff9c8d65bc48da534de6f1ce0d5aba79db3ac532d11c35
+              securityContext:
+                allowPrivilegeEscalation: false
+              computeResources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+              volumeMounts:
+                - name: proxy-config
+                  mountPath: /workspace/proxy
+              script: |
+                #!/bin/bash
+                set -euo pipefail
+                enabled=$(kubectl get configmap cluster-config -n konflux-info -o jsonpath='{.data.allow-cache-proxy}')
+                [[ "$enabled" == true ]] || { echo 'cluster-config does not enable the cache proxy' >&2; exit 1; }
+                proxy=$(kubectl get configmap cluster-config -n konflux-info -o jsonpath='{.data.http-proxy}')
+                proxy=${proxy//$'\r'/}
+                proxy=${proxy//$'\n'/}
+                [[ -n "$proxy" ]] || { echo 'cluster-config http-proxy is empty' >&2; exit 1; }
+                case "$proxy" in
+                  http://*) ;;
+                  *://*) echo "cluster-config uses an unsupported proxy scheme: $proxy" >&2; exit 1 ;;
+                  *) proxy="http://$proxy" ;;
+                esac
+                expected=http://squid.container-image-proxy.svc.cluster.local:3128
+                [[ "$proxy" == "$expected" ]] || { echo "cluster-config selects $proxy, expected $expected" >&2; exit 1; }
+                printf '%s' "$proxy" > /workspace/proxy/http-proxy
+                echo "Validated cluster-config endpoint: $proxy"
+            - name: pull-and-build
+              image: quay.io/konflux-ci/konflux-build-cli:latest@sha256:0415613f955ef8f7c6fc821a6738dcf062d9a3582441042b87a2391c375d7f54
+              securityContext:
+                runAsUser: 0
+                allowPrivilegeEscalation: false
+                capabilities:
+                  add:
+                    - SETFCAP
+              computeResources:
+                requests:
+                  cpu: 250m
+                  memory: 512Mi
+                limits:
+                  cpu: "2"
+                  memory: 2Gi
+              volumeMounts:
+                - name: proxy-config
+                  mountPath: /workspace/proxy
+                  readOnly: true
+                - name: build-workspace
+                  mountPath: /workspace/build
+                - name: proxy-ca-bundle
+                  mountPath: /mnt/proxy-ca-bundle
+                  readOnly: true
+              script: |
+                #!/bin/bash
+                set -euo pipefail
+                proxy=$(cat /workspace/proxy/http-proxy)
+                export HTTP_PROXY="$proxy" HTTPS_PROXY="$proxy"
+                export http_proxy="$proxy" https_proxy="$proxy"
+                export NO_PROXY= no_proxy= ALL_PROXY= all_proxy=
+                image=registry.access.redhat.com/ubi10/openjdk-25-runtime:1784364635
+                negative_root=/workspace/build/negative/root
+                negative_runroot=/workspace/build/negative/runroot
+                positive_root=/workspace/build/positive/root
+                positive_runroot=/workspace/build/positive/runroot
+                mkdir -p /var/lib/containers/storage "$negative_root" "$negative_runroot" "$positive_root" "$positive_runroot"
+                negative_log=/workspace/build/negative-pull.log
+                set +e
+                buildah --storage-driver=vfs --root "$negative_root" --runroot "$negative_runroot" \
+                  pull --tls-verify=true "docker://$image" >"$negative_log" 2>&1
+                negative_status=$?
+                set -e
+                if [[ $negative_status -eq 0 ]]; then
+                  echo 'pull without the mounted proxy CA unexpectedly succeeded' >&2
+                  exit 1
+                fi
+                if ! grep -Fqi 'x509: certificate signed by unknown authority' "$negative_log"; then
+                  echo 'negative pull failed for a reason other than missing proxy CA trust' >&2
+                  cat "$negative_log" >&2
+                  exit 1
+                fi
+                echo NEGATIVE_CA_CONTROL_PASSED
+                test -s /mnt/proxy-ca-bundle/ca-bundle.crt
+                cp /mnt/proxy-ca-bundle/ca-bundle.crt /etc/pki/ca-trust/source/anchors/caching-ca-bundle.crt
+                update-ca-trust
+                buildah --storage-driver=vfs --root "$positive_root" --runroot "$positive_runroot" \
+                  pull --tls-verify=true "docker://$image"
+                container=$(buildah --storage-driver=vfs --root "$positive_root" --runroot "$positive_runroot" \
+                  from --pull=never "$image")
+                buildah --storage-driver=vfs --root "$positive_root" --runroot "$positive_runroot" \
+                  config --label konflux.proxy-regression=KFLUXVNGD-1358 "$container"
+                buildah --storage-driver=vfs --root "$positive_root" --runroot "$positive_runroot" \
+                  commit "$container" localhost/proxy-regression:1358
+                echo IMAGE_PULL_AND_BUILD_SUCCESS
