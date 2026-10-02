@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: managed-tenant-config
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Manage restricted tenant-operated automation namespaces
+  sourceRepos:
+    - https://gitlab.cee.redhat.com/releng/konflux-release-data.git
+  destinations:
+    - namespace: art-token-broker
+      name: kflux-ocp-p01
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: ServiceAccount
+    - group: batch
+      kind: CronJob
+  orphanedResources:
+    warn: false
