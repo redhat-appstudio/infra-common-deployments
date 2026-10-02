@@ -1,0 +1,118 @@
+{
+  "apiVersion": "tekton.dev/v1",
+  "kind": "PipelineRun",
+  "metadata": {
+    "generateName": "caching-proxy-regression-",
+    "namespace": "verification-vanguard-proxy-runner",
+    "labels": {
+      "app.kubernetes.io/name": "caching-proxy-regression",
+      "app.kubernetes.io/part-of": "konflux-verifications",
+      "verification.konflux-ci.dev/suite": "caching-proxy-regression"
+    }
+  },
+  "spec": {
+    "timeouts": {
+      "pipeline": "20m"
+    },
+    "taskRunTemplate": {
+      "serviceAccountName": "verification-runner"
+    },
+    "pipelineSpec": {
+      "tasks": [
+        {
+          "name": "verify-proxy",
+          "taskSpec": {
+            "volumes": [
+              {
+                "name": "proxy-config",
+                "emptyDir": {}
+              },
+              {
+                "name": "build-workspace",
+                "emptyDir": {}
+              },
+              {
+                "name": "proxy-ca-bundle",
+                "configMap": {
+                  "name": "caching-ca-bundle",
+                  "items": [
+                    {
+                      "key": "ca-bundle.crt",
+                      "path": "ca-bundle.crt"
+                    }
+                  ]
+                }
+              }
+            ],
+            "steps": [
+              {
+                "name": "read-cluster-config",
+                "image": "quay.io/konflux-ci/task-runner:3.1.2@sha256:e272c1e1c60a4ecc72ff9c8d65bc48da534de6f1ce0d5aba79db3ac532d11c35",
+                "securityContext": {
+                  "allowPrivilegeEscalation": false
+                },
+                "computeResources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "64Mi"
+                  },
+                  "limits": {
+                    "cpu": "200m",
+                    "memory": "128Mi"
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "proxy-config",
+                    "mountPath": "/workspace/proxy"
+                  }
+                ],
+                "script": "#!/bin/bash\nset -euo pipefail\nenabled=$(kubectl get configmap cluster-config -n konflux-info -o jsonpath='{.data.allow-cache-proxy}')\n[[ \"$enabled\" == true ]] || { echo 'cluster-config does not enable the cache proxy' >&2; exit 1; }\nproxy=$(kubectl get configmap cluster-config -n konflux-info -o jsonpath='{.data.http-proxy}')\nproxy=${proxy//$'\\r'/}\nproxy=${proxy//$'\\n'/}\n[[ -n \"$proxy\" ]] || { echo 'cluster-config http-proxy is empty' >&2; exit 1; }\ncase \"$proxy\" in\n  http://*) ;;\n  *://*) echo \"cluster-config uses an unsupported proxy scheme: $proxy\" >&2; exit 1 ;;\n  *) proxy=\"http://$proxy\" ;;\nesac\nexpected=http://squid.container-image-proxy.svc.cluster.local:3128\n[[ \"$proxy\" == \"$expected\" ]] || { echo \"cluster-config selects $proxy, expected $expected\" >&2; exit 1; }\nprintf '%s' \"$proxy\" > /workspace/proxy/http-proxy\necho \"Validated cluster-config endpoint: $proxy\"\n"
+              },
+              {
+                "name": "pull-and-build",
+                "image": "quay.io/konflux-ci/konflux-build-cli:latest@sha256:0415613f955ef8f7c6fc821a6738dcf062d9a3582441042b87a2391c375d7f54",
+                "securityContext": {
+                  "runAsUser": 0,
+                  "allowPrivilegeEscalation": false,
+                  "capabilities": {
+                    "add": [
+                      "SETFCAP"
+                    ]
+                  }
+                },
+                "computeResources": {
+                  "requests": {
+                    "cpu": "250m",
+                    "memory": "512Mi"
+                  },
+                  "limits": {
+                    "cpu": "2",
+                    "memory": "2Gi"
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "proxy-config",
+                    "mountPath": "/workspace/proxy",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "build-workspace",
+                    "mountPath": "/workspace/build"
+                  },
+                  {
+                    "name": "proxy-ca-bundle",
+                    "mountPath": "/mnt/proxy-ca-bundle",
+                    "readOnly": true
+                  }
+                ],
+                "script": "#!/bin/bash\nset -euo pipefail\nproxy=$(cat /workspace/proxy/http-proxy)\nexport HTTP_PROXY=\"$proxy\" HTTPS_PROXY=\"$proxy\"\nexport http_proxy=\"$proxy\" https_proxy=\"$proxy\"\nexport NO_PROXY= no_proxy= ALL_PROXY= all_proxy=\nimage=registry.access.redhat.com/ubi10/openjdk-25-runtime:1784364635\nnegative_root=/workspace/build/negative/root\nnegative_runroot=/workspace/build/negative/runroot\npositive_root=/workspace/build/positive/root\npositive_runroot=/workspace/build/positive/runroot\nmkdir -p \"$negative_root\" \"$negative_runroot\" \"$positive_root\" \"$positive_runroot\" /workspace/build/context\nnegative_log=/workspace/build/negative-pull.log\nset +e\nbuildah --storage-driver=vfs --root \"$negative_root\" --runroot \"$negative_runroot\" \\\n  pull --tls-verify=true \"docker://$image\" >\"$negative_log\" 2>&1\nnegative_status=$?\nset -e\nif [[ $negative_status -eq 0 ]]; then\n  echo 'pull without the mounted proxy CA unexpectedly succeeded' >&2\n  exit 1\nfi\nif ! grep -Fqi 'x509: certificate signed by unknown authority' \"$negative_log\"; then\n  echo 'negative pull failed for a reason other than missing proxy CA trust' >&2\n  cat \"$negative_log\" >&2\n  exit 1\nfi\necho NEGATIVE_CA_CONTROL_PASSED\ntest -s /mnt/proxy-ca-bundle/ca-bundle.crt\ncp /mnt/proxy-ca-bundle/ca-bundle.crt /etc/pki/ca-trust/source/anchors/caching-ca-bundle.crt\nupdate-ca-trust\nbuildah --storage-driver=vfs --root \"$positive_root\" --runroot \"$positive_runroot\" \\\n  pull --tls-verify=true \"docker://$image\"\nprintf 'FROM %s\\nLABEL konflux.proxy-regression=KFLUXVNGD-1358\\n' \"$image\" \\\n  > /workspace/build/context/Containerfile\nbuildah --storage-driver=vfs --root \"$positive_root\" --runroot \"$positive_runroot\" \\\n  bud --isolation=chroot --pull=never --tls-verify=true \\\n  -t localhost/proxy-regression:1358 /workspace/build/context\necho IMAGE_PULL_AND_BUILD_SUCCESS\n"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
