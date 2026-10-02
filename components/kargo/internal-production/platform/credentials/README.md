@@ -17,6 +17,7 @@ Kargo consumers receive it:
 | `kargo-rhobs-staging`, `kargo-rhobs-production` | Replicated to projects for Kanary AnalysisTemplates |
 | `konflux-conformance-sa` | Replicated to projects for the conformance launcher |
 | `konflux-conformance-tests-credentials` | Replicated to projects for conformance tests |
+| `vanguard-proxy-verification-sa` | Replicated to projects for the deployed caching proxy regression launcher |
 
 Replication is configured on `spec.target.template.metadata.annotations` with
 `kargo.akuity.io/replicate-to: "*"`. It applies to generated Secrets, not copies

@@ -1,0 +1,52 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: caching-proxy-regression-staging
+spec:
+  metrics:
+    - name: default-ca-image-pull-and-build
+      count: 1
+      failureLimit: 0
+      provider:
+        job:
+          spec:
+            backoffLimit: 0
+            activeDeadlineSeconds: 2400
+            template:
+              spec:
+                automountServiceAccountToken: false
+                restartPolicy: Never
+                containers:
+                  - name: launcher
+                    image: quay.io/konflux-ci/task-runner:3.1.2@sha256:e272c1e1c60a4ecc72ff9c8d65bc48da534de6f1ce0d5aba79db3ac532d11c35
+                    command:
+                      - /bin/bash
+                      - /runner/run.sh
+                    securityContext:
+                      allowPrivilegeEscalation: false
+                    resources:
+                      requests:
+                        cpu: 200m
+                        memory: 256Mi
+                      limits:
+                        cpu: 500m
+                        memory: 512Mi
+                    env:
+                      - name: CREDENTIALS_DIR
+                        value: /credentials
+                      - name: TEMPLATE_FILE
+                        value: /runner/pipelinerun.json
+                    volumeMounts:
+                      - name: runner
+                        mountPath: /runner
+                        readOnly: true
+                      - name: credentials
+                        mountPath: /credentials
+                        readOnly: true
+                volumes:
+                  - name: runner
+                    configMap:
+                      name: caching-proxy-regression-runner
+                  - name: credentials
+                    secret:
+                      secretName: vanguard-proxy-verification-sa
