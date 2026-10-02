@@ -11,6 +11,7 @@ resources:
   - components/crossplane-config
   - components/crossplane-control-plane
   - components/notification-controller
+  - components/project-controller
   - components/smee-client
 
 components:

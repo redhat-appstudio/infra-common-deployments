@@ -59,3 +59,13 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-2-crossplane-config
       autoPromotionEnabled: true
+    - stage: ring-0-project-controller
+      autoPromotionEnabled: true
+    - stage: ring-1-project-controller
+      autoPromotionEnabled: true
+    - stage: ring-2-project-controller
+      autoPromotionEnabled: true
+    - stage: ring-3-project-controller
+      autoPromotionEnabled: true
+    - stage: ring-4-project-controller
+      autoPromotionEnabled: true
