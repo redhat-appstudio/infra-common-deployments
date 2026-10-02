@@ -1,0 +1,105 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-project-controller
+spec:
+  vars:
+    - name: srcPath
+    - name: freightPath
+    - name: repoURL
+    - name: component
+    - name: targetRing
+    - name: controllerImageRepoURL
+      value: quay.io/konflux-ci/project-controller
+  steps:
+    - uses: fail
+      as: validate-freight
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'project-controller' || vars.component != ctx.targetFreight.origin.name
+        || vars.repoURL != 'https://github.com/redhat-appstudio/infra-deployments.git'
+        || vars.controllerImageRepoURL != 'quay.io/konflux-ci/project-controller'
+        || vars.targetRing not in ['ring-0', 'ring-1', 'ring-2', 'ring-3', 'ring-4']
+        || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$')
+        || !(imageFrom(vars.controllerImageRepoURL).Tag matches '^[0-9a-f]{40}$') }}
+      config:
+        message: Expected project-controller Freight with an infra-deployments commit and a SHA-tagged controller image, targeting Rings 0-4.
+    - uses: yaml-parse
+      as: read-previous
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        outputs:
+          - name: resources
+            fromExpression: resources ?? []
+          - name: controllerImages
+            fromExpression: filter(images ?? [], {.name == 'konflux-project-controller'})
+    - uses: fail
+      as: validate-layout
+      if: >-
+        ${{ status('read-previous') == 'Succeeded' && (
+        len(filter(task.outputs['read-previous'].resources, {# == 'base-snapshot'})) != 1
+        || len(filter(task.outputs['read-previous'].resources,
+        {# startsWith 'https://github.com/konflux-ci/project-controller/config/default?ref='})) != 1
+        || len(task.outputs['read-previous'].controllerImages) != 1
+        || (task.outputs['read-previous'].controllerImages[0].newName ?? '') != 'quay.io/konflux-ci/project-controller') }}
+      config:
+        message: Expected base-snapshot, one pinned project-controller manifest ref, and the konflux-project-controller image alias targeting its release repository.
+    # Replace the shared snapshot from immutable Freight, preserving ring-specific settings.
+    - uses: delete
+      as: delete-old-base-snapshot
+      if: ${{ status('read-previous') == 'Succeeded' && status('validate-layout') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: copy
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-base-snapshot') == 'Succeeded' }}
+      config:
+        inPath: ${{ vars.freightPath }}/components/${{ vars.component }}/base
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: kustomize-set-image
+      as: update-image
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base
+        images:
+          - image: konflux-project-controller
+            newName: ${{ vars.controllerImageRepoURL }}
+            tag: ${{ quote(imageFrom(vars.controllerImageRepoURL).Tag) }}
+    # Resolve the upstream entry by URL: resources[0] is the local base snapshot.
+    - uses: yaml-update
+      as: update-manifest-ref
+      if: ${{ status('update-image') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        updates:
+          - key: >-
+              resources.${{ findIndex(task.outputs['read-previous'].resources,
+              {# startsWith 'https://github.com/konflux-ci/project-controller/config/default?ref='}) }}
+            value: https://github.com/konflux-ci/project-controller/config/default?ref=${{ imageFrom(vars.controllerImageRepoURL).Tag }}
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-freight') == 'Skipped' && status('read-previous') == 'Succeeded'
+        && status('validate-layout') == 'Skipped' && status('delete-old-base-snapshot') == 'Succeeded'
+        && status('copy-freight-manifests') == 'Succeeded' && status('update-image') == 'Succeeded'
+        && status('update-manifest-ref') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: |
+          Update the project-controller image and upstream manifests to the same selected SHA in ${{ vars.targetRing }}.
+
+          Shared RBAC source: [${{ commitFrom(vars.repoURL).ID[0:12] }}](https://github.com/redhat-appstudio/infra-deployments/commit/${{ commitFrom(vars.repoURL).ID }}).
+        prChanges:
+          - kind: Controller image
+            previous: >-
+              ${{ quote(string(task.outputs['read-previous'].controllerImages[0].digest
+              ?? task.outputs['read-previous'].controllerImages[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.controllerImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+          - kind: Manifest source
+            previous: >-
+              ${{ find(task.outputs['read-previous'].resources,
+              {# startsWith 'https://github.com/konflux-ci/project-controller/config/default?ref='}) }}
+            proposed: https://github.com/konflux-ci/project-controller/config/default?ref=${{ imageFrom(vars.controllerImageRepoURL).Tag }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
