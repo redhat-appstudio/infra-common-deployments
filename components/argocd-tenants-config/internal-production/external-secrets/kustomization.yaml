@@ -3,3 +3,11 @@ kind: Kustomization
 
 resources:
   - konflux-release-data-es.yaml
+  - stone-prd-rh01-es.yaml
+  - stone-prod-p01-es.yaml
+  - stone-prod-p02-es.yaml
+  - kflux-ocp-p01-es.yaml
+  - kflux-prd-rh02-es.yaml
+  - kflux-prd-rh03-es.yaml
+  - kflux-rhel-p01-es.yaml
+  - kflux-osp-p01-es.yaml
