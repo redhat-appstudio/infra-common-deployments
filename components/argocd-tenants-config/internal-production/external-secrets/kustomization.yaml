@@ -11,3 +11,4 @@ resources:
   - kflux-prd-rh03-es.yaml
   - kflux-rhel-p01-es.yaml
   - kflux-osp-p01-es.yaml
+  - kflux-lw-p01-es.yaml
