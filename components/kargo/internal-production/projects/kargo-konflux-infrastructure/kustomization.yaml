@@ -14,6 +14,7 @@ resources:
   - components/kyverno
   - components/multi-platform-controller
   - components/repository-validator
+  - components/cluster-secret-store-rh
 
 components:
   - ../../shared/promotion-tasks
