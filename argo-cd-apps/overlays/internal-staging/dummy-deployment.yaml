@@ -1,3 +1,4 @@
+# SPRE-6655: learning-spike no-op. ApplicationSet for dummy-deployment on kflux-c-stg-i01.
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
