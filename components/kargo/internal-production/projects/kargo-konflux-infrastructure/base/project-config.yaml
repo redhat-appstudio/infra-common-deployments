@@ -5,6 +5,14 @@ metadata:
   name: kargo-konflux-infrastructure
 spec:
   promotionPolicies:
+    - stage: ring-1-cluster-secret-store
+      autoPromotionEnabled: true
+    - stage: ring-2-cluster-secret-store
+      autoPromotionEnabled: true
+    - stage: ring-3-cluster-secret-store
+      autoPromotionEnabled: true
+    - stage: ring-4-cluster-secret-store
+      autoPromotionEnabled: true
     - stage: ring-1-authentication
       autoPromotionEnabled: true
     - stage: ring-2-authentication
