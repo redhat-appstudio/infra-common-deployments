@@ -87,3 +87,9 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-3-repository-validator
       autoPromotionEnabled: true
+    - stage: ring-2-cluster-secret-store-rh
+      autoPromotionEnabled: true
+    - stage: ring-3-cluster-secret-store-rh
+      autoPromotionEnabled: true
+    - stage: ring-4-cluster-secret-store-rh
+      autoPromotionEnabled: true

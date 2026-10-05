@@ -1,0 +1,67 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: promote-cluster-secret-store-rh-manifests
+spec:
+  vars:
+    - name: srcPath
+    - name: freightPath
+    - name: repoURL
+    - name: component
+    - name: targetRing
+
+  steps:
+    - uses: fail
+      as: validate-freight
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'cluster-secret-store-rh' || vars.component != ctx.targetFreight.origin.name
+        || vars.repoURL != 'https://github.com/redhat-appstudio/infra-deployments.git'
+        || vars.targetRing not in ['ring-2', 'ring-3', 'ring-4']
+        || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$') }}
+      config:
+        message: Expected cluster-secret-store-rh Freight containing a Git commit, targeting Ring 2-4.
+
+    - uses: yaml-parse
+      as: read-layout
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        outputs:
+          - name: resources
+            fromExpression: resources ?? []
+
+    - uses: fail
+      as: validate-layout
+      if: >-
+        ${{ status('read-layout') == 'Succeeded' &&
+        len(filter(task.outputs['read-layout'].resources, {# == 'base-snapshot'})) != 1 }}
+      config:
+        message: Expected exactly one base-snapshot resource in the target ring; ring-specific configuration must stay outside the snapshot.
+
+    - uses: delete
+      as: delete-old-base-snapshot
+      if: ${{ status('read-layout') == 'Succeeded' && status('validate-layout') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+
+    - uses: copy
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-base-snapshot') == 'Succeeded' }}
+      config:
+        inPath: ${{ vars.freightPath }}/components/${{ vars.component }}/base
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-freight') == 'Skipped' && status('read-layout') == 'Succeeded' && status('validate-layout') == 'Skipped'
+        && status('delete-old-base-snapshot') == 'Succeeded' && status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: |
+          Update cluster-secret-store-rh base manifests in ${{ vars.targetRing }} from the selected Git revision.
+
+          Source: [${{ commitFrom(vars.repoURL).ID[0:12] }}](https://github.com/redhat-appstudio/infra-deployments/commit/${{ commitFrom(vars.repoURL).ID }}).
+
+          Replaces `components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot`. Ring-specific overlays are preserved.
