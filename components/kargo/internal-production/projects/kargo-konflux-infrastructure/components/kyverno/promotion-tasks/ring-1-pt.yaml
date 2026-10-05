@@ -15,6 +15,9 @@ spec:
       value: quay.io/konflux-ci/kyverno
     - name: kfluxKyvernoImageRepoURL
       value: quay.io/konflux-ci/kyverno/kyverno
+    - name: chartVersion
+    - name: appVersion
+    - name: sourceRevision
 
   steps:
     # Validate the freight
@@ -283,16 +286,44 @@ spec:
             newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-cli
             tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
 
+    - uses: yaml-update
+      as: update-chart-version-stone-stage-p01
+      if: ${{ status('update-images-stg-p01') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/kyverno/rings/ring-1/stone-stage-p01/kyverno-helm-generator.yaml
+        updates:
+          - key: version
+            value: ${{ vars.chartVersion }}
+    - uses: yaml-update
+      as: update-chart-version-stone-stg-rh01
+      if: ${{ status('update-images-stg-rh01') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/kyverno/rings/ring-1/stone-stg-rh01/kyverno-helm-generator.yaml
+        updates:
+          - key: version
+            value: ${{ vars.chartVersion }}
+    - uses: yaml-update
+      as: update-chart-version-lightwell-dev
+      if: ${{ status('update-images-lw-dev') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/kyverno/rings/ring-1/lightwell-dev/kyverno-helm-generator.yaml
+        updates:
+          - key: version
+            value: ${{ vars.chartVersion }}
+
     # Outputs information for the PR summary
     - uses: compose-output
       as: result
       if: >-
         ${{ status('update-images-stg-p01') == 'Succeeded' && status('update-images-stg-rh01') == 'Succeeded'
-        && status('update-images-lw-dev') == 'Succeeded' }}
+        && status('update-images-lw-dev') == 'Succeeded'
+        && status('update-chart-version-stone-stage-p01') == 'Succeeded'
+        && status('update-chart-version-stone-stg-rh01') == 'Succeeded'
+        && status('update-chart-version-lightwell-dev') == 'Succeeded' }}
       config:
         prepared: 'yes'
         prSummary: |
-          Update the Kyverno images to the same source reference in ${{ vars.targetRing }}.
+          Update Kyverno images and chart in ${{ vars.targetRing }}; validated pair: chart ${{ vars.chartVersion }} / app ${{ vars.appVersion }} (source ${{ vars.sourceRevision }}).
 
         prChanges:
           # -- stone-stage-p01

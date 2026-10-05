@@ -15,6 +15,9 @@ spec:
       value: quay.io/konflux-ci/kyverno
     - name: kfluxKyvernoImageRepoURL
       value: quay.io/konflux-ci/kyverno/kyverno
+    - name: chartVersion
+    - name: appVersion
+    - name: sourceRevision
 
   steps:
     # Validate the freight
@@ -177,15 +180,25 @@ spec:
             newName: ${{ vars.kfluxImageRepoBaseURL }}/kyverno-cli
             tag: ${{ imageFrom(vars.kfluxKyvernoImageRepoURL).Tag }}
 
+    - uses: yaml-update
+      as: update-chart-version
+      if: ${{ status('update-images') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/kyverno/rings/ring-0/base/kyverno-helm-generator.yaml
+        updates:
+          - key: version
+            value: ${{ vars.chartVersion }}
+
     # Outputs information for the PR summary
     - uses: compose-output
       as: result
       if: >-
-        ${{ status('update-images') == 'Succeeded' }}
+        ${{ status('update-images') == 'Succeeded' && status('update-chart-version') == 'Succeeded' }}
       config:
         prepared: 'yes'
         prSummary: |
-          Update the Kyverno images to the same source reference in ${{ vars.targetRing }}.
+          Update the Kyverno images and Helm chart in ${{ vars.targetRing }}.
+          Validated release pair: chart ${{ vars.chartVersion }} / app ${{ vars.appVersion }} (source ${{ vars.sourceRevision }}).
 
         prChanges:
           - kind: Kyverno image
