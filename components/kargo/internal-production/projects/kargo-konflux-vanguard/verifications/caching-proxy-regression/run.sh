@@ -10,9 +10,12 @@ RUNNER_NAMESPACE=verification-vanguard-proxy-runner
 POLL_INTERVAL=${POLL_INTERVAL:-15}
 RUN_TIMEOUT_SECONDS=${RUN_TIMEOUT_SECONDS:-1800}
 RUN_RETENTION_COUNT=${RUN_RETENTION_COUNT:-10}
+ABANDONED_RUN_SECONDS=${ABANDONED_RUN_SECONDS:-$((RUN_TIMEOUT_SECONDS + POLL_INTERVAL + 60))}
 [[ "$POLL_INTERVAL" =~ ^[0-9]+$ ]]
 [[ "$RUN_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]]
 [[ "$RUN_RETENTION_COUNT" =~ ^[1-9][0-9]*$ ]]
+[[ "$ABANDONED_RUN_SECONDS" =~ ^[1-9][0-9]*$ ]]
+(( ABANDONED_RUN_SECONDS > RUN_TIMEOUT_SECONDS + POLL_INTERVAL ))
 
 # Start with one representative staging cluster. Add one representative cluster
 # from each later ring only after its cluster-side suite resources are deployed.
@@ -39,18 +42,32 @@ print_run_condition() {
   ' <<< "$1" >&2
 }
 
+mark_run_observed() {
+  local run_name=$1
+
+  kube annotate pipelinerun "$run_name" -n "$RUNNER_NAMESPACE" \
+    verification.konflux-ci.dev/result-observed-at="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --overwrite >/dev/null
+}
+
 prune_completed_runs() {
-  local history_count=$((RUN_RETENTION_COUNT - 1))
+  local keep_count=$1
   local old_run
   local prune_names
   local runs
 
   runs=$(kube get pipelineruns -n "$RUNNER_NAMESPACE" \
     -l verification.konflux-ci.dev/suite=caching-proxy-regression -o json)
-  prune_names=$(jq -r --argjson keep "$history_count" '
+  prune_names=$(jq -r \
+    --argjson keep "$keep_count" \
+    --argjson abandonedAfter "$ABANDONED_RUN_SECONDS" '
     [.items[]
       | select(any(.status.conditions[]?;
-          .type == "Succeeded" and (.status == "True" or .status == "False")))]
+          .type == "Succeeded" and (.status == "True" or .status == "False")))
+      | select(
+          .metadata.annotations["verification.konflux-ci.dev/result-observed-at"] != null
+          or (now - (.metadata.creationTimestamp | fromdateiso8601)) > $abandonedAfter
+        )]
     | sort_by(.metadata.creationTimestamp)
     | if length > $keep then .[0:(length - $keep)] else [] end
     | .[].metadata.name
@@ -60,7 +77,8 @@ prune_completed_runs() {
     [[ -n "$old_run" ]] || continue
     printf 'Pruning completed PipelineRun: %s/%s\n' \
       "$RUNNER_NAMESPACE" "$old_run"
-    kube delete pipelinerun "$old_run" -n "$RUNNER_NAMESPACE" --wait=false
+    kube delete pipelinerun "$old_run" -n "$RUNNER_NAMESPACE" \
+      --ignore-not-found=true --wait=false
   done <<< "$prune_names"
 }
 
@@ -93,10 +111,11 @@ for cluster in "${clusters[@]}"; do
     "current-context":"target"
   }' "$CREDENTIALS_DIR/vanguard-proxy-$cluster" > "$KUBECONFIG"
 
-  # Ring 1 disables the cluster-wide Tekton pruner. Before creating a run,
-  # retain only the newest completed suite runs. Active and unrelated runs are
-  # never selected for deletion.
-  prune_completed_runs
+  # Ring 1 disables the cluster-wide Tekton pruner. Reserve one retention slot
+  # for the incoming run. A terminal run is not eligible until its launcher has
+  # observed the result, unless the launcher's maximum lifetime plus a safety
+  # margin has elapsed. Active and unrelated runs are never selected.
+  prune_completed_runs "$((RUN_RETENTION_COUNT - 1))"
 
   # Each run has isolated PipelineRun and Buildah storage. Generated names allow
   # overlapping promotions and avoid collisions with Tekton Results finalizers.
@@ -118,9 +137,11 @@ for cluster in "${clusters[@]}"; do
         break
         ;;
       False)
+        mark_run_observed "$run_name"
+        prune_completed_runs "$RUN_RETENTION_COUNT"
         echo "Regression failed on $cluster" >&2
         print_run_condition "$result"
-        echo "PipelineRun retained for diagnostics: $RUNNER_NAMESPACE/$run_name" >&2
+        echo "PipelineRun result retained under suite policy: $RUNNER_NAMESPACE/$run_name" >&2
         exit 1
         ;;
     esac
@@ -134,7 +155,13 @@ for cluster in "${clusters[@]}"; do
     exit 1
   }
 
-  printf 'PipelineRun retained: %s/%s (suite limit: %s)\n' \
+  # Mark the terminal result as consumed before making the run eligible for
+  # deletion, then reconcile again so runs that completed concurrently cannot
+  # leave the suite above its configured limit.
+  mark_run_observed "$run_name"
+  prune_completed_runs "$RUN_RETENTION_COUNT"
+
+  printf 'PipelineRun result observed: %s/%s (suite limit: %s)\n' \
     "$RUNNER_NAMESPACE" "$run_name" "$RUN_RETENTION_COUNT"
   printf 'PROXY_REGRESSION_PASSED cluster=%s\n' "$cluster"
 done
