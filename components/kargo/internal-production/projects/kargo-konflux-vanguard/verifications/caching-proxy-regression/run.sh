@@ -4,7 +4,7 @@ set -euo pipefail
 umask 077
 
 : "${CREDENTIALS_DIR:?proxy suite credential directory is required}"
-: "${TEMPLATE_FILE:?PipelineRun JSON template is required}"
+: "${TEMPLATE_FILE:?PipelineRun template is required}"
 
 RUNNER_NAMESPACE=verification-vanguard-proxy-runner
 POLL_INTERVAL=${POLL_INTERVAL:-15}
@@ -25,7 +25,6 @@ done
 
 workdir=$(mktemp -d /tmp/proxy-regression.XXXXXXXX)
 export KUBECONFIG="$workdir/kubeconfig"
-run_name=''
 
 kube() {
   kubectl --request-timeout=30s "$@"
@@ -38,26 +37,8 @@ print_run_condition() {
   ' <<< "$1" >&2
 }
 
-cleanup_run() {
-  if [[ -n "$run_name" ]]; then
-    kube logs -n "$RUNNER_NAMESPACE" \
-      -l "tekton.dev/pipelineRun=$run_name" \
-      --all-containers=true --tail=-1 || true
-    kube delete pipelinerun "$run_name" -n "$RUNNER_NAMESPACE" \
-      --ignore-not-found --wait=false
-    run_name=''
-  fi
-}
-
 cleanup() {
-  local exit_code=$?
-  trap - EXIT
-  if ! cleanup_run; then
-    echo "Failed to clean up PipelineRun $run_name" >&2
-    [[ $exit_code -ne 0 ]] || exit_code=1
-  fi
   rm -rf -- "$workdir"
-  exit "$exit_code"
 }
 
 trap cleanup EXIT
@@ -107,6 +88,7 @@ for cluster in "${clusters[@]}"; do
       False)
         echo "Regression failed on $cluster" >&2
         print_run_condition "$result"
+        echo "PipelineRun retained for diagnostics: $RUNNER_NAMESPACE/$run_name" >&2
         exit 1
         ;;
     esac
@@ -116,9 +98,12 @@ for cluster in "${clusters[@]}"; do
   [[ "$status" == True ]] || {
     echo "Regression timed out on $cluster" >&2
     [[ -z "$result" ]] || print_run_condition "$result"
+    echo "PipelineRun retained for diagnostics: $RUNNER_NAMESPACE/$run_name" >&2
     exit 1
   }
 
-  cleanup_run
+  # Keep completed PipelineRuns and their Pods available for diagnostics. The
+  # cluster's Tekton retention policy handles eventual cleanup.
+  printf 'PipelineRun retained: %s/%s\n' "$RUNNER_NAMESPACE" "$run_name"
   printf 'PROXY_REGRESSION_PASSED cluster=%s\n' "$cluster"
 done
