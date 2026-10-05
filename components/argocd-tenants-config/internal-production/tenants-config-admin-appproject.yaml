@@ -60,6 +60,12 @@ spec:
       name: kflux-osp-p01
     - namespace: rhtap-releng-tenant
       name: kflux-osp-p01
+    - namespace: '*-tenant'
+      name: kflux-lw-p01
+    - namespace: rh-managed-*-tenant
+      name: kflux-lw-p01
+    - namespace: rhtap-releng-tenant
+      name: kflux-lw-p01
   # Deny all namespaced-scoped resources from being created, except for the following
   namespaceResourceWhitelist:
     - group: ""
