@@ -5,7 +5,6 @@ kind: Kustomization
 resources:
   - deployment
   - projects
-  - prometheusrule
 
 patches:
   - target:

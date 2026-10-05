@@ -2,9 +2,11 @@ apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   name: kargo-promotion
+  namespace: appstudio-monitoring
   labels:
     # UWM ignores rules in openshift-user-workload-monitoring. Evaluate with
-    # the in-cluster user-workload Prometheus, same as kargo-verification.
+    # the in-cluster user-workload Prometheus. The rule lives next to the
+    # custom kube-state-metrics scrape, in appstudio-monitoring.
     openshift.io/prometheus-rule-evaluation-scope: leaf-prometheus
 spec:
   groups:
@@ -13,6 +15,8 @@ spec:
       rules:
         # Stage metadata.name is ring-<n>-<component>. The collector cannot
         # split that string, so the split happens here and name is dropped.
+        # metricNamePrefix is kargo_stage, so the series name is
+        # kargo_stage_<metric>, not kube_customresource_*.
         # The Kargo project namespace is exported_namespace because the scrape
         # target namespace (appstudio-monitoring) takes the namespace label.
         - record: kargo:stage:last_promotion:finished_timestamp
