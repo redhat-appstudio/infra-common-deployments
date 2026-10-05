@@ -19,6 +19,7 @@ spec:
   verification:
     analysisTemplates:
       - name: kanary-staging
+      - name: caching-proxy-regression-staging
     args:
       - name: clusters
         value: stone-stg-rh01|stone-stage-p01

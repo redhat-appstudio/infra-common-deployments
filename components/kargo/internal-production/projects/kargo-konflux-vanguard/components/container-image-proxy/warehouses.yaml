@@ -13,6 +13,7 @@ spec:
         branch: main
         includePaths:
           - components/container-image-proxy/base
+          - components/konflux-info/staging/stone-stg-rh01/cluster-config.env
     - chart:
         repoURL: oci://quay.io/konflux-ci/caching/caching-helm
         semverConstraint: ^0.1.0
