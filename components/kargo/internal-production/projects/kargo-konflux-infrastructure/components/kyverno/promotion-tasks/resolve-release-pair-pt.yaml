@@ -14,25 +14,25 @@ spec:
       config:
         message: Expected a SHA-tagged Kyverno image.
     - uses: fail
-      as: validate-source-token
+      as: validate-source-credentials
       if: >-
         ${{ status('validate-input') == 'Skipped' &&
-        (sharedSecret('kyverno-source-token')?.token ?? '') == '' }}
+        (repoCredentials('https://github.com/konflux-ci/kyverno.git', 'git')?.Password ?? '') == '' }}
       config:
         message: >-
-          Kyverno source App token is missing. Check the kyverno-source-token
-          ExternalSecret and GithubAccessToken in kargo-shared-resources.
+          Kyverno source repository credentials are missing. Check the
+          kyverno-source-credentials ExternalSecret in kargo-shared-resources.
     - uses: http-download
       as: fetch-konflux-source-commit
       if: >-
         ${{ status('validate-input') == 'Skipped' &&
-        status('validate-source-token') == 'Skipped' }}
+        status('validate-source-credentials') == 'Skipped' }}
       config:
         url: https://api.github.com/repos/konflux-ci/kyverno/git/commits/${{ vars.imageTag }}
         outPath: ./kyverno-source-commit.json
         headers:
           - name: Authorization
-            value: Bearer ${{ sharedSecret('kyverno-source-token').token }}
+            value: Bearer ${{ repoCredentials('https://github.com/konflux-ci/kyverno.git', 'git').Password }}
           - name: Accept
             value: application/vnd.github+json
     - uses: json-parse
@@ -60,7 +60,7 @@ spec:
         outPath: ./kyverno-source-tree.json
         headers:
           - name: Authorization
-            value: Bearer ${{ sharedSecret('kyverno-source-token').token }}
+            value: Bearer ${{ repoCredentials('https://github.com/konflux-ci/kyverno.git', 'git').Password }}
           - name: Accept
             value: application/vnd.github+json
     - uses: json-parse
