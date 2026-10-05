@@ -6,3 +6,7 @@ namespace: iib-qe
 
 resources:
 - namespace.yaml
+- registry-proxy-push-secret.yaml
+- registry-redhat-io-read.yaml
+- gitlab-webhook-config.yaml
+- gitlab-git-auth.yaml

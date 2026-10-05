@@ -1,0 +1,31 @@
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: gitlab-git-auth
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: staging/operator-foundry/iib-qe/gitlab-git-auth
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: appsre-stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: gitlab-git-auth
+    template:
+      engineVersion: v2
+      type: kubernetes.io/basic-auth
+      metadata:
+        annotations:
+          tekton.dev/git-0: https://gitlab.cee.redhat.com/exd-guild-hello-operator-gitlab/iib-api-test-index-configs
+      data:
+        username: '{{ regexReplaceAll ":.*$" .data "" }}'
+        password: '{{ regexReplaceAll "^[^:]*:" .data "" }}'
