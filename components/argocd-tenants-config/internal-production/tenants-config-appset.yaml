@@ -16,6 +16,7 @@ spec:
           - path: tenants-config/auto-generated/cluster/kflux-prd-rh03/tenants/*
           - path: tenants-config/auto-generated/cluster/kflux-rhel-p01/tenants/*
           - path: tenants-config/auto-generated/cluster/kflux-osp-p01/tenants/*
+          - path: tenants-config/auto-generated/cluster/kflux-lw-p01/tenants/*
   template:
     metadata:
       name: '{{path.basename}}-{{path[3]}}'
