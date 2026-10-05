@@ -9,8 +9,10 @@ umask 077
 RUNNER_NAMESPACE=verification-vanguard-proxy-runner
 POLL_INTERVAL=${POLL_INTERVAL:-15}
 RUN_TIMEOUT_SECONDS=${RUN_TIMEOUT_SECONDS:-1800}
+RUN_RETENTION_COUNT=${RUN_RETENTION_COUNT:-10}
 [[ "$POLL_INTERVAL" =~ ^[0-9]+$ ]]
 [[ "$RUN_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]]
+[[ "$RUN_RETENTION_COUNT" =~ ^[1-9][0-9]*$ ]]
 
 # Start with one representative staging cluster. Add one representative cluster
 # from each later ring only after its cluster-side suite resources are deployed.
@@ -35,6 +37,31 @@ print_run_condition() {
     [.status.conditions[]? | select(.type == "Succeeded")][0]
     | "PipelineRun condition: status=\(.status // "Unknown") reason=\(.reason // "Unknown") message=\(.message // "")"
   ' <<< "$1" >&2
+}
+
+prune_completed_runs() {
+  local history_count=$((RUN_RETENTION_COUNT - 1))
+  local old_run
+  local prune_names
+  local runs
+
+  runs=$(kube get pipelineruns -n "$RUNNER_NAMESPACE" \
+    -l verification.konflux-ci.dev/suite=caching-proxy-regression -o json)
+  prune_names=$(jq -r --argjson keep "$history_count" '
+    [.items[]
+      | select(any(.status.conditions[]?;
+          .type == "Succeeded" and (.status == "True" or .status == "False")))]
+    | sort_by(.metadata.creationTimestamp)
+    | if length > $keep then .[0:(length - $keep)] else [] end
+    | .[].metadata.name
+  ' <<< "$runs")
+
+  while IFS= read -r old_run; do
+    [[ -n "$old_run" ]] || continue
+    printf 'Pruning completed PipelineRun: %s/%s\n' \
+      "$RUNNER_NAMESPACE" "$old_run"
+    kube delete pipelinerun "$old_run" -n "$RUNNER_NAMESPACE" --wait=false
+  done <<< "$prune_names"
 }
 
 cleanup() {
@@ -65,6 +92,11 @@ for cluster in "${clusters[@]}"; do
     contexts:[{name:"target",context:{cluster:"target",user:"bot",namespace:$namespace}}],
     "current-context":"target"
   }' "$CREDENTIALS_DIR/vanguard-proxy-$cluster" > "$KUBECONFIG"
+
+  # Ring 1 disables the cluster-wide Tekton pruner. Before creating a run,
+  # retain only the newest completed suite runs. Active and unrelated runs are
+  # never selected for deletion.
+  prune_completed_runs
 
   # Each run has isolated PipelineRun and Buildah storage. Generated names allow
   # overlapping promotions and avoid collisions with Tekton Results finalizers.
@@ -102,8 +134,7 @@ for cluster in "${clusters[@]}"; do
     exit 1
   }
 
-  # Keep completed PipelineRuns and their Pods available for diagnostics. The
-  # cluster's Tekton retention policy handles eventual cleanup.
-  printf 'PipelineRun retained: %s/%s\n' "$RUNNER_NAMESPACE" "$run_name"
+  printf 'PipelineRun retained: %s/%s (suite limit: %s)\n' \
+    "$RUNNER_NAMESPACE" "$run_name" "$RUN_RETENTION_COUNT"
   printf 'PROXY_REGRESSION_PASSED cluster=%s\n' "$cluster"
 done
