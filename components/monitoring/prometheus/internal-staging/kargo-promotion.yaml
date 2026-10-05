@@ -1,0 +1,65 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: kargo-promotion
+  namespace: appstudio-monitoring
+  labels:
+    # UWM ignores rules in openshift-user-workload-monitoring. Evaluate with
+    # the in-cluster user-workload Prometheus. The rule lives next to the
+    # custom kube-state-metrics scrape, in appstudio-monitoring.
+    openshift.io/prometheus-rule-evaluation-scope: leaf-prometheus
+spec:
+  groups:
+    - name: kargo_promotion
+      interval: 1m
+      rules:
+        # Stage metadata.name is ring-<n>-<component>. The collector cannot
+        # split that string, so the split happens here and name is dropped.
+        # metricNamePrefix is kargo_stage, so the series name is
+        # kargo_stage_<metric>, not kube_customresource_*.
+        # The Kargo project namespace is exported_namespace because the scrape
+        # target namespace (appstudio-monitoring) takes the namespace label.
+        - record: kargo:stage:last_promotion:finished_timestamp
+          expr: |
+            max by (exported_namespace, stage, component, phase) (
+              label_replace(
+                label_replace(
+                  kargo_stage_last_promotion_finished_timestamp,
+                  "stage", "$1", "name", "(ring-[0-9]+)-.+"
+                ),
+                "component", "$1", "name", "ring-[0-9]+-(.+)"
+              )
+            )
+        - record: kargo:stage:current_promotion:started_timestamp
+          expr: |
+            max by (exported_namespace, stage, component, phase) (
+              label_replace(
+                label_replace(
+                  kargo_stage_current_promotion_started_timestamp,
+                  "stage", "$1", "name", "(ring-[0-9]+)-.+"
+                ),
+                "component", "$1", "name", "ring-[0-9]+-(.+)"
+              )
+            )
+        - record: kargo:stage:health
+          expr: |
+            count by (exported_namespace, stage, component, health) (
+              label_replace(
+                label_replace(
+                  kargo_stage_health,
+                  "stage", "$1", "name", "(ring-[0-9]+)-.+"
+                ),
+                "component", "$1", "name", "ring-[0-9]+-(.+)"
+              )
+            )
+        - record: kargo:stage:condition:last_transition_timestamp
+          expr: |
+            max by (exported_namespace, stage, component, condition, status) (
+              label_replace(
+                label_replace(
+                  kargo_stage_condition_last_transition_timestamp,
+                  "stage", "$1", "name", "(ring-[0-9]+)-.+"
+                ),
+                "component", "$1", "name", "ring-[0-9]+-(.+)"
+              )
+            )

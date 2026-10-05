@@ -6,4 +6,71 @@ metadata:
 data:
   custom-resource-state.yaml: |
     spec:
-      resources: []
+      resources:
+        # Stage names are stable: ring-<n>-<component>. Promotion ids stay off
+        # these labels. Phase and health are strings, so they are labels and the
+        # gauge value is a timestamp or the object generation.
+        - groupVersionKind:
+            group: kargo.akuity.io
+            version: v1alpha1
+            kind: Stage
+          metricNamePrefix: kargo_stage
+          labelsFromPath:
+            name: [metadata, name]
+            namespace: [metadata, namespace]
+          metrics:
+            - name: last_promotion_finished_timestamp
+              help: "Unix time when this Stage last finished a promotion."
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, lastPromotion]
+                  labelsFromPath:
+                    phase: [status, phase]
+                  valueFrom: [finishedAt]
+            - name: current_promotion_started_timestamp
+              help: "Unix time when the in-progress promotion started. Absent while the Stage is idle."
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, currentPromotion]
+                  labelsFromPath:
+                    phase: [status, phase]
+                  valueFrom: [status, startedAt]
+            - name: health
+              help: "Stage object generation. The health label is status.health.status."
+              labelsFromPath:
+                health: [status, health, status]
+              each:
+                type: Gauge
+                gauge:
+                  path: [metadata, generation]
+            - name: condition_last_transition_timestamp
+              help: "Unix time of the last transition for a Stage condition."
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                    status: [status]
+                  valueFrom: [lastTransitionTime]
+        - groupVersionKind:
+            group: kargo.akuity.io
+            version: v1alpha1
+            kind: Warehouse
+          metricNamePrefix: kargo_warehouse
+          labelsFromPath:
+            name: [metadata, name]
+            namespace: [metadata, namespace]
+          metrics:
+            - name: condition_last_transition_timestamp
+              help: "Unix time of the last transition for a Warehouse condition."
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, conditions]
+                  labelsFromPath:
+                    condition: [type]
+                    status: [status]
+                  valueFrom: [lastTransitionTime]
