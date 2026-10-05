@@ -13,6 +13,7 @@ resources:
   - components/notification-controller
   - components/project-controller
   - components/smee-client
+  - verifications
 
 components:
   - ../../shared/promotion-tasks
