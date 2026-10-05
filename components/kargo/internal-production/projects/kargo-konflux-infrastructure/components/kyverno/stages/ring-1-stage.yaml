@@ -52,11 +52,23 @@ spec:
               - branch: main
                 path: ${{ vars.srcPath }}
         - task:
+            name: resolve-kyverno-release-pair
+          as: resolve-release
+          vars:
+            - name: imageTag
+              value: ${{ imageFrom('quay.io/konflux-ci/kyverno/kyverno').Tag }}
+        - task:
             name: promote-kyverno-images-ring-1
           as: promote
           vars:
             - name: srcPath
               value: ${{ vars.srcPath }}
+            - name: chartVersion
+              value: ${{ outputs['resolve-release::result'].chartVersion }}
+            - name: appVersion
+              value: ${{ outputs['resolve-release::result'].appVersion }}
+            - name: sourceRevision
+              value: ${{ outputs['resolve-release::result'].sourceRevision }}
             - name: component
               value: ${{ vars.component }}
         - task:
