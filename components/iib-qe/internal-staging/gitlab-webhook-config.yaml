@@ -12,6 +12,7 @@ spec:
         conversionStrategy: Default
         decodingStrategy: None
         key: staging/operator-foundry/iib-qe/gitlab-webhook-config
+        metadataPolicy: None
   refreshInterval: 1h
   secretStoreRef:
     kind: ClusterSecretStore

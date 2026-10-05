@@ -12,6 +12,7 @@ spec:
         conversionStrategy: Default
         decodingStrategy: None
         key: staging/operator-foundry/iib-qe/gitlab-git-auth
+        metadataPolicy: None
   refreshInterval: 1h
   secretStoreRef:
     kind: ClusterSecretStore
