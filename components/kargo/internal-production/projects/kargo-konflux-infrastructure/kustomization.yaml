@@ -6,6 +6,7 @@ namespace: kargo-konflux-infrastructure
 
 resources:
   - base
+  - components/cluster-secret-store
   - components/authentication
   - components/etcd-defrag
   - components/etcd-shield
