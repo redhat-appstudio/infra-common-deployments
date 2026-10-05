@@ -21,7 +21,7 @@ spec:
       config:
         message: >-
           Kyverno source repository credentials are missing. Check the
-          kyverno-source-credentials ExternalSecret in kargo-shared-resources.
+          kargo-konflux-ci-credentials ExternalSecret in kargo-shared-resources.
     - uses: http-download
       as: fetch-konflux-source-commit
       if: >-

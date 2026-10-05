@@ -13,7 +13,7 @@ Kargo consumers receive it:
 |---|---|
 | `kargo-promotion-credentials` | Git credential discovery in the shared resources namespace; no replication annotation |
 | `konflux-kargo-git-operations` | Generic credential read with `sharedSecret()` by GitHub HTTP steps; no replication annotation |
-| `kyverno-source-credentials` | Git credential for `konflux-ci/kyverno`; source HTTP steps use `repoCredentials()`; limited to `kargo-konflux-infrastructure` |
+| `kargo-konflux-ci-credentials` | Git credential discovery for konflux-ci repositories, using the URL regex stored in Vault; no replication annotation |
 | `argocd-app-reader-token-staging` | Replicated to projects; readiness reads it with `secret()` |
 | `kargo-rhobs-staging`, `kargo-rhobs-production` | Replicated to projects for Kanary AnalysisTemplates |
 | `konflux-conformance-sa` | Replicated to projects for the conformance launcher |
@@ -35,47 +35,23 @@ See [shared verifications](../../shared/verifications/) and
 Platform ownership follows [Kargo OWNERS](../../../OWNERS). Coordinate Vault rotation
 with the owners of the source credential; never commit credential values here.
 
-## Kyverno source repository credential
+## konflux-ci repository credentials
 
-Kyverno source resolution reads the internal `konflux-ci/kyverno` repository.
-It uses the existing `konflux-kargo-bot` App (ID `3794764`), with the
-**konflux-ci installation `168199985`**. The `redhat-appstudio` installation
-`134364184` continues to serve deployment repository operations.
+`kargo-konflux-ci-credentials` follows the same configuration as
+`kargo-promotion-credentials`, importing the complete Vault entry at
+`production/devprod/konflux-ci-kargo-bot` every 15 minutes.
 
-The `kyverno-source-credentials` ExternalSecret reads only `githubAppID` and
-`githubAppPrivateKey` from the existing Vault entry
-`production/devprod/konflux-redhat-appstudio-bot`. It sets the konflux-ci
-installation ID and matches the exact repository URL
-`https://github.com/konflux-ci/kyverno.git`. The existing promotion credential
-and its redhat-appstudio installation remain unchanged.
+Store the App fields (`githubAppID`, `githubAppInstallationID`,
+`githubAppPrivateKey`) and repository matching fields (`repoURL`,
+`repoURLIsRegex`) in that entry. Use the konflux-ci installation and a regex
+matching the intended konflux-ci repository URLs, including `.git` URLs.
+The App installation must include each repository Kargo will access.
 
-The resolver uses
-`repoCredentials('https://github.com/konflux-ci/kyverno.git', 'git').Password`
-for both GitHub API requests. Kargo manages the App installation token;
-External Secrets refreshes the underlying App fields from Vault every 15
-minutes. There is no separate generated-token Secret or token generator.
+Kyverno's resolver selects this credential automatically with
+`repoCredentials('https://github.com/konflux-ci/kyverno.git', 'git').Password`.
+Kargo manages the installation token. Wait for the ExternalSecret to report
+`Ready` in `kargo-shared-resources` before retrying a promotion.
 
-The `kargo.akuity.io/github-token-scopes` annotation restricts this shared Git
-credential to `kyverno` in the `kargo-konflux-infrastructure` Project. Tokens
-retain the App installation's permissions; this configuration does not
-independently reduce those permissions to read-only. The credential is not
-replicated and is not exposed as a shared generic Secret.
-
-Deployment requires Kargo v1.12 or a build with `repoCredentials()` backported
-to promotion expressions; see the [v1.12 release notes](https://docs.kargo.io/release-notes/v1.12.0).
-The repository currently pins v1.11.3. Upgrade or confirm the backport in the
-deployed build before merging or deploying this resolver change. YAML linting
-and Kustomize rendering cannot establish runtime function support.
-
-Before retrying a promotion after sync:
-
-1. Confirm the App's konflux-ci installation still includes `kyverno`.
-2. Confirm the deployed Kargo build supports `repoCredentials()`.
-3. Wait for the `kyverno-source-credentials` ExternalSecret to report `Ready`
-   in `kargo-shared-resources`.
-4. Retry the affected Kyverno promotion. All rings call the same resolver.
-
-For missing credentials, inspect the ExternalSecret's status and events,
-the exact repository URL, and the Project scope annotation. For HTTP 401,
-check the App key and installation ID. For HTTP 403/404, check the App
-installation's repository access. Do not print Secret values.
+`repoCredentials()` requires Kargo v1.12 or a backport; see the
+[release notes](https://docs.kargo.io/release-notes/v1.12.0). The repository pins
+v1.11.3, so confirm runtime support before deploying the resolver change.
