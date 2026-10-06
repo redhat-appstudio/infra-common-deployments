@@ -20,7 +20,7 @@ spec:
         errorThreshold: 240
       config:
         method: GET
-        url: https://api.github.com/repos/${{ vars.repoOwner }}/${{ vars.repoName }}/commits/${{ vars.commitSHA }}/check-runs
+        url: https://api.github.com/repos/${{ vars.repoOwner }}/${{ vars.repoName }}/commits/${{ vars.commitSHA }}/check-runs?per_page=100
         headers:
           - name: Authorization
             value: Bearer ${{ secret('kargo-common-infra-test-secrets').github_pat }}
@@ -28,6 +28,7 @@ spec:
             value: application/vnd.github+json
         successExpression: |
           response.status == 200 &&
+          response.body.total_count <= len(response.body.check_runs) &&
           len(response.body.check_runs) > 0 &&
-          all(response.body.check_runs, {.conclusion == 'success'})
+          all(response.body.check_runs, {.status == 'completed' && .conclusion == 'success'})
         timeout: 30s
