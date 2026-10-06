@@ -4,13 +4,13 @@ metadata:
   name: kargo
 name: kargo
 repo: oci://ghcr.io/akuity/kargo-charts
-version: 1.11.3
+version: 1.12.1
 namespace: kargo
 releaseName: kargo
 valuesInline:
   image:
     repository: quay.io/konflux-ci/kargo
-    tag: v1.11.3-0-g08a4d084
+    tag: v1.12.1-0-gc2316a2ff
   api:
     resources:
       requests:
@@ -52,7 +52,7 @@ valuesInline:
             memory: 128Mi
         image:
           repository: quay.io/konflux-ci/dex
-          tag: 51da7a2d36a03d846a646c988d38f37ac9f14cf3
+          tag: abaf6acef7dc7fa5694b8fad37431ec98b05ebcd
         skipApprovalScreen: true
         tls:
           selfSignedCert: false
