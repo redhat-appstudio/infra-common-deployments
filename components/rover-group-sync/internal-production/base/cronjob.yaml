@@ -58,6 +58,8 @@ spec:
                     secretKeyRef:
                       name: ldap-creds
                       key: password
+                - name: ENVIRONMENT
+                  value: "production"
               volumeMounts:
                 - name: rover-group-sync-config
                   mountPath: /config

@@ -1,12 +1,17 @@
 # Rover Group Sync
 
-The Rover Group Sync component consists of a scheduled job that ensures `Group` YAML manifest files in a `<environment>/rover/groups` directory of a Git repository are kept up to date with Konflux's [Rover][rover] LDAP groups. The component runs `oc adm groups sync` (LDAP only), then commits and pushes to the configured branch and Git repository (currently [internal-infra-deployments](https://github.com/redhat-appstudio/internal-infra-deployments/tree/main)) when there are changes to the groups.
+The Rover Group Sync component consists of a scheduled job that ensures `Group` YAML manifest files in a `<environment>/rover/<identity provider>/groups` directory of a Git repository are kept up to date with Konflux's [Rover][rover] LDAP groups.
+The component runs `oc adm groups sync` (LDAP only), then commits and pushes to the configured branch and Git repository (currently [internal-infra-deployments](https://github.com/redhat-appstudio/internal-infra-deployments/tree/main)) when there are changes to the groups.
 
 The container image and entrypoint script are maintained in the [infrastructure](https://github.com/redhat-appstudio/infrastructure) repository under `maintenance/rover-group-sync`.
 
 [rover]: https://rover.redhat.com/
 
 ## Layout
+
+The `base` folder is referenced by per Identity Provider (IdP) folders.
+Each IdP folder customizes the Rover Group Sync as per its needs.
+As an example, the IBMId IdP requires the `IAM#mail@redhat.com` format, whereas the RH Internal SSO requires the `preferred-username` one.
 
 `Secret`s spawned from `ExternalSecret`s in the `external-secrets/` directory are mounted into a `CronJob` along with a `ConfigMap` generated using the file(s) in the `config/` directory. The `CronJob` runs in the associated `Namspace` using the associated `ServiceAccount`.
 
@@ -44,15 +49,17 @@ The LDAP sync config template in `base/config/ldap-sync-config.yaml` has placeho
 | `LDAP_PASSWORD` | LDAP credential injection value | Yes | N/A | `ldap-creds` Secret |
 | `GIT_REPO_URL` | Git repository URL | Yes | N/A | `git-repo-creds` Secret |
 | `GIT_BRANCH` | Git repository branch | No | "main" | CronJob env |
-| `ENVIRONMENT` | The type of environment hosting the component | No | "staging" | Cronjob env |
+| `ENVIRONMENT` | The type of environment hosting the component | No | "staging" | CronJob env |
+| `USERNAME_PREFIX` | The prefix to add to each username | No | "" | CronJob env |
+| `IDENTITY_PROVIDER` | The name of the IdP targeted from the Job | Yes | "" | CronJob env |
 
 ## Local checks
 
 Run a one-off job on the cluster w/ a different image (same pod template as the CronJob):
 
 ```bash
-oc create job --from=cronjob/rover-group-sync "rover-group-sync-test-$(date +%s)" \
+IDENTITY_PROVIDER=ibmid # or rh-internal-sso or another
+oc create job --from=cronjob/rover-group-sync-${IDENTITY_PROVIDER} "rover-group-sync-test-$(date +%s)" \
 -n rover-group-sync --dry-run=client -o yaml | \
 sed 's|image:.*|image: <image-to-test>|g' | kubectl apply -f -
-
 ```

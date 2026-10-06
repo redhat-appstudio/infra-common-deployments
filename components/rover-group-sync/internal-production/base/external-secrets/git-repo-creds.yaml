@@ -10,7 +10,7 @@ spec:
     - extract:
         conversionStrategy: Default
         decodingStrategy: None
-        key: staging/infrastructure/group-sync/git-repo-ssh-key
+        key: production/infrastructure/group-sync/git-repo-ssh-key
   refreshInterval: 1h
   secretStoreRef:
     kind: ClusterSecretStore

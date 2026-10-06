@@ -1,0 +1,74 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+configMapGenerator:
+- files:
+  - ldap-sync-config.yaml=./config/ldap-sync-config.yaml
+  name: rover-group-sync-config
+generatorOptions:
+  disableNameSuffixHash: true
+nameSuffix: -ibmid
+patches:
+  - path: cronjob-patch.yaml
+    target:
+      kind: CronJob
+      name: rover-group-sync
+resources:
+- ../base
+replacements:
+  - source:
+      kind: ExternalSecret
+      name: ldap-creds
+      fieldPath: metadata.name
+    targets:
+    - select:
+        kind: ExternalSecret
+        name: ldap-creds
+      fieldPaths:
+      - spec.target.name
+    - select:
+        kind: CronJob
+        name: rover-group-sync
+      fieldPaths:
+        - spec.jobTemplate.spec.template.spec.containers.[name=rover-group-sync].env.[name=LDAP_DN].valueFrom.secretKeyRef.name
+        - spec.jobTemplate.spec.template.spec.containers.[name=rover-group-sync].env.[name=LDAP_PASSWORD].valueFrom.secretKeyRef.name
+  - source:
+      kind: ExternalSecret
+      name: mtls-ca-validators
+      fieldPath: metadata.name
+    targets:
+    - select:
+        kind: ExternalSecret
+        name: mtls-ca-validators
+      fieldPaths:
+      - spec.target.name
+    - select:
+        kind: CronJob
+        name: rover-group-sync
+      fieldPaths:
+        - spec.jobTemplate.spec.template.spec.volumes.[name=ca].secret.secretName
+  - source:
+      kind: ExternalSecret
+      name: git-repo-creds
+      fieldPath: metadata.name
+    targets:
+    - select:
+        kind: ExternalSecret
+        name: git-repo-creds
+      fieldPaths:
+      - spec.target.name
+    - select:
+        kind: CronJob
+        name: rover-group-sync
+      fieldPaths:
+        - spec.jobTemplate.spec.template.spec.containers.[name=rover-group-sync].env.[name=GIT_REPO_URL].valueFrom.secretKeyRef.name
+        - spec.jobTemplate.spec.template.spec.volumes.[name=git-repo-creds].secret.secretName
+  - source:
+      kind: ServiceAccount
+      name: rover-group-sync-sa
+      fieldPath: metadata.name
+    targets:
+    - select:
+        kind: ClusterRoleBinding
+        name: rover-group-sync-crb
+      fieldPaths:
+        - subjects.0.name
