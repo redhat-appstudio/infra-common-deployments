@@ -111,7 +111,7 @@ spec:
             errorThreshold: 10
           config:
             method: GET
-            url: https://api.github.com/repos/redhat-appstudio/infra-common-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/ring-1&state=open&per_page=2
+            url: https://api.github.com/repos/redhat-appstudio/infra-common-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/ring-1&state=open&base=main&per_page=2
             headers:
               - name: Authorization
                 value: Bearer ${{ secret('kargo-common-infra-test-secrets').github_pat }}
