@@ -114,7 +114,7 @@ spec:
             errorThreshold: 10
           config:
             method: GET
-            url: https://api.github.com/repos/redhat-appstudio/infra-common-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}&state=open
+            url: https://api.github.com/repos/redhat-appstudio/infra-common-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}&state=open&base=main&per_page=2
             headers:
               - name: Authorization
                 value: Bearer ${{ secret('kargo-common-infra-test-secrets').github_pat }}
@@ -123,7 +123,15 @@ spec:
             outputs:
               - name: prNumber
                 fromExpression: response.body[0].number
-            successExpression: response.status == 200 && len(response.body) > 0
+            successExpression: |
+              response.status == 200 &&
+              len(response.body) == 1 &&
+              response.body[0].state == 'open' &&
+              response.body[0].head.sha == ${{ quote(outputs['push'].commit) }} &&
+              response.body[0].head.ref == ${{ quote(ctx.project + '/' + vars.component + '/' + vars.targetRing) }} &&
+              response.body[0].head.repo.full_name == 'redhat-appstudio/infra-common-deployments' &&
+              response.body[0].base.repo.full_name == 'redhat-appstudio/infra-common-deployments' &&
+              response.body[0].base.ref == 'main'
             timeout: 30s
         - uses: git-merge-pr
           as: merge-pr
