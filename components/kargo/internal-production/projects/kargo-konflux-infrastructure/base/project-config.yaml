@@ -93,3 +93,13 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-4-cluster-secret-store-rh
       autoPromotionEnabled: true
+    - stage: ring-0-policies
+      autoPromotionEnabled: true
+    - stage: ring-1-policies
+      autoPromotionEnabled: true
+    - stage: ring-2-policies
+      autoPromotionEnabled: true
+    - stage: ring-3-policies
+      autoPromotionEnabled: true
+    - stage: ring-4-policies
+      autoPromotionEnabled: true

@@ -1,0 +1,48 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-policies
+spec:
+  vars:
+    - name: srcPath
+    - name: freightPath
+    - name: repoURL
+    - name: component
+    - name: targetRing
+  steps:
+    - uses: fail
+      as: validate-bundle
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'policies' || vars.repoURL !=
+        'https://github.com/redhat-appstudio/infra-deployments.git' ||
+        vars.component != ctx.targetFreight.origin.name || vars.targetRing not in
+        ['ring-0', 'ring-1', 'ring-2', 'ring-3', 'ring-4'] ||
+        !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$') }}
+      config:
+        message: Expected policies Freight containing an immutable infra-deployments
+          policy commit, targeting Ring 0-4.
+    # Replace from the selected Freight checkout, never from a moving previous ring.
+    - uses: delete
+      as: delete-old-base-snapshot
+      if: ${{ status('validate-bundle') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/policies/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: copy
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-base-snapshot') == 'Succeeded' }}
+      config:
+        inPath: ${{ vars.freightPath }}/components/policies/base
+        outPath: ${{ vars.srcPath }}/components/policies/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-bundle') == 'Skipped' &&
+        status('delete-old-base-snapshot') == 'Succeeded' &&
+        status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: |
+          Update the Konflux policies in ${{ vars.targetRing }} from the selected Freight.
+
+          Policy source: [${{ commitFrom(vars.repoURL).ID[0:12] }}](https://github.com/redhat-appstudio/infra-deployments/commit/${{ commitFrom(vars.repoURL).ID }}).
