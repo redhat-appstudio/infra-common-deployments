@@ -13,6 +13,7 @@ Kargo consumers receive it:
 |---|---|
 | `kargo-promotion-credentials` | Git credential discovery in the shared resources namespace; no replication annotation |
 | `konflux-kargo-git-operations` | Generic credential read with `sharedSecret()` by GitHub HTTP steps; no replication annotation |
+| `kargo-konflux-ci-credentials` | Git credential discovery for konflux-ci repositories, using the URL regex stored in Vault; no replication annotation |
 | `argocd-app-reader-token-staging` | Replicated to projects; readiness reads it with `secret()` |
 | `kargo-rhobs-staging`, `kargo-rhobs-production` | Replicated to projects for Kanary AnalysisTemplates |
 | `konflux-conformance-sa` | Replicated to projects for the conformance launcher |
@@ -33,3 +34,24 @@ See [shared verifications](../../shared/verifications/) and
 [shared promotion tasks](../../shared/promotion-tasks/) for consumers.
 Platform ownership follows [Kargo OWNERS](../../../OWNERS). Coordinate Vault rotation
 with the owners of the source credential; never commit credential values here.
+
+## konflux-ci repository credentials
+
+`kargo-konflux-ci-credentials` follows the same configuration as
+`kargo-promotion-credentials`, importing the complete Vault entry at
+`production/devprod/konflux-ci-kargo-bot` every 15 minutes.
+
+Store the App fields (`githubAppID`, `githubAppInstallationID`,
+`githubAppPrivateKey`) and repository matching fields (`repoURL`,
+`repoURLIsRegex`) in that entry. Use the konflux-ci installation and a regex
+matching the intended konflux-ci repository URLs, including `.git` URLs.
+The App installation must include each repository Kargo will access.
+
+Kyverno's resolver selects this credential automatically with
+`repoCredentials('https://github.com/konflux-ci/kyverno.git', 'git').Password`.
+Kargo manages the installation token. Wait for the ExternalSecret to report
+`Ready` in `kargo-shared-resources` before retrying a promotion.
+
+`repoCredentials()` requires Kargo v1.12 or a backport; see the
+[release notes](https://docs.kargo.io/release-notes/v1.12.0). The repository pins
+v1.11.3, so confirm runtime support before deploying the resolver change.
