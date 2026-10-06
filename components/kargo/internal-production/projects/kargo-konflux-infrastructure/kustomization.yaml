@@ -14,6 +14,7 @@ resources:
   - components/kueue
   - components/kyverno
   - components/multi-platform-controller
+  - components/policies
   - components/repository-validator
   - components/cluster-secret-store-rh
 
