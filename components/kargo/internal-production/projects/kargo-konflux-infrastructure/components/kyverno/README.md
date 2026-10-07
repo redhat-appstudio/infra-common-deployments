@@ -16,7 +16,7 @@ for that exact tag to appear in the public Quay repository before making changes
 | 3 | Manual | 48h | `stone-prd-rh01`, `stone-prod-p02` |
 | 4 | Manual | 72h | `kflux-prd-rh02` |
 
-Ring 0 receives Freight directly. Each later ring takes verified Freight from its predecessor Auto-promotion is enabled for every ring; production creates a pull request and waits for a human to merge it. The Prow gate is `ci/prow/appstudio-operator-overlay-e2e-tests`, whose trigger includes this component's ring 0. It is an integration gate, not a kyverno-specific test suite. Prow is skipped explicitly in rings 1-4.
+Ring 0 receives Freight directly. Each later ring takes verified Freight from its predecessor Auto-promotion is enabled for every ring; production creates a pull request and waits for a human to merge it. The Prow gate is `ci/prow/konflux-ring-deployments-conformance-tests`, whose trigger includes this component's ring 0. It is an integration gate, not a kyverno-specific test suite. Prow is skipped explicitly in rings 1-4.
 
 Readiness checks occur on every configured Application after merge in rings 1-4. Targets match the rendered staging/production ApplicationSets and existing ring paths; this onboarding does not add clusters. The infrastructure Kanary templates add sampled verification: ring 1 checks `stone-stage-p01` and `stone-stg-rh01`; ring 2 checks `stone-prod-p01`, `kflux-fedora-01` and `kflux-prd-rh03`; ring 3 checks `stone-prd-rh01`; and ring 4 checks `kflux-prd-rh02`.
 

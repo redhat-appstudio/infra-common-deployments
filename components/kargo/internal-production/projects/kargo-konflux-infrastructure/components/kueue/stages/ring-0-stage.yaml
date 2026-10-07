@@ -30,7 +30,7 @@ spec:
         - name: skipProwChecks
           value: 'false'
         - name: requiredProwChecks
-          value: ^ci/prow/appstudio-operator-overlay-e2e-tests$
+          value: ^ci/prow/konflux-ring-deployments-conformance-tests$
         - name: freightPath
           value: ./freight
       steps:

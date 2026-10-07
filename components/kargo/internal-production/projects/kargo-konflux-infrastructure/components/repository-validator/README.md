@@ -28,7 +28,7 @@ The staging and production Applications enable Argo CD auto-sync with pruning
 and self-healing. After merge, Argo CD reconciles the change; the readiness task
 observes that sync and does not initiate it.
 
-Ring 0 requires `ci/prow/appstudio-operator-overlay-e2e-tests`; its trigger includes
+Ring 0 requires `ci/prow/konflux-ring-deployments-conformance-tests`; its trigger includes
 this component's Ring 0 paths. Prow is explicitly skipped in later rings. Ring 0
 keeps the development allow-all configuration and does not test the private
 allowlists. Staging exercises the staging config; reviewers must review the

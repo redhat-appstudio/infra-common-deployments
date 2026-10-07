@@ -24,7 +24,7 @@ must keep SHA tags immutable; OTP's digest is not independently recorded in Frei
 Ring 0 receives Freight directly. Each later ring takes verified Freight from
 its predecessor. Auto-promotion is enabled for every ring; production creates a
 proposal and waits for a human to merge it. The Prow gate is
-`ci/prow/appstudio-operator-overlay-e2e-tests`, whose trigger includes this
+`ci/prow/konflux-ring-deployments-conformance-tests`, whose trigger includes this
 component's Ring 0. It is an integration gate, not an MPC-specific test suite.
 Prow is skipped explicitly in Rings 1-4.
 
