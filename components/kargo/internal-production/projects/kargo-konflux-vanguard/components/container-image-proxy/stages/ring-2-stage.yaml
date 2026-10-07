@@ -17,6 +17,12 @@ spec:
         stages:
           - ring-1-container-image-proxy
         requiredSoakTime: 48h0m0s
+  verification:
+    analysisTemplates:
+      - name: caching-proxy-regression-production
+    args:
+      - name: proxy-regression-cluster
+        value: stone-prod-p01
   promotionTemplate:
     spec:
       vars:

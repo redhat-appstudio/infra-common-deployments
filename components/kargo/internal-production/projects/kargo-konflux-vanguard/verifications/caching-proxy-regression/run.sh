@@ -5,6 +5,7 @@ umask 077
 
 : "${CREDENTIALS_DIR:?proxy suite credential directory is required}"
 : "${TEMPLATE_FILE:?PipelineRun template is required}"
+TARGET_CLUSTER=${TARGET_CLUSTER:-stone-stg-rh01}
 
 RUNNER_NAMESPACE=verification-vanguard-proxy-runner
 POLL_INTERVAL=${POLL_INTERVAL:-15}
@@ -17,9 +18,9 @@ ABANDONED_RUN_SECONDS=${ABANDONED_RUN_SECONDS:-$((RUN_TIMEOUT_SECONDS + POLL_INT
 [[ "$ABANDONED_RUN_SECONDS" =~ ^[1-9][0-9]*$ ]]
 (( ABANDONED_RUN_SECONDS > RUN_TIMEOUT_SECONDS + POLL_INTERVAL ))
 
-# Start with one representative staging cluster. Add one representative cluster
-# from each later ring only after its cluster-side suite resources are deployed.
-clusters=(stone-stg-rh01)
+# Each Stage selects one representative cluster from its ring. Keeping the
+# cluster selection in the Stage prevents one verification from crossing rings.
+clusters=("$TARGET_CLUSTER")
 
 for cluster in "${clusters[@]}"; do
   # Validate every launcher credential before contacting a cluster. Never put the
@@ -94,6 +95,9 @@ for cluster in "${clusters[@]}"; do
   case "$cluster" in
     stone-stg-rh01)
       server=https://api.stone-stg-rh01.l2vh.p1.openshiftapps.com:6443
+      ;;
+    stone-prod-p01)
+      server=https://api.stone-prod-p01.wcfb.p1.openshiftapps.com:6443
       ;;
     *)
       echo "No API endpoint configured for $cluster" >&2
