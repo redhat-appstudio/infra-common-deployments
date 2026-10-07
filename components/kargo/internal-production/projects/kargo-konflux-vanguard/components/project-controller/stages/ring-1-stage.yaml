@@ -141,6 +141,6 @@ spec:
             - name: component
               value: ${{ vars.component }}
             - name: clusters
-              value: stone-stage-p01|stone-stg-rh01|lightwell-dev
+              value: stone-stage-p01|stone-stg-rh01
             - name: tokenSecret
               value: argocd-app-reader-token-staging

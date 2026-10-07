@@ -22,7 +22,7 @@ an atomic cross-repository release.
 | Ring | Merge policy | Deployment readiness | Soak in previous Stage |
 |---|---|---|---|
 | 0 | Automatic after GitHub checks and the Operator overlay Prow suite | Development deployment uses the updated ring base; no Argo readiness gate | None |
-| 1 | Automatic after GitHub checks | All three staging Applications, then the existing Kanary verification | None |
+| 1 | Automatic after GitHub checks | Two staging Applications, then the existing Kanary verification | None |
 | 2 | Manual after GitHub checks | Seven production Applications, then Kanary on two clusters | 48h |
 | 3 | Manual after GitHub checks | Two production Applications, then Kanary on one cluster | 48h |
 | 4 | Manual after GitHub checks | One production Application, then Kanary on that cluster | 72h |
@@ -32,10 +32,10 @@ a proposal; a reviewer still has to merge the PR. Prow is required in Ring 0 and
 explicitly skipped in later rings, following the existing Vanguard workflow.
 Soak measures eligibility in the previous Stage, not the image publication age.
 
-Application targets were checked against infra-deployments commit
+Verification targets use the Application names checked against infra-deployments commit
 [`562b33c4b35b9e2af320778679e37082597acf47`](https://github.com/redhat-appstudio/infra-deployments/tree/562b33c4b35b9e2af320778679e37082597acf47/components/project-controller/rings):
 
-- Ring 1: `stone-stage-p01`, `stone-stg-rh01`, `lightwell-dev`.
+- Ring 1: `stone-stage-p01`, `stone-stg-rh01`.
 - Ring 2: `kflux-lw-p01`, `kflux-fedora-01`, `kflux-ocp-p01`, `kflux-osp-p01`,
   `kflux-prd-rh03`, `kflux-rhel-p01`, `stone-prod-p01`.
 - Ring 3: `stone-prd-rh01`, `stone-prod-p02`.
@@ -45,7 +45,7 @@ Applications use `project-controller-<cluster>` names and the
 `app.kubernetes.io/part-of: project-controller` label. All three staging overlays
 include the component base. Kanary covers only `stone-stg-rh01` and
 `stone-stage-p01`, matching the existing staging monitoring configuration;
-`lightwell-dev` is still required to pass Argo readiness. Production retains
+`lightwell-dev` is excluded from Argo readiness verification. Production retains
 the existing Vanguard Kanary targets: `stone-prod-p01` and `kflux-prd-rh03`
 in Ring 2, `stone-prd-rh01` in Ring 3, and `kflux-prd-rh02` in Ring 4.
 

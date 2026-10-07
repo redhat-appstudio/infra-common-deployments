@@ -11,7 +11,7 @@ for that exact tag to appear in the public Quay repository before making changes
 | Ring | Merge policy | Upstream soak | Argo CD targets |
 |---|---|---|---|
 | 0 | Automatic after GitHub checks and Prow | None | No fixed Argo CD target list; Prow is required |
-| 1 | Automatic after GitHub checks | None | `stone-stage-p01`, `stone-stg-rh01`, `lightwell-dev` |
+| 1 | Automatic after GitHub checks | None | `stone-stage-p01`, `stone-stg-rh01` |
 | 2 | Manual | 24h | `kflux-lw-p01`, `kflux-fedora-01`, `kflux-ocp-p01`, `kflux-osp-p01`, `kflux-prd-rh03`, `kflux-rhel-p01`, `stone-prod-p01` |
 | 3 | Manual | 48h | `stone-prd-rh01`, `stone-prod-p02` |
 | 4 | Manual | 72h | `kflux-prd-rh02` |
