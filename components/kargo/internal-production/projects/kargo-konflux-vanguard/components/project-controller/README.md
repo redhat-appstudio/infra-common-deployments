@@ -21,7 +21,7 @@ an atomic cross-repository release.
 
 | Ring | Merge policy | Deployment readiness | Soak in previous Stage |
 |---|---|---|---|
-| 0 | Automatic after GitHub checks and the Operator overlay Prow suite | Development deployment uses the updated ring base; no Argo readiness gate | None |
+| 0 | Automatic after GitHub checks and the ring deployments conformance Prow suite | Development deployment uses the updated ring base; no Argo readiness gate | None |
 | 1 | Automatic after GitHub checks | Two staging Applications, then the existing Kanary verification | None |
 | 2 | Manual after GitHub checks | Seven production Applications, then Kanary on two clusters | 48h |
 | 3 | Manual after GitHub checks | Two production Applications, then Kanary on one cluster | 48h |

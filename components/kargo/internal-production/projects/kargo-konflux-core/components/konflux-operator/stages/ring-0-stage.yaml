@@ -27,11 +27,11 @@ spec:
           value: ring-0
         - name: mergeMode
           value: auto
-        # Ring 0 requires the Operator overlay end-to-end Prow suite.
+        # Ring 0 requires the ring deployments conformance Prow suite.
         - name: skipProwChecks
           value: 'false'
         - name: requiredProwChecks
-          value: ^ci/prow/appstudio-operator-overlay-e2e-tests$
+          value: ^ci/prow/konflux-ring-deployments-conformance-tests$
       steps:
         - uses: git-clone
           as: clone

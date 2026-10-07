@@ -18,7 +18,7 @@ These targets come from the rendered ESO staging/production ApplicationSets.
 Ring 0 is an empty placeholder with no development ApplicationSet, so promotion
 starts at Ring 1. `lightwell-dev` is empty and is not a deployment target.
 GitHub checks are required. Prow is explicitly skipped: this component has no
-active Ring 0 deployment, and the Operator overlay Prow suite targets Ring 0.
+active Ring 0 deployment, and the ring deployments conformance Prow suite targets Ring 0.
 
 Production auto-promotion creates the proposal; it does not merge it. Every ring
 waits for all its Argo CD Applications to be healthy and synchronized after the

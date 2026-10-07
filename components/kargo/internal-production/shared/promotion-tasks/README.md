@@ -41,7 +41,7 @@ These tasks currently target `redhat-appstudio/infra-deployments`, branch `main`
 | Konflux Operator | 1 | Automatic | Disabled | `stone-stage-p01` |
 | Konflux Operator | 2 | Automatic | Disabled | `kflux-lw-p01` |
 
-Operator Ring 0 requires `^ci/prow/appstudio-operator-overlay-e2e-tests$`.
+Operator Ring 0 requires `^ci/prow/konflux-ring-deployments-conformance-tests$`.
 Operator Ring 1 also runs Kanary and conformance verification on
 `stone-stage-p01`, with single-arch and multi-arch signals. Those verification
 checks have a different scope from its two-cluster deployment readiness check.

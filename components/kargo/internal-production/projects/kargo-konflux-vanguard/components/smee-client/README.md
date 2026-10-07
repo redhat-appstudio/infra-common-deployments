@@ -47,7 +47,7 @@ state. Existing digest pins are shown as digests. Full provenance remains in Fre
 
 | Ring | Freight source | Merge | Prow | Deployment verification |
 |---|---|---|---|---|
-| 0 | Direct from `smee-client` | Automatic after CI | `ci/prow/appstudio-operator-overlay-e2e-tests` required | Git/CI completion only |
+| 0 | Direct from `smee-client` | Automatic after CI | `ci/prow/konflux-ring-deployments-conformance-tests` required | Git/CI completion only |
 | 1 | Through Ring 0 | Automatic after CI | Explicitly skipped | `smee-client-stone-stage-p01`, then existing Kanary verification |
 
 The staging ApplicationSet currently has automated sync disabled. A manual or

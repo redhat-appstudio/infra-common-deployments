@@ -10,7 +10,7 @@ snapshots do not trigger another candidate.
 
 | Ring | Freight source | PR merge | Checks |
 |---|---|---|---|
-| 0 | Warehouse | Automatic | GitHub checks and `ci/prow/appstudio-operator-overlay-e2e-tests` |
+| 0 | Warehouse | Automatic | GitHub checks and `ci/prow/konflux-ring-deployments-conformance-tests` |
 | 1 | Ring 0 | Automatic | GitHub checks; Argo CD readiness for `crossplane-config-kflux-stg-es01` |
 | 2 | Ring 1, after 48h soak | Manual | GitHub checks; Argo CD readiness for `crossplane-config-kflux-prd-es01` |
 
