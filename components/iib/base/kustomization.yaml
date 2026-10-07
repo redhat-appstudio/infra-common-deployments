@@ -6,3 +6,4 @@ namespace: iib
 
 resources:
 - namespace.yaml
+- iib-maintainers.yaml
