@@ -10,7 +10,7 @@ spec:
     - extract:
         conversionStrategy: Default
         decodingStrategy: None
-        key: staging/infrastructure/group-sync/konflux-ldap-sa
+        key: production/infrastructure/group-sync/konflux-ldap-sa
   refreshInterval: 1h
   secretStoreRef:
     kind: ClusterSecretStore

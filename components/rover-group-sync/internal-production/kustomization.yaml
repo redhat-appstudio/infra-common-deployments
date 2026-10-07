@@ -5,14 +5,9 @@ namespace: rover-group-sync
 images:
 - name: quay.io/redhat-user-workloads/konflux-infra-tenant/rover-group-sync
   newName: quay.io/redhat-user-workloads/konflux-infra-tenant/rover-group-sync
-  digest: sha256:45325f6ec0d064ceaa4ecd8fa17958394592f9bb3c5f95d0d5167e218bae94f0
+  digest: sha256:0943b55b7d170a859a5bd9847a504a4b720084b0abdbf6eee3ef2c12ee70bbbc
 
 resources:
-- base
-
-patches:
-  - path: cronjob-patch.yaml
-    target:
-      kind: CronJob
-      name: rover-group-sync
-  - path: externalsecrets-patch.yaml
+- namespace.yaml
+- ibmid
+- rh-sso-internal

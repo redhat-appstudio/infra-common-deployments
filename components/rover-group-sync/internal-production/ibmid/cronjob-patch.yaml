@@ -11,5 +11,7 @@ spec:
           containers:
             - name: rover-group-sync
               env:
-                - name: ENVIRONMENT
-                  value: "production"
+                - name: USERNAME_PREFIX
+                  value: "IAM#"
+                - name: IDENTITY_PROVIDER
+                  value: "ibmid"

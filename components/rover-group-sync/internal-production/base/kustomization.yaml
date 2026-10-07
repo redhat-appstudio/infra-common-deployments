@@ -4,11 +4,4 @@ namespace: rover-group-sync
 resources:
   - external-secrets
   - cronjob.yaml
-  - namespace.yaml
   - rbac.yaml
-configMapGenerator:
-  - name: rover-group-sync-config
-    files:
-      - ldap-sync-config.yaml=./config/ldap-sync-config.yaml
-generatorOptions:
-  disableNameSuffixHash: true
