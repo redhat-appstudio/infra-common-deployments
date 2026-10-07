@@ -7,6 +7,7 @@ resources:
   - ../../base/internal
   - argo-rollouts.yaml
   - kargo-shard-infra-deployments.yaml
+  - custom-kube-state-metrics.yaml
 
 patches:
   - path: environment-patch.yaml
