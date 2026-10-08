@@ -288,6 +288,28 @@ spec:
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
+  name: remote-client-config-lw-p01
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: hacbs/hacbs-internal-services/internal-services-controller/remote-client-config/lw-p01
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: hacbs-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: remote-client-config-lw-p01
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
   name: remote-client-config-prod-rh03
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
