@@ -9,7 +9,7 @@ spec:
         values:
           sourceRoot: components/k8s-groups
           environment: ""
-          useCaseDir: rover
+          useCaseDir: rover/rh-sso-internal
   template:
     metadata:
       name: k8s-groups-{{.nameNormalized}}
