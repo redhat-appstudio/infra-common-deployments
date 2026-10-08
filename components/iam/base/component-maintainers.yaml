@@ -21,6 +21,7 @@ rules:
     verbs:
       - patch
       - get
+      - update
   - apiGroups:
       - ''
     resources:
