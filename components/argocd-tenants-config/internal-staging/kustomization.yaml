@@ -13,3 +13,11 @@ resources:
   - tenants-config-appset.yaml
   - rh-managed-workspaces-config-appset.yaml
   - external-secrets
+
+patches:
+  - path: patches/argocd-controller-resource-health-persist-patch.yaml
+    target:
+      group: argoproj.io
+      version: v1beta1
+      kind: ArgoCD
+      name: argocd-tenants-config
