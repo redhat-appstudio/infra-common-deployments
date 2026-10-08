@@ -7,6 +7,7 @@ namespace: iib-qe
 resources:
 - namespace.yaml
 - iib-qe-maintainers.yaml
+- serviceaccount.yaml
 - trusted-ca-configmap.yaml
 - repositories
 - registry-proxy-push-secret.yaml
