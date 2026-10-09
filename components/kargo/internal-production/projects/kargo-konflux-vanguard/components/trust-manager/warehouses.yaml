@@ -10,6 +10,6 @@ spec:
     - chart:
         repoURL: https://charts.jetstack.io
         name: trust-manager
-        # Stay within the deployed pre-1.0 minor until explicitly reviewed.
-        semverConstraint: ^0.19.0
+        # Allow all stable 0.x releases; adopting 1.x requires explicit review.
+        semverConstraint: '>=0.0.0 <1.0.0'
         discoveryLimit: 5

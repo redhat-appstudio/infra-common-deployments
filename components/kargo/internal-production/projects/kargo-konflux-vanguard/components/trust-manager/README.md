@@ -2,9 +2,10 @@
 
 Trust-manager belongs to the production `kargo-konflux-vanguard` project.
 Its Warehouse discovers the public `trust-manager` chart from
-`https://charts.jetstack.io` every two hours. The initial `^0.19.0` constraint
-allows stable patches of the deployed minor; review this constraint before
-adopting another minor. Upstream chart versions may have a `v` prefix.
+`https://charts.jetstack.io` every two hours. The `>=0.0.0 <1.0.0` constraint
+allows all stable 0.x releases, including `v0.25.0`, and excludes prereleases
+and 1.x or later releases. Each discovery selects up to five newest matching
+versions. Upstream chart versions may have a `v` prefix.
 
 Each promotion clones infra-deployments `main` and updates only `version` in
 `components/trust-manager/rings/<ring>/base/trust-manager-helm-generator.yaml`.
@@ -43,8 +44,8 @@ the Stage manifests contain the exact lists.
 
 ## Operations
 
-The first discovery can start Ring 0 automatically and may produce a change
-from `0.19.0` to the equivalent published `v0.19.0` spelling. No chart is
+The first discovery can start Ring 0 automatically and may select a newer
+0.x minor than the deployed `0.19.0`. No chart is
 deployed merely by adding these Kargo resources; deployments follow the
 promotion PRs in infra-deployments.
 
