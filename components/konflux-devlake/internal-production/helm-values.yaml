@@ -15,7 +15,7 @@ lake:
       cpu: "4"
       memory: "4Gi"
     limits:
-      memory: "8Gi"
+      memory: "12Gi"
   envs:
     REMOTE_PLUGIN_DIR: ""
     DISABLED_REMOTE_PLUGINS: "true"
