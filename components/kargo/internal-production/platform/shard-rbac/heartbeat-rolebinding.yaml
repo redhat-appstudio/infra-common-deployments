@@ -1,0 +1,15 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kargo-shard-heartbeats
+  namespace: kargo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kargo-shard-heartbeats
+subjects:
+  # Identity used by all three shards' production-kargo-kubeconfig.
+  - kind: ServiceAccount
+    name: kargo-shard-staging
+    namespace: kargo

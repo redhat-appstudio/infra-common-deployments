@@ -31,6 +31,8 @@ valuesInline:
     installClusterRoles: false
     installClusterRoleBindings: false
   global:
+    # Heartbeats must be written where the production Kargo API reads them.
+    kargoNamespace: kargo
     createClusterSecretsNamespace: false
     systemResources:
       createNamespace: false
