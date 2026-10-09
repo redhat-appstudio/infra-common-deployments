@@ -1,0 +1,15 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: trust-manager
+spec:
+  freightCreationPolicy: Automatic
+  interval: 2h0m0s
+  subscriptions:
+    - chart:
+        repoURL: https://charts.jetstack.io
+        name: trust-manager
+        # Allow all stable 0.x releases; adopting 1.x requires explicit review.
+        semverConstraint: '>=0.0.0 <1.0.0'
+        discoveryLimit: 5

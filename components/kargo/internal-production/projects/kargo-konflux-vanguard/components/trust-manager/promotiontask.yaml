@@ -1,0 +1,61 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-trust-manager
+spec:
+  vars:
+    - name: srcPath
+    - name: component
+    - name: targetRing
+  steps:
+    - uses: fail
+      as: validate-chart
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'trust-manager' || vars.component != 'trust-manager' ||
+        vars.targetRing not in ['ring-0', 'ring-1', 'ring-2', 'ring-3', 'ring-4'] ||
+        chartFrom('https://charts.jetstack.io', 'trust-manager') == nil ||
+        !(chartFrom('https://charts.jetstack.io', 'trust-manager').Version matches '^v?[0-9]+[.][0-9]+[.][0-9]+$') }}
+      config:
+        message: Expected trust-manager Freight containing a stable Helm chart version, targeting Ring 0–4.
+    - uses: yaml-parse
+      as: read-previous-chart
+      if: ${{ status('validate-chart') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/trust-manager/rings/${{ vars.targetRing }}/base/trust-manager-helm-generator.yaml
+        outputs:
+          - name: version
+            fromExpression: string(version)
+          - name: validLayout
+            fromExpression: >-
+              apiVersion == 'builtin' && kind == 'HelmChartInflationGenerator' &&
+              name == 'trust-manager' && repo == 'https://charts.jetstack.io' &&
+              namespace == 'cert-manager' && releaseName == 'trust-manager'
+    - uses: fail
+      as: validate-layout
+      if: >-
+        ${{ status('read-previous-chart') == 'Succeeded' &&
+        (!task.outputs['read-previous-chart'].validLayout || task.outputs['read-previous-chart'].version == '') }}
+      config:
+        message: Expected the existing trust-manager Helm generator from charts.jetstack.io in cert-manager.
+    - uses: yaml-update
+      as: update-chart-version
+      if: ${{ status('read-previous-chart') == 'Succeeded' && status('validate-layout') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/trust-manager/rings/${{ vars.targetRing }}/base/trust-manager-helm-generator.yaml
+        updates:
+          - key: version
+            value: ${{ chartFrom('https://charts.jetstack.io', 'trust-manager').Version }}
+    - uses: compose-output
+      as: result
+      if: ${{ status('update-chart-version') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: |
+          Update the trust-manager Helm chart in ${{ vars.targetRing }}.
+          Preserve the ring's existing Helm values, namespace, and release name.
+        prChanges:
+          - kind: Trust-manager Helm chart
+            previous: ${{ quote(task.outputs['read-previous-chart'].version) }}
+            proposed: ${{ quote(chartFrom('https://charts.jetstack.io', 'trust-manager').Version) }}
+            path: components/trust-manager/rings/${{ vars.targetRing }}/base/trust-manager-helm-generator.yaml
