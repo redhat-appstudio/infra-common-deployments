@@ -13,7 +13,7 @@ lake:
   resources:
     requests:
       cpu: "4"
-      memory: "4Gi"
+      memory: "12Gi"
     limits:
       memory: "12Gi"
   envs:
