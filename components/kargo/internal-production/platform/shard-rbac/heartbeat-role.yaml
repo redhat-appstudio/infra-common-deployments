@@ -1,0 +1,26 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kargo-shard-heartbeats
+  namespace: kargo
+rules:
+  # Kubernetes RBAC cannot restrict create by resourceNames.
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    resourceNames:
+      - kargo-controller-infra-common-deployments-staging
+      - kargo-controller-infra-deployments-staging
+      - kargo-controller-infra-deployments-production
+    verbs:
+      - get
+      - update
+      - delete
