@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
 - internal-services.yaml
 - advisories.yaml
+- iib-qe.yaml
 commonAnnotations:
   argocd.argoproj.io/sync-wave: "11"
 
