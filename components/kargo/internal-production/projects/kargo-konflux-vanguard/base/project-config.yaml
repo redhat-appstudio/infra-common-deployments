@@ -69,3 +69,13 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-4-project-controller
       autoPromotionEnabled: true
+    - stage: ring-0-trust-manager
+      autoPromotionEnabled: true
+    - stage: ring-1-trust-manager
+      autoPromotionEnabled: true
+    - stage: ring-2-trust-manager
+      autoPromotionEnabled: true
+    - stage: ring-3-trust-manager
+      autoPromotionEnabled: true
+    - stage: ring-4-trust-manager
+      autoPromotionEnabled: true
