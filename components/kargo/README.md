@@ -7,6 +7,8 @@ change deployment Git through pull requests; Argo CD reconciles the result.
 
 ## Start here
 
+- [Configure Kargo promotions](CONFIGURATION.md) — choose a project and find
+  where each promotion setting belongs.
 - [Production directory and ownership](internal-production/README.md)
 - [Onboard a component](internal-production/docs/onboarding.md)
 - [Operate and upgrade Kargo](internal-production/docs/operations.md)
