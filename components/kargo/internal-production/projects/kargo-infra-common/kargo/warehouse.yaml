@@ -9,7 +9,7 @@ spec:
   subscriptions:
     - chart:
         repoURL: oci://ghcr.io/akuity/kargo-charts/kargo
-        semverConstraint: ^1.10.0
+        semverConstraint: ^1.12.0
         discoveryLimit: 5
     - image:
         repoURL: quay.io/konflux-ci/kargo
