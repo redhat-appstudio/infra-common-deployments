@@ -15,6 +15,24 @@ As an example, the IBMId IdP requires the `IAM#mail@redhat.com` format, whereas 
 
 `Secret`s spawned from `ExternalSecret`s in the `external-secrets/` directory are mounted into a `CronJob` along with a `ConfigMap` generated using the file(s) in the `config/` directory. The `CronJob` runs in the associated `Namspace` using the associated `ServiceAccount`.
 
+## RBAC
+
+The `ServiceAccount` is bound to a `ClusterRole` that grants only `get` on `user.openshift.io/groups`, restricted by `resourceNames` to the groups the job reads. The job runs `oc adm groups sync` without `--confirm`, so it only ever `GET`s each `Group` by name and never writes `Group` objects.
+
+Because `groupNameAttributes` is `cn`, each `Group` object name equals its LDAP CN. **When you add or remove a CN in the `groupsQuery` filter of an IdP overlay's `config/ldap-sync-config.yaml`, update `resourceNames` in `base/rbac.yaml` in the same change** — otherwise the `GET` for the new group is denied and the sync run fails.
+
+Each IdP overlay (`ibmid/`, `rh-sso-internal/`) builds on `../base` with its own `nameSuffix`, so each renders a separate `ClusterRole` (`rover-group-sync-cr-ibmid`, `rover-group-sync-cr-rh-sso-internal`) from the one `base/rbac.yaml`. A single `resourceNames` list therefore has to serve every IdP, and it cannot track two different group sets — so **the overlays are required to use an identical `groupsQuery` filter**: add a CN to all of them or none. `internal-staging` and `internal-production` each carry their own copies.
+
+> **Note:** `internal-staging` is tightened as described above. `internal-production` still grants `verbs: ["*"]` and is tightened in a follow-up PR once staging has validated.
+
+The `groupsQuery` filter has to stay in the canonical form `(&(objectClass=rhatRoverGroup)(|(cn=...)(cn=...)))`. Only that shape selects exactly the CNs it names: a different outer operator or an extra term can match groups that are absent from `resourceNames`, and the sync would then 403 on them. A filter that genuinely needs a different shape means updating `CANONICAL_FILTER` in the test and re-deriving `resourceNames` in the same change.
+
+`hack/test-rover-group-sync-rbac.py` enforces all of this in CI for every environment listed in its `ENVIRONMENTS` constant — it also requires the `ClusterRole` to hold that one rule and nothing else, and the `ServiceAccount` to be bound to no other role. It can be run locally:
+
+```bash
+python hack/test-rover-group-sync-rbac.py --verbose
+```
+
 ## Default Behavior
 
 **Schedule:** every 15 minutes
