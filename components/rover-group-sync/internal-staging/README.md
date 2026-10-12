@@ -23,7 +23,9 @@ Because `groupNameAttributes` is `cn`, each `Group` object name equals its LDAP 
 
 > **Note:** `internal-staging` is tightened as described above. `internal-production` still grants `verbs: ["*"]` and is tightened in a follow-up PR once staging has validated.
 
-`hack/test-rover-group-sync-rbac.py` enforces this in CI for every environment listed in its `ENVIRONMENTS` constant, and can be run locally:
+The `groupsQuery` filter has to stay in the canonical form `(&(objectClass=rhatRoverGroup)(|(cn=...)(cn=...)))`. Only that shape selects exactly the CNs it names: a different outer operator or an extra term can match groups that are absent from `resourceNames`, and the sync would then 403 on them. A filter that genuinely needs a different shape means updating `CANONICAL_FILTER` in the test and re-deriving `resourceNames` in the same change.
+
+`hack/test-rover-group-sync-rbac.py` enforces all of this in CI for every environment listed in its `ENVIRONMENTS` constant — it also requires the `ClusterRole` to hold that one rule and nothing else, and the `ServiceAccount` to be bound to no other role. It can be run locally:
 
 ```bash
 python hack/test-rover-group-sync-rbac.py --verbose
