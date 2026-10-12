@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: spre-automations
 resources:
 - ../base
+- external-secrets
 - ../base/pharos
 # When SPRE-6612 lands, pin the digest here:
 # images:
