@@ -19,7 +19,9 @@ As an example, the IBMId IdP requires the `IAM#mail@redhat.com` format, whereas 
 
 The `ServiceAccount` is bound to a `ClusterRole` that grants only `get` on `user.openshift.io/groups`, restricted by `resourceNames` to the groups the job reads. The job runs `oc adm groups sync` without `--confirm`, so it only ever `GET`s each `Group` by name and never writes `Group` objects.
 
-Because `groupNameAttributes` is `cn`, each `Group` object name equals its LDAP CN. **When you add or remove a CN in the `groupsQuery` filter of `base/config/ldap-sync-config.yaml`, update `resourceNames` in `base/rbac.yaml` in the same change** — otherwise the `GET` for the new group is denied and the sync run fails. Note that `internal-staging` and `internal-production` each carry their own copy of both files.
+Because `groupNameAttributes` is `cn`, each `Group` object name equals its LDAP CN. **When you add or remove a CN in the `groupsQuery` filter of an IdP overlay's `config/ldap-sync-config.yaml`, update `resourceNames` in `base/rbac.yaml` in the same change** — otherwise the `GET` for the new group is denied and the sync run fails.
+
+Each IdP overlay (`ibmid/`, `rh-sso-internal/`) builds on `../base` with its own `nameSuffix`, so each renders a separate `ClusterRole` (`rover-group-sync-cr-ibmid`, `rover-group-sync-cr-rh-sso-internal`) from the one `base/rbac.yaml`. A single `resourceNames` list therefore has to serve every IdP, and it cannot track two different group sets — so **the overlays are required to use an identical `groupsQuery` filter**: add a CN to all of them or none. `internal-staging` and `internal-production` each carry their own copies.
 
 > **Note:** `internal-staging` is tightened as described above. `internal-production` still grants `verbs: ["*"]` and is tightened in a follow-up PR once staging has validated.
 

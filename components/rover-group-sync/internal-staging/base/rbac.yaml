@@ -24,6 +24,7 @@ rules:
       - konflux-devprod
       - konflux-ec
       - konflux-grafana-viewers
+      - konflux-image-rbac-proxy
       - konflux-infra
       - konflux-integration
       - konflux-kubearchive

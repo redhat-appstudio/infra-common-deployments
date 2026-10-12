@@ -9,16 +9,23 @@ The CronJob runs `oc adm groups sync` without --confirm, so it only GETs each
 OpenShift Group by name (groupNameAttributes is `cn`, so the Group object name
 equals the LDAP CN). The ClusterRole is therefore restricted to verbs ["get"]
 with an explicit resourceNames list. That list has to track the CNs in the
-groupsQuery filter of config/ldap-sync-config.yaml: if a CN is added to the
-filter without being added to resourceNames, the GET returns 403 and the sync
-run fails.
+groupsQuery filter of each IdP overlay's config/ldap-sync-config.yaml: if a CN
+is added to a filter without being added to resourceNames, the GET returns 403
+and the sync run fails.
+
+Each environment has one CronJob per IdP overlay (ibmid, rh-sso-internal).
+The overlays apply a nameSuffix, so each renders its own ClusterRole, but all
+of them are generated from the single base/rbac.yaml -- one resourceNames list
+has to serve every IdP. That list cannot track two different group sets, so
+the overlays are required to use an identical filter.
 
 Checks, per environment:
     - the ClusterRole holds exactly one rule, and that rule is exactly
       get on user.openshift.io/groups with a resourceNames list -- any extra
       or wildcard rule fails, not just a widened Groups rule
     - the ServiceAccount is bound to that ClusterRole and nothing else
-    - the groupsQuery filter is in the canonical form
+    - every IdP overlay uses the same groupsQuery filter
+    - that filter is in the canonical form
       (&(objectClass=rhatRoverGroup)(|(cn=...)...)), so the CNs it names are
       the only groups it can select
     - resourceNames matches the set of CNs in that filter exactly
@@ -72,8 +79,15 @@ def rbac_path(environment):
     return COMPONENT_DIR / environment / "base" / "rbac.yaml"
 
 
-def ldap_config_path(environment):
-    return COMPONENT_DIR / environment / "base" / "config" / "ldap-sync-config.yaml"
+def idp_config_paths(environment):
+    """Return the ldap-sync-config.yaml of every IdP overlay in the environment."""
+    paths = sorted((COMPONENT_DIR / environment).glob("*/config/ldap-sync-config.yaml"))
+    if not paths:
+        raise FileNotFoundError(
+            f"No */config/ldap-sync-config.yaml under "
+            f"{(COMPONENT_DIR / environment).relative_to(REPO_ROOT)}"
+        )
+    return paths
 
 
 def load_docs(environment):
@@ -231,26 +245,53 @@ def extract_cns(ldap_filter):
     return set(cns)
 
 
+def shared_filter(filters_by_idp):
+    """Return the one groupsQuery filter every IdP overlay uses.
+
+    Raises ValueError if they diverge. Every overlay's ClusterRole is rendered
+    from the same base/rbac.yaml, so one resourceNames list cannot track two
+    group sets: a CN present in only one filter is either denied at runtime or
+    granted to both CronJobs.
+    """
+    distinct = set(filters_by_idp.values())
+    if len(distinct) != 1:
+        detail = "; ".join(
+            f"{idp}: {ldap_filter!r}"
+            for idp, ldap_filter in sorted(filters_by_idp.items())
+        )
+        raise ValueError(
+            f"every IdP overlay must use the same groupsQuery filter, since "
+            f"every overlay's ClusterRole is rendered from the one "
+            f"base/rbac.yaml; found {len(distinct)} distinct filters -- {detail}"
+        )
+    return distinct.pop()
+
+
+def load_ldap_filters(environment):
+    """Return {idp: groupsQuery filter} for the environment's IdP overlays."""
+    filters = {}
+    for path in idp_config_paths(environment):
+        with path.open() as handle:
+            config = yaml.safe_load(handle)
+
+        try:
+            filters[path.parent.parent.name] = config["rfc2307"]["groupsQuery"]["filter"]
+        except (KeyError, TypeError) as exc:
+            raise ValueError(
+                f"No rfc2307.groupsQuery.filter in {path.relative_to(REPO_ROOT)}"
+            ) from exc
+
+    return filters
+
+
 def load_ldap_cns(environment):
     """Return the set of CNs matched by the environment's groupsQuery filter."""
-    path = ldap_config_path(environment)
-    if not path.is_file():
-        raise FileNotFoundError(f"Missing {path.relative_to(REPO_ROOT)}")
-
-    with path.open() as handle:
-        config = yaml.safe_load(handle)
-
     try:
-        ldap_filter = config["rfc2307"]["groupsQuery"]["filter"]
-    except (KeyError, TypeError) as exc:
-        raise ValueError(
-            f"No rfc2307.groupsQuery.filter in {path.relative_to(REPO_ROOT)}"
-        ) from exc
-
-    try:
-        return extract_cns(ldap_filter)
+        return extract_cns(shared_filter(load_ldap_filters(environment)))
     except ValueError as exc:
-        raise ValueError(f"{path.relative_to(REPO_ROOT)}: {exc}") from exc
+        raise ValueError(
+            f"{(COMPONENT_DIR / environment).relative_to(REPO_ROOT)}: {exc}"
+        ) from exc
 
 
 class TestRoverGroupSyncRBAC(unittest.TestCase):
@@ -269,6 +310,17 @@ class TestRoverGroupSyncRBAC(unittest.TestCase):
         for environment in ENVIRONMENTS:
             with self.subTest(environment=environment):
                 self.assertEqual(check_bindings(load_docs(environment)), [])
+
+    def test_idp_overlays_share_one_filter(self):
+        for environment in ENVIRONMENTS:
+            with self.subTest(environment=environment):
+                filters = load_ldap_filters(environment)
+                self.assertGreaterEqual(
+                    len(filters), 1,
+                    f"{environment}: no IdP overlays found; the glob in "
+                    f"idp_config_paths() has probably gone stale",
+                )
+                shared_filter(filters)  # raises if the overlays diverge
 
     def test_resource_names_match_ldap_filter(self):
         for environment in ENVIRONMENTS:
@@ -354,6 +406,17 @@ class TestChecksCatchWidening(unittest.TestCase):
         with self.assertRaises(ValueError):
             extract_cns("(&(objectClass=rhatRoverGroup)(|(cn=konflux-sre)(cn=konflux-sre)))")
 
+    def test_identical_idp_filters_pass(self):
+        self.assertEqual(
+            shared_filter({"ibmid": self.GOOD_FILTER, "rh-sso-internal": self.GOOD_FILTER}),
+            self.GOOD_FILTER,
+        )
+
+    def test_divergent_idp_filters_are_rejected(self):
+        divergent = self.GOOD_FILTER.replace("(cn=konflux-sre)", "(cn=konflux-qe)")
+        with self.assertRaises(ValueError):
+            shared_filter({"ibmid": self.GOOD_FILTER, "rh-sso-internal": divergent})
+
 
 def check_prerequisites(should_print=False):
     """Verify every environment's files parse, and report what was found."""
@@ -369,8 +432,9 @@ def check_prerequisites(should_print=False):
             print(f"      rules: {len(rules)}")
             print(f"      verbs: {rules[0].get('verbs')}")
             print(f"      resourceNames: {len(rules[0].get('resourceNames') or [])}")
-            print(f"    {ldap_config_path(environment).relative_to(REPO_ROOT)}")
-            print(f"      filter CNs: {len(cns)}")
+            for path in idp_config_paths(environment):
+                print(f"    {path.relative_to(REPO_ROOT)}")
+            print(f"      shared filter CNs: {len(cns)}")
 
     return summary
 
