@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: spre-automations
 resources:
 - ../base
+- external-secrets
 - ../base/pharos
 # Konflux digest from SPRE-6612, PipelineRun pharos-on-push-c5zzq.
 images:
