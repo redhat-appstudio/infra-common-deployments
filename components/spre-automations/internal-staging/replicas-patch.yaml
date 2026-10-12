@@ -1,7 +1,7 @@
 ---
-# replicas: 0 until SPRE-6612 pins a Konflux digest on this overlay and
-# SPRE-6648 materializes pharos-secrets (LUMINO_HTTP_TOKEN). Delete this
-# patch when both exist, then set images: digest in kustomization.yaml.
+# replicas: 0 until SPRE-6648 materializes pharos-secrets (LUMINO_HTTP_TOKEN).
+# The Konflux digest is pinned in kustomization.yaml. Delete this patch
+# once that secret exists.
 apiVersion: apps/v1
 kind: Deployment
 metadata:

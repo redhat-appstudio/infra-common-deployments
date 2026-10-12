@@ -5,11 +5,11 @@ namespace: spre-automations
 resources:
 - ../base
 - ../base/pharos
-# When SPRE-6612 lands, pin the digest here:
-# images:
-# - name: quay.io/redhat-user-workloads/spre-tenant/pharos
-#   newName: quay.io/redhat-user-workloads/spre-tenant/pharos
-#   digest: sha256:<konflux-digest>
+# Konflux digest from SPRE-6612, PipelineRun pharos-on-push-c5zzq.
+images:
+- name: quay.io/redhat-user-workloads/spre-tenant/pharos
+  newName: quay.io/redhat-user-workloads/spre-tenant/pharos
+  digest: sha256:bbb76267dd7c866c122c38c4e26b62f88bdead88c490ecf9bb28b906eb769429
 patches:
 - path: route-patch.yaml
 - path: replicas-patch.yaml
