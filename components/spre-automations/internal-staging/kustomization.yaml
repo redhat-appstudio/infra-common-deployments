@@ -13,4 +13,3 @@ images:
   digest: sha256:bbb76267dd7c866c122c38c4e26b62f88bdead88c490ecf9bb28b906eb769429
 patches:
 - path: route-patch.yaml
-- path: replicas-patch.yaml

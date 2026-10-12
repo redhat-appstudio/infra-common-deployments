@@ -51,9 +51,6 @@ spec:
                 secretKeyRef:
                   name: pharos-secrets
                   key: LUMINO_HTTP_TOKEN
-                  # Secret is created by SPRE-6648 ExternalSecret. optional
-                  # so this Deployment can merge before that ticket lands.
-                  optional: true
           volumeMounts:
             - name: pharos-config
               mountPath: /etc/pharos
