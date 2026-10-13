@@ -6,10 +6,10 @@ resources:
 - ../base
 - external-secrets
 - ../base/pharos
-# Konflux digest from SPRE-6612, PipelineRun pharos-on-push-c5zzq.
+# Konflux build of pharos d5af72c (spre-sre/pharos PR #49, SPRE-7074).
 images:
 - name: quay.io/redhat-user-workloads/spre-tenant/pharos
   newName: quay.io/redhat-user-workloads/spre-tenant/pharos
-  digest: sha256:bbb76267dd7c866c122c38c4e26b62f88bdead88c490ecf9bb28b906eb769429
+  digest: sha256:9a2c5db1181f1bc936179b2a85916608efa334e362a1635d5017a7dac8049b3b
 patches:
 - path: route-patch.yaml
