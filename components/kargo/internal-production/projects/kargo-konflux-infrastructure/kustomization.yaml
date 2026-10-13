@@ -15,6 +15,7 @@ resources:
   - components/kyverno
   - components/multi-platform-controller
   - components/policies
+  - components/disaster-recovery
   - components/repository-validator
   - components/cluster-secret-store-rh
 
