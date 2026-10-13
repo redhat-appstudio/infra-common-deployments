@@ -91,6 +91,8 @@ Projects are listed in `config.yaml` (one per line):
 data:
   projects: |
     kargo-konflux-core
+    kargo-konflux-vanguard
+    kargo-konflux-infrastructure
 ```
 
 **When adding a new project**, you must also add two RoleBindings

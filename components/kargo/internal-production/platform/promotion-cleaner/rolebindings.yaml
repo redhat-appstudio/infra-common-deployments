@@ -1,3 +1,32 @@
+# kargo-konflux-infrastructure — Kubernetes RBAC
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kargo-promotion-cleaner
+  namespace: kargo-konflux-infrastructure
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kargo-promotion-cleaner
+subjects:
+  - kind: ServiceAccount
+    name: kargo-promotion-cleaner
+    namespace: kargo
+---
+# kargo-konflux-infrastructure — Kargo RBAC
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kargo-promotion-cleaner-promoter
+  namespace: kargo-konflux-infrastructure
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kargo-promoter
+subjects:
+  - kind: ServiceAccount
+    name: kargo-promotion-cleaner
+    namespace: kargo
 ---
 # Kubernetes RBAC — grants get/list/patch on Promotions + get/list on Freight
 apiVersion: rbac.authorization.k8s.io/v1
