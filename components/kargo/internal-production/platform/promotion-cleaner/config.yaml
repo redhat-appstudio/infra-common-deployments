@@ -8,3 +8,4 @@ data:
   projects: |
     kargo-konflux-core
     kargo-konflux-vanguard
+    kargo-konflux-infrastructure
