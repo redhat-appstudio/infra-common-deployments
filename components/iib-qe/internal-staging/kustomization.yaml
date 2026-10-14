@@ -8,6 +8,7 @@ resources:
 - namespace.yaml
 - iib-qe-maintainers.yaml
 - serviceaccount.yaml
+- iib-qe-pipelines-scc-rolebinding.yaml
 - iib-qe-pipelinerun-reader.yaml
 - trusted-ca-configmap.yaml
 - repositories
