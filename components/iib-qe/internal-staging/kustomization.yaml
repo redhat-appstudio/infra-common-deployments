@@ -15,3 +15,5 @@ resources:
 - registry-redhat-io-read.yaml
 - gitlab-webhook-config.yaml
 - gitlab-git-auth.yaml
+- regenerate-bundle-universal-repository-gitlab-webhook-config-externalsecret.yaml
+- regenerate-bundle-universal-repository-git-auth-externalsecret.yaml

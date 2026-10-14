@@ -1,0 +1,17 @@
+---
+apiVersion: pipelinesascode.tekton.dev/v1alpha1
+kind: Repository
+metadata:
+  name: regenerate-bundle-universal-repository
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  url: https://gitlab.cee.redhat.com/exd-guild-hello-operator-gitlab/regenerate-bundle-universal-repository
+  git_provider:
+    url: "https://gitlab.cee.redhat.com"
+    secret:
+      name: regenerate-bundle-universal-repository-gitlab-webhook-config
+      key: provider.token
+    webhook_secret:
+      name: regenerate-bundle-universal-repository-gitlab-webhook-config
+      key: webhook.secret
