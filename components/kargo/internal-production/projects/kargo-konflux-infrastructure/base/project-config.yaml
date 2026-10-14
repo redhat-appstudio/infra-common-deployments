@@ -5,6 +5,10 @@ metadata:
   name: kargo-konflux-infrastructure
 spec:
   promotionPolicies:
+    - stage: ring-0-disaster-recovery
+      autoPromotionEnabled: true
+    - stage: ring-1-disaster-recovery
+      autoPromotionEnabled: true
     - stage: ring-1-cluster-secret-store
       autoPromotionEnabled: true
     - stage: ring-2-cluster-secret-store
