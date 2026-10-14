@@ -11,8 +11,25 @@ spec:
   template:
     metadata:
       name: kyverno-{{nameNormalized}}
+      annotations:
+        argocd.argoproj.io/compare-options: ServerSideDiff=true,IncludeMutationWebhook=true
     spec:
       project: default
+      ignoreDifferences:
+        - group: apiextensions.k8s.io
+          kind: CustomResourceDefinition
+          name: '*.kyverno.io'
+          jqPathExpressions:
+            - .spec.preserveUnknownFields
+            - .spec.conversion
+            - .spec.versions[].schema.openAPIV3Schema
+        - group: apiextensions.k8s.io
+          kind: CustomResourceDefinition
+          name: '*.wgpolicyk8s.io'
+          jqPathExpressions:
+            - .spec.preserveUnknownFields
+            - .spec.conversion
+            - .spec.versions[].schema.openAPIV3Schema
       source:
         path: '{{values.sourceRoot}}/{{values.environment}}'
         repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
@@ -27,6 +44,7 @@ spec:
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true
+          - RespectIgnoreDifferences=true
         retry:
           limit: 50
           backoff:
