@@ -20,31 +20,15 @@ spec:
       as: validate-freight
       if: >-
         ${{ ctx.targetFreight.origin.name != 'etcd-defrag' || vars.component != ctx.targetFreight.origin.name
-        || vars.targetRing not in ['ring-0', 'ring-1', 'ring-2', 'ring-3', 'ring-4']
+        || vars.targetRing not in ['ring-1', 'ring-2', 'ring-3', 'ring-4']
         || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$')
         || !(imageFrom(vars.imageRepoURL).Tag matches '^[0-9a-f]{64}$') }}
       config:
-        message: Expected etcd-defrag Freight with a Git commit and a digest-tagged image, targeting Ring 0-4.
-
-    - uses: yaml-parse
-      as: read-previous
-      if: ${{ status('validate-freight') == 'Skipped' }}
-      config:
-        path: ${{ vars.srcPath }}/${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
-        outputs:
-          - name: images
-            fromExpression: filter(images ?? [], {.name == 'quay.io/konflux-ci/etcd-defrag'})
-
-    - uses: fail
-      as: validate-layout
-      if: >-
-        ${{ status('read-previous') == 'Succeeded' && len(task.outputs['read-previous'].images) > 1 }}
-      config:
-        message: Expected zero or one etcd-defrag image in the ring Kustomization.
+        message: Expected etcd-defrag Freight with a Git commit and a digest-tagged image, targeting rings 1-4.
 
     - uses: delete
       as: delete-old-base-snapshot
-      if: ${{ status('read-previous') == 'Succeeded' && status('validate-layout') == 'Skipped' }}
+      if: ${{ status('validate-freight') == 'Skipped' }}
       config:
         path: ${{ vars.srcPath }}/${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/base-snapshot
 
@@ -55,28 +39,26 @@ spec:
         inPath: ${{ vars.freightPath }}/${{ vars.componentPath }}/base
         outPath: ${{ vars.srcPath }}/${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/base-snapshot
 
-    - uses: kustomize-set-image
+    - uses: yaml-update
       as: update-image
-      if: ${{ status('copy-freight-manifests') == 'Succeeded' && len(task.outputs['read-previous'].images) == 1 }}
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
       config:
-        path: ${{ vars.srcPath }}/${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base
-        images:
-          - image: ${{ vars.imageRepoURL }}
-            tag: ${{ imageFrom(vars.imageRepoURL).Tag }}
+        path: ${{ vars.srcPath }}/${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/image-patch.yaml
+        updates:
+          - key: "1.value"
+            value: ${{ vars.imageRepoURL }}@sha256:${{ imageFrom(vars.imageRepoURL).Tag }}
 
     - uses: compose-output
       as: result
       if: >-
-        ${{ status('validate-freight') == 'Skipped' && status('read-previous') == 'Succeeded'
-        && status('validate-layout') == 'Skipped' && status('copy-freight-manifests') == 'Succeeded'
-        && status('update-image') in ['Succeeded', 'Skipped'] }}
+        ${{ status('validate-freight') == 'Skipped'
+        && status('delete-old-base-snapshot') == 'Succeeded' && status('copy-freight-manifests') == 'Succeeded'
+        && status('update-image') == 'Succeeded' }}
       config:
         prepared: 'yes'
         prSummary: >-
           Update etcd-defrag image and base snapshot in ${{ vars.targetRing }}.
         prChanges:
-          - kind: Image tag
-            previous: >-
-              ${{ len(task.outputs['read-previous'].images) > 0 ? quote(string(task.outputs['read-previous'].images[0].newTag ?? 'unknown')) : '"none"' }}
-            proposed: ${{ quote(imageFrom(vars.imageRepoURL).Tag) }}
-            path: ${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+          - kind: Image value
+            proposed: ${{ quote(vars.imageRepoURL + '@sha256:' + imageFrom(vars.imageRepoURL).Tag) }}
+            path: ${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/image-patch.yaml
