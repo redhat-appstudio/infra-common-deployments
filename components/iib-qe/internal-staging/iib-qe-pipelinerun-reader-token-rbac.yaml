@@ -1,0 +1,29 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: iib-qe-pipelinerun-reader-token-creator
+  namespace: iib-qe
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - serviceaccounts/token
+    resourceNames:
+      - iib-qe-pipelinerun-reader
+    verbs:
+      - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: iib-qe-pipelinerun-reader-token-creator
+  namespace: iib-qe
+subjects:
+  - kind: Group
+    apiGroup: rbac.authorization.k8s.io
+    name: konflux-operator-foundry
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: iib-qe-pipelinerun-reader-token-creator

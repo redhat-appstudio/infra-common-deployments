@@ -10,6 +10,7 @@ resources:
 - serviceaccount.yaml
 - iib-qe-pipelines-scc-rolebinding.yaml
 - iib-qe-pipelinerun-reader.yaml
+- iib-qe-pipelinerun-reader-token-rbac.yaml
 - trusted-ca-configmap.yaml
 - repositories
 - registry-proxy-push-secret.yaml
