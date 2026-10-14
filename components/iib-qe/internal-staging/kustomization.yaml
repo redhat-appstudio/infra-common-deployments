@@ -7,6 +7,7 @@ namespace: iib-qe
 resources:
 - namespace.yaml
 - iib-qe-maintainers.yaml
+- iib-qe-sa-token-rbac.yaml
 - serviceaccount.yaml
 - iib-qe-pipelines-scc-rolebinding.yaml
 - iib-qe-pipelinerun-reader.yaml
