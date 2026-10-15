@@ -64,7 +64,7 @@ spec:
       as: wait-for-prow-checks
       if: ${{ status('wait-for-check-runs') == 'Succeeded' && vars.skipProwChecks == 'false' }}
       retry:
-        timeout: 72h
+        timeout: 120h
       config:
         method: GET
         pollInterval: ${{ vars.prowPollInterval }}
