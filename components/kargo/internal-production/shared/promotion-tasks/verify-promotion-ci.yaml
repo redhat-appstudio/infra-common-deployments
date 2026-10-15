@@ -17,6 +17,8 @@ spec:
       value: .*
     - name: ciPollInterval
       value: 2m
+    - name: prowPollInterval
+      value: 15m
   steps:
     - uses: fail
       as: validate-config
@@ -62,10 +64,10 @@ spec:
       as: wait-for-prow-checks
       if: ${{ status('wait-for-check-runs') == 'Succeeded' && vars.skipProwChecks == 'false' }}
       retry:
-        timeout: 2h30m
+        timeout: 72h
       config:
         method: GET
-        pollInterval: ${{ vars.ciPollInterval }}
+        pollInterval: ${{ vars.prowPollInterval }}
         url: https://api.github.com/repos/redhat-appstudio/infra-deployments/commits/${{ vars.commitSHA }}/status?per_page=100
         headers:
           - name: Authorization

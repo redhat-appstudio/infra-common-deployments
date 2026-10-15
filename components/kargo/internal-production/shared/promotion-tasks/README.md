@@ -190,7 +190,7 @@ Promotion Running at the Prow gate. Comment `/retest` on the PR to ask Prow to
 rerun checks. Kargo polls the latest statuses for the same published commit and
 continues only when at least one required context is present and all matching
 contexts report `success`. It does not listen for or interpret PR comments.
-The existing two-minute polling interval and 2h30m Prow wait budget still apply;
+Prow polling defaults to 15 minutes (`prowPollInterval`) with a 72-hour wait budget;
 a retest does not reset that budget. The stage queue stays occupied while waiting.
 
 An already Failed or timed-out Promotion needs an explicit Kargo retry; later
@@ -242,7 +242,8 @@ are made just to build the description. A reused PR may keep its original body.
 | Branch changes during merge | Native merge lacks an atomic expected-head precondition. The final identity check can detect a mismatch but cannot undo an already completed merge. |
 | Repeating a promotion | An open PR on the stable branch is reused. The branch is replaced and CI checks the new head. A retry that resumes after publication keeps its captured head and fails the merge identity check if the branch has changed. |
 
-CI polling defaults to two minutes, with up to 2h30m per phase. Automatic merge and
+GitHub check-runs polling defaults to two minutes, with up to 2h30m.
+Prow polling defaults to 15 minutes, with up to 72 hours (three days). Automatic merge and
 PR identity checks use two-minute polling and two-hour budgets; the manual merge
 waiter uses five-minute polling and a seven-day budget. Readiness has a 45-minute
 retry budget. These are not strict wall-clock deadlines.
