@@ -185,6 +185,21 @@ variables, matching the publisher's stable branch; no extra API call is needed. 
 pending CI results wait; failed results block completion. Responses exceeding
 100 checks/statuses are rejected rather than approving a partial result set.
 
+**Prow retests:** a required Prow context in `failure` or `error` keeps the
+Promotion Running at the Prow gate. Comment `/retest` on the PR to ask Prow to
+rerun checks. Kargo polls the latest statuses for the same published commit and
+continues only when at least one required context is present and all matching
+contexts report `success`. It does not listen for or interpret PR comments.
+The existing two-minute polling interval and 2h30m Prow wait budget still apply;
+a retest does not reset that budget. The stage queue stays occupied while waiting.
+
+An already Failed or timed-out Promotion needs an explicit Kargo retry; later
+Prow success does not restart it automatically. Existing Promotions retain their
+expanded steps, so this change applies to newly created Promotions. A failure in
+the earlier GitHub check-runs gate (for example, `dispatch / Fix`) still fails
+immediately and is outside this Prow-only retest behavior. Authentication errors,
+missing API resources, and truncated status responses still fail closed.
+
 **Readiness:** every configured Application must appear in the same complete
 response and be Healthy, Synced, at the expected revision, and not deleting or
 running an operation. Reconciliation must be newer than the fixed readiness-start

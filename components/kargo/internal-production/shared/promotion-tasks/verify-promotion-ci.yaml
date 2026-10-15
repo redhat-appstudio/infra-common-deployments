@@ -56,6 +56,8 @@ spec:
           'Failed checks: ' + join(map(filter(response.body.check_runs, {.name matches ${{ quote(vars.requiredCheckRuns) }} && .conclusion in ['failure', 'cancelled', 'timed_out', 'action_required', 'stale']}), {.name + '=' + .conclusion}), ', ')
         timeout: 30s
     # Only explicit caller policy skips Prow; exclude the non-test tide context.
+    # Failed Prow results keep polling so /retest can recover on the same SHA.
+    # The retry timeout still bounds the wait; API/configuration failures are terminal.
     - uses: http
       as: wait-for-prow-checks
       if: ${{ status('wait-for-check-runs') == 'Succeeded' && vars.skipProwChecks == 'false' }}
@@ -77,13 +79,10 @@ spec:
           all(filter(response.body.statuses, {.context != 'tide' && (.context matches ${{ quote(vars.requiredProwChecks) }})}), {.state == 'success'})
         failureExpression: |
           (response.status in [401, 404] || (response.status == 403 && response.header('X-RateLimit-Remaining') != '0' && response.header('Retry-After') == '' && !(lower(response.body?.message ?? '') contains 'rate limit'))) ||
-          (response.status == 200 &&
-          (response.body.total_count > len(response.body.statuses) ||
-          any(filter(response.body.statuses, {.context != 'tide' && (.context matches ${{ quote(vars.requiredProwChecks) }})}), {.state in ['failure', 'error']})))
+          (response.status == 200 && response.body.total_count > len(response.body.statuses))
         errorExpression: |
           response.status != 200 ? 'GitHub status API: HTTP ' + string(response.status) :
-          response.body.total_count > len(response.body.statuses) ? 'GitHub statuses response is truncated; refusing to merge' :
-          'Failed Prow checks: ' + join(map(filter(response.body.statuses, {.context != 'tide' && (.context matches ${{ quote(vars.requiredProwChecks) }}) && .state in ['failure', 'error']}), {.context + '=' + .state}), ', ')
+          'GitHub statuses response is truncated; refusing to merge'
         timeout: 30s
     - uses: compose-output
       as: result
