@@ -5,6 +5,7 @@ namespace: konflux-public-production
 resources:
   - ../base
   - ns.yaml
+  - external-secrets
 
 patches:
   - path: patches/argocd-controller-sharding-replica-patch.yaml
