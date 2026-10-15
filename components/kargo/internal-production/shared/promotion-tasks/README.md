@@ -185,6 +185,21 @@ variables, matching the publisher's stable branch; no extra API call is needed. 
 pending CI results wait; failed results block completion. Responses exceeding
 100 checks/statuses are rejected rather than approving a partial result set.
 
+**Prow retests:** a required Prow context in `failure` or `error` keeps the
+Promotion Running at the Prow gate. Comment `/retest` on the PR to ask Prow to
+rerun checks. Kargo polls the latest statuses for the same published commit and
+continues only when at least one required context is present and all matching
+contexts report `success`. It does not listen for or interpret PR comments.
+Prow polling defaults to 15 minutes (`prowPollInterval`) with a 120-hour wait budget;
+a retest does not reset that budget. The stage queue stays occupied while waiting.
+
+An already Failed or timed-out Promotion needs an explicit Kargo retry; later
+Prow success does not restart it automatically. Existing Promotions retain their
+expanded steps, so this change applies to newly created Promotions. A failure in
+the earlier GitHub check-runs gate (for example, `dispatch / Fix`) still fails
+immediately and is outside this Prow-only retest behavior. Authentication errors,
+missing API resources, and truncated status responses still fail closed.
+
 **Readiness:** every configured Application must appear in the same complete
 response and be Healthy, Synced, at the expected revision, and not deleting or
 running an operation. Reconciliation must be newer than the fixed readiness-start
@@ -227,7 +242,8 @@ are made just to build the description. A reused PR may keep its original body.
 | Branch changes during merge | Native merge lacks an atomic expected-head precondition. The final identity check can detect a mismatch but cannot undo an already completed merge. |
 | Repeating a promotion | An open PR on the stable branch is reused. The branch is replaced and CI checks the new head. A retry that resumes after publication keeps its captured head and fails the merge identity check if the branch has changed. |
 
-CI polling defaults to two minutes, with up to 2h30m per phase. Automatic merge and
+GitHub check-runs polling defaults to two minutes, with up to 2h30m.
+Prow polling defaults to 15 minutes, with up to 120 hours (five days). Automatic merge and
 PR identity checks use two-minute polling and two-hour budgets; the manual merge
 waiter uses five-minute polling and a seven-day budget. Readiness has a 45-minute
 retry budget. These are not strict wall-clock deadlines.
