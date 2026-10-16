@@ -50,9 +50,12 @@ it must not synchronize snapshots across rings.
 | 3 | 48 hours | Manual PR merge | GitHub checks, production ArgoCD readiness and Kanary |
 | 4 | 72 hours | Manual PR merge | GitHub checks, production ArgoCD readiness and Kanary |
 
-All stages have automatic promotion enabled. Rings 2–4 still require manual
-merging. Prow is skipped for Rings 1–4, matching the conformance job's path
-filters; GitHub checks remain required.
+Automatic stage promotion is disabled for Rings 0–4 until the companion CI
+repair and the separately reviewed initial production migration have merged.
+Enable the five policies in a follow-up after verifying those prerequisites.
+Once enabled, Rings 0–1 automatically merge after their checks; Rings 2–4
+still require manual PR merges. Prow is skipped for Rings 1–4, matching the
+conformance job's path filters; GitHub checks remain required.
 
 ArgoCD readiness uses the `pipeline-service` application prefix and label:
 - Ring 1: stone-stage-p01, stone-stg-rh01.
