@@ -1,0 +1,108 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-pipeline-service
+spec:
+  vars:
+    - name: srcPath
+    - name: freightPath
+    - name: repoURL
+    - name: component
+    - name: targetRing
+  steps:
+    - uses: fail
+      as: validate-bundle
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'pipeline-service' || vars.repoURL !=
+        'https://github.com/redhat-appstudio/infra-deployments.git' ||
+        vars.component != ctx.targetFreight.origin.name || vars.targetRing not in
+        ['ring-0', 'ring-1', 'ring-2', 'ring-3', 'ring-4'] ||
+        !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$') }}
+      config:
+        message: Expected pipeline-service Freight containing an immutable infra-deployments
+          base commit, targeting Ring 0-4.
+    - uses: yaml-parse
+      as: read-previous-catalog
+      if: ${{ status('validate-bundle') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/pipeline-service/rings/${{ vars.targetRing }}/base/base-snapshot/catalogsource.yaml
+        outputs:
+          - name: value
+            fromExpression: spec.image
+    - uses: yaml-parse
+      as: read-previous-channel
+      if: ${{ status('read-previous-catalog') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/pipeline-service/rings/${{ vars.targetRing }}/base/base-snapshot/subscription.yaml
+        outputs:
+          - name: value
+            fromExpression: spec.channel
+    - uses: yaml-parse
+      as: read-previous-results-disabled
+      if: ${{ status('read-previous-channel') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/pipeline-service/rings/${{ vars.targetRing }}/base/base-snapshot/openshift-pipelines/tekton-config.yaml
+        outputs:
+          - name: value
+            fromExpression: string(spec.result.disabled)
+    - uses: yaml-parse
+      as: read-selected-catalog
+      if: ${{ status('read-previous-results-disabled') == 'Succeeded' }}
+      config:
+        path: ${{ vars.freightPath }}/components/pipeline-service/base/catalogsource.yaml
+        outputs:
+          - name: value
+            fromExpression: spec.image
+    - uses: yaml-parse
+      as: read-selected-channel
+      if: ${{ status('read-selected-catalog') == 'Succeeded' }}
+      config:
+        path: ${{ vars.freightPath }}/components/pipeline-service/base/subscription.yaml
+        outputs:
+          - name: value
+            fromExpression: spec.channel
+    - uses: yaml-parse
+      as: read-selected-results-disabled
+      if: ${{ status('read-selected-channel') == 'Succeeded' }}
+      config:
+        path: ${{ vars.freightPath }}/components/pipeline-service/base/openshift-pipelines/tekton-config.yaml
+        outputs:
+          - name: value
+            fromExpression: string(spec.result.disabled)
+    # Copy the complete selected base, including deletions. Ring overlays stay outside it.
+    - uses: delete
+      as: delete-old-base-snapshot
+      if: ${{ status('read-selected-results-disabled') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/pipeline-service/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: copy
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-base-snapshot') == 'Succeeded' }}
+      config:
+        inPath: ${{ vars.freightPath }}/components/pipeline-service/base
+        outPath: ${{ vars.srcPath }}/components/pipeline-service/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: compose-output
+      as: result
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: |
+          Promote the complete pipeline-service base to ${{ vars.targetRing }} from the selected Freight.
+          This includes the OLM catalog, Subscription, TektonConfig, Results configuration, and base resource deletions.
+          Ring and cluster overlays are preserved. Review Results ownership changes before merging.
+
+          Manifest source: [${{ commitFrom(vars.repoURL).ID[0:12] }}](https://github.com/redhat-appstudio/infra-deployments/commit/${{ commitFrom(vars.repoURL).ID }}).
+        prChanges:
+          - kind: OpenShift Pipelines catalog image
+            previous: ${{ quote(task.outputs['read-previous-catalog'].value) }}
+            proposed: ${{ quote(task.outputs['read-selected-catalog'].value) }}
+            path: components/pipeline-service/rings/${{ vars.targetRing }}/base/base-snapshot/catalogsource.yaml
+          - kind: OpenShift Pipelines subscription channel
+            previous: ${{ quote(task.outputs['read-previous-channel'].value) }}
+            proposed: ${{ quote(task.outputs['read-selected-channel'].value) }}
+            path: components/pipeline-service/rings/${{ vars.targetRing }}/base/base-snapshot/subscription.yaml
+          - kind: Operator-managed Tekton Results disabled
+            previous: ${{ quote(task.outputs['read-previous-results-disabled'].value) }}
+            proposed: ${{ quote(task.outputs['read-selected-results-disabled'].value) }}
+            path: components/pipeline-service/rings/${{ vars.targetRing }}/base/base-snapshot/openshift-pipelines/tekton-config.yaml

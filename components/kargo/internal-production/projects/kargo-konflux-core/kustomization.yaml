@@ -7,6 +7,7 @@ namespace: kargo-konflux-core
 resources:
   - base
   - components/konflux-operator
+  - components/pipeline-service
 
 components:
   - ../../shared/promotion-tasks
