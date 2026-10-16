@@ -14,8 +14,7 @@ spec:
         kind: Warehouse
         name: etcd-defrag
       sources:
-        stages:
-          - ring-0-etcd-defrag
+        direct: true
   verification:
     analysisTemplates:
       - name: kanary-staging
