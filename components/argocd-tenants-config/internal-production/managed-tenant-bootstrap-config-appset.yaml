@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: managed-tenant-bootstrap-config
+spec:
+  generators:
+    - git:
+        repoURL: https://gitlab.cee.redhat.com/releng/konflux-release-data.git
+        revision: main
+        directories:
+          - path: tenants-config/auto-generated/cluster/kflux-ocp-p01/managed-tenant-bootstrap/art-token-broker
+  template:
+    metadata:
+      name: art-token-broker-managed-tenant-bootstrap-kflux-ocp-p01
+      annotations:
+        argocd.argoproj.io/compare-options: ServerSideDiff=true,IncludeMutationWebhook=true
+    spec:
+      project: managed-tenant-bootstrap-config
+      source:
+        path: '{{path}}'
+        repoURL: https://gitlab.cee.redhat.com/releng/konflux-release-data.git
+        targetRevision: main
+      destination:
+        namespace: art-token-broker
+        name: kflux-ocp-p01
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - ServerSideApply=true
+        retry:
+          limit: 10
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 3m
