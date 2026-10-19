@@ -63,8 +63,6 @@ spec:
                 "component", "$1", "name", "ring-[0-9]+-(.+)"
               )
             )
-        # origin is the FreightOrigin map key, such as Warehouse/authentication.
-        # Freight and Promotion names are not labels.
         - record: kargo:stage:auto_promotion_hold:created_timestamp
           expr: |
             max by (exported_namespace, stage, component, origin) (
@@ -76,7 +74,6 @@ spec:
                 "component", "$1", "name", "ring-[0-9]+-(.+)"
               )
             )
-        # Warehouse names are the component name. There is no ring prefix to split.
         - record: kargo:warehouse:discovered_timestamp
           expr: |
             max by (exported_namespace, name) (
