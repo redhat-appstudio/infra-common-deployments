@@ -63,12 +63,12 @@ spec:
                 "component", "$1", "name", "ring-[0-9]+-(.+)"
               )
             )
-        - record: kargo:stage:auto_promotion_hold:created_timestamp
+        - record: kargo:stage:effective_auto_promotion_hold:created_timestamp
           expr: |
             max by (exported_namespace, stage, component, origin) (
               label_replace(
                 label_replace(
-                  kargo_stage_auto_promotion_hold_created_timestamp,
+                  kargo_stage_effective_auto_promotion_hold_created_timestamp,
                   "stage", "$1", "name", "(ring-[0-9]+)-.+"
                 ),
                 "component", "$1", "name", "ring-[0-9]+-(.+)"

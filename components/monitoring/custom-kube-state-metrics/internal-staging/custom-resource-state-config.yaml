@@ -58,7 +58,7 @@ data:
             # One series per origin currently held. The key is the FreightOrigin,
             # such as Warehouse/authentication. Freight and Promotion names stay
             # off the labels. The series is absent when nothing is held.
-            - name: auto_promotion_hold_created_timestamp
+            - name: effective_auto_promotion_hold_created_timestamp
               help: "Unix time when the Promotion that established this auto-promotion hold was created."
               each:
                 type: Gauge
@@ -85,8 +85,9 @@ data:
                     condition: [type]
                     status: [status]
                   valueFrom: [lastTransitionTime]
-            # FreightCreated lastTransitionTime stays put while that condition
-            # remains True, so it is not the time of the latest discovery.
+            # A Warehouse can show a FreightCreated condition and its
+            # lastTransitionTime. That time is not when artifacts were last
+            # discovered. This gauge uses status.discoveredArtifacts.discoveredAt.
             - name: discovered_timestamp
               help: "Unix time when this Warehouse last discovered artifacts."
               each:
