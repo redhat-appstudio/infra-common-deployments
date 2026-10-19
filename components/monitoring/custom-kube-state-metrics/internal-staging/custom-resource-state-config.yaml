@@ -45,8 +45,10 @@ data:
                 type: Gauge
                 gauge:
                   path: [metadata, generation]
+            # reason splits status Unknown into Running, Pending, and Inconclusive.
+            # message stays off this metric: each distinct string would be a series.
             - name: condition_last_transition_timestamp
-              help: "Unix time of the last transition for a Stage condition."
+              help: "Unix time of the last transition for a Stage condition. The reason label is the condition reason."
               each:
                 type: Gauge
                 gauge:
@@ -54,6 +56,7 @@ data:
                   labelsFromPath:
                     condition: [type]
                     status: [status]
+                    reason: [reason]
                   valueFrom: [lastTransitionTime]
         - groupVersionKind:
             group: kargo.akuity.io

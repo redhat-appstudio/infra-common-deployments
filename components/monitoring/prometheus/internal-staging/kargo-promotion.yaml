@@ -54,7 +54,7 @@ spec:
             )
         - record: kargo:stage:condition:last_transition_timestamp
           expr: |
-            max by (exported_namespace, stage, component, condition, status) (
+            max by (exported_namespace, stage, component, condition, status, reason) (
               label_replace(
                 label_replace(
                   kargo_stage_condition_last_transition_timestamp,
