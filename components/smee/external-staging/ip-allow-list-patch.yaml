@@ -12,6 +12,7 @@
 # The current "whitelisted" clusters are:
 # - stone-stage-p01
 # - pentest-p01
+# - kflux-stg-p02
 - op: add
   path: /metadata/annotations/haproxy.router.openshift.io~1ip_whitelist
   value: >-
@@ -29,6 +30,9 @@
     107.21.230.162
     52.70.180.31
     34.234.55.39
+    169.63.96.104
+    169.63.190.113
+    52.117.122.201
     107.21.237.46
     107.23.223.171
     23.23.229.59
