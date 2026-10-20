@@ -1,0 +1,33 @@
+---
+# Read-only token for the konflux-pharos/pharos ServiceAccount on kflux-stg-p02.
+# Terraform (konflux-iac kubernetes/pharos) writes it to Vault with the token
+# inside the JSON string "config" (bearerToken), so the template unpacks it.
+# Pharos reads the "token" key when this Secret is mounted as a directory and
+# referenced as secret:<dir>.
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: pharos-kflux-stg-p02-token
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  data:
+    - secretKey: config
+      remoteRef:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: staging/platform/terraform/generated/kflux-stg-p02/pharos-serviceaccount-token
+        property: config
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: appsre-stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: pharos-kflux-stg-p02-token
+    template:
+      engineVersion: v2
+      data:
+        token: '{{ (.config | mustFromJson).bearerToken }}'
