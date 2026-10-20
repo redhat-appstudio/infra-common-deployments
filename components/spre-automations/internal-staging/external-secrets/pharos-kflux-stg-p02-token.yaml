@@ -18,6 +18,7 @@ spec:
         conversionStrategy: Default
         decodingStrategy: None
         key: staging/platform/terraform/generated/kflux-stg-p02/pharos-serviceaccount-token
+        metadataPolicy: None
         property: config
   refreshInterval: 1h
   secretStoreRef:
