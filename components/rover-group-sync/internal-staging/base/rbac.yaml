@@ -38,6 +38,7 @@ rules:
       - konflux-qe
       - konflux-qe-admins
       - konflux-release-team
+      - konflux-service-enhancement
       - konflux-sre
       - konflux-support
       - konflux-support-ops
