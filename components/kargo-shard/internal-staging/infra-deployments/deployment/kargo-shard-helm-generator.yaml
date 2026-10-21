@@ -4,7 +4,7 @@ metadata:
   name: kargo-shard-infra-deployments
 name: kargo
 repo: oci://ghcr.io/akuity/kargo-charts
-version: 1.12.3
+version: 1.12.4
 namespace: kargo-shard-infra-deployments
 releaseName: kargo-shard-infra-deployments
 valuesInline:
