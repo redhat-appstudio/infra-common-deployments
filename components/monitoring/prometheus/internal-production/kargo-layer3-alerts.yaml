@@ -1,0 +1,37 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: kargo-layer3-promotion-alerts
+  namespace: appstudio-monitoring
+  labels:
+    openshift.io/prometheus-rule-evaluation-scope: leaf-prometheus
+spec:
+  groups:
+  - name: kargo_layer3_promotion
+    interval: 1m
+    rules:
+    - alert: KargoPromotionFailed
+      expr: "(\n  (\n    max by (exported_namespace, component, stage) (\n      kargo:stage:last_promotion:finished_timestamp{phase=~\"\
+        Failed|Errored\"}\n    )\n    unless on (exported_namespace, component, stage)\n    (\n      max by (exported_namespace,\
+        \ component, stage) (\n        kargo:stage:last_promotion:finished_timestamp{phase=~\"Succeeded|Aborted\"}\n     \
+        \ )\n      >=\n      on (exported_namespace, component, stage)\n      max by (exported_namespace, component, stage)\
+        \ (\n        kargo:stage:last_promotion:finished_timestamp{phase=~\"Failed|Errored\"}\n      )\n    )\n  )\n  and\n\
+        \  (\n    (time() - max by (exported_namespace, component, stage) (\n      kargo:stage:last_promotion:finished_timestamp{phase=~\"\
+        Failed|Errored\"}\n    )) >= 0\n  )\n  and\n  (\n    (time() - max by (exported_namespace, component, stage) (\n \
+        \     kargo:stage:last_promotion:finished_timestamp{phase=~\"Failed|Errored\"}\n    )) < 1800\n  )\n)"
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        runbook_url: https://gitlab.cee.redhat.com/konflux/docs/sop/-/blob/main/infra/sre/alert-KargoPromotionFailed.md
+        summary: 'Kargo promotion failed: {{ $labels.component }} / {{ $labels.stage }}'
+        description: A recent Kargo promotion failed or errored in namespace {{ $labels.exported_namespace }}.
+    - alert: KargoAutoPromotionHoldTooLong
+      expr: "(\n  time() - kargo:stage:effective_auto_promotion_hold:created_timestamp{\n    exported_namespace!=\"kargo-production-playground\"\
+        \n  }\n) > 86400"
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: 'Kargo auto-promotion hold exceeds 24h: {{ $labels.component }} / {{ $labels.stage }}'
+        description: Auto-promotion hold has exceeded 24 hours in {{ $labels.exported_namespace }}.
