@@ -212,6 +212,10 @@ spec:
       - '{__name__="kube_deployment_status_replicas_available", namespace=~"kargo.*"}'
       - '{__name__="kube_deployment_spec_replicas", namespace=~"kargo.*"}'
 
+      # Kargo Layer 3 promotion alert metrics
+      - '{__name__="kargo:stage:last_promotion:finished_timestamp"}'
+      - '{__name__="kargo:stage:effective_auto_promotion_hold:created_timestamp"}'
+
       # Namespace: konflux-devlake
       - '{__name__="kube_deployment_status_replicas_ready", namespace="konflux-devlake"}'
       - '{__name__="kube_deployment_status_replicas_available", namespace="konflux-devlake"}'
