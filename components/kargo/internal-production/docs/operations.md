@@ -45,6 +45,9 @@ AnalysisRuns are not being created or reconciled.
 
 ## Credentials and access
 
+For an overview of signing and key updates in Vault, see
+[commit signing](commit-signing.md).
+
 [platform/credentials](../platform/credentials/) deploys ExternalSecrets once in
 `kargo-shared-resources`. Their templates distinguish Git credentials from generic
 API/verification credentials and explicitly select replication. Shared promotion

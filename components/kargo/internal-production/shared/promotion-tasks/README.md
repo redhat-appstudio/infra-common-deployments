@@ -52,6 +52,8 @@ Changing to human merging requires an explicit `mergeMode: manual` choice.
 
 The shared publisher uses `github-push` for all callers so trusted Kargo-signed
 commits are attributed and signed by the GitHub App.
+Operators must populate the signing-key Vault records and confirm sync on the
+executing controller; see [commit signing and Vault setup](../../docs/commit-signing.md).
 
 ## Start here when adding a component
 
