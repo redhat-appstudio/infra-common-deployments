@@ -57,7 +57,7 @@ data:
                   valueFrom: [lastTransitionTime]
             # One series per origin currently held. The series is absent when
             # nothing is held. source is the map key (Warehouse/authentication).
-            # It is not on the remote-write allowlist, so RHOBS drops it.
+            # It is not on the remote-write allowlist, so the label will be dropped and won't get federated to RHOBS.
             # origin_kind and origin_name come from the hold's origin object.
             # They are not named kind and name: those would replace the Stage
             # name label that the recording rule splits into stage and component.
