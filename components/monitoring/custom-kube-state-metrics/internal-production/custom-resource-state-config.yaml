@@ -58,6 +58,20 @@ data:
                     status: [status]
                     reason: [reason]
                   valueFrom: [lastTransitionTime]
+            # source is the map key. It is not on the remote-write allowlist, so the label will be dropped and won't get federated to RHOBS.
+            # origin_kind and origin_name are kept.
+            # Reference: https://docs.kargo.io/api-docs#tag/core/GET/v1beta1/projects/{project}/stages/{stage}:~:text=%7D%2C%0A%20%20%20%20%22-,effectiveAutoPromotionHolds,-%22%3A%20%7B
+            - name: effective_auto_promotion_hold_created_timestamp
+              help: "Unix time when the Promotion that established this auto-promotion hold was created."
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, effectiveAutoPromotionHolds]
+                  labelFromKey: source
+                  labelsFromPath:
+                    origin_kind: [origin, kind]
+                    origin_name: [origin, name]
+                  valueFrom: [createdAt]
         - groupVersionKind:
             group: kargo.akuity.io
             version: v1alpha1
@@ -77,3 +91,13 @@ data:
                     condition: [type]
                     status: [status]
                   valueFrom: [lastTransitionTime]
+            # A Warehouse can show a FreightCreated condition and its
+            # lastTransitionTime. That time is not when artifacts were last
+            # discovered. This gauge uses status.discoveredArtifacts.discoveredAt.
+            - name: discovered_timestamp
+              help: "Unix time when this Warehouse last discovered artifacts."
+              each:
+                type: Gauge
+                gauge:
+                  path: [status, discoveredArtifacts]
+                  valueFrom: [discoveredAt]
