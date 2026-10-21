@@ -144,6 +144,6 @@ spec:
               - name: component
                 value: ${{ vars.component }}
               - name: clusters
-                value: stone-prd-rh01
+                value: stone-prd-rh01|stone-prod-p02
               - name: tokenSecret
                 value: argocd-app-reader-token
