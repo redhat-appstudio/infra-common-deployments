@@ -65,7 +65,7 @@ spec:
             )
         - record: kargo:stage:effective_auto_promotion_hold:created_timestamp
           expr: |
-            max by (exported_namespace, stage, component, origin) (
+            max by (exported_namespace, stage, component, origin_kind, origin_name) (
               label_replace(
                 label_replace(
                   kargo_stage_effective_auto_promotion_hold_created_timestamp,

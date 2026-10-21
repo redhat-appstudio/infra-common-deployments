@@ -55,16 +55,23 @@ data:
                     condition: [type]
                     status: [status]
                   valueFrom: [lastTransitionTime]
-            # One series per origin currently held. The key is the FreightOrigin,
-            # such as Warehouse/authentication. Freight and Promotion names stay
-            # off the labels. The series is absent when nothing is held.
+            # One series per origin currently held. The series is absent when
+            # nothing is held. entry_name is the map key (Warehouse/authentication).
+            # It is not on the remote-write allowlist, so RHOBS drops it.
+            # origin_kind and origin_name come from the hold's origin object.
+            # They are not named kind and name: those would replace the Stage
+            # name label that the recording rule splits into stage and component.
+            # Freight and Promotion names stay off the labels.
             - name: effective_auto_promotion_hold_created_timestamp
               help: "Unix time when the Promotion that established this auto-promotion hold was created."
               each:
                 type: Gauge
                 gauge:
                   path: [status, effectiveAutoPromotionHolds]
-                  labelFromKey: origin
+                  labelFromKey: entry_name
+                  labelsFromPath:
+                    origin_kind: [origin, kind]
+                    origin_name: [origin, name]
                   valueFrom: [createdAt]
         - groupVersionKind:
             group: kargo.akuity.io
