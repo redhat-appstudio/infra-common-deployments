@@ -54,7 +54,7 @@ valuesInline:
     shardName: infra-deployments-production
     gitClient:
       name: Kargo
-      email: no-reply@redhat.com
+      email: no-reply+konflux-kargo-git-operations@redhat.com
       pushIntegrationPolicy: RebaseOrMerge
       signingKeySecret:
         name: kargo-git-signing-key
