@@ -30,9 +30,3 @@ spec:
       metadata:
         labels:
           argocd.argoproj.io/secret-type: cluster
-          appstudio.redhat.com/member-cluster: 'true'
-          appstudio.redhat.com/rh-member-cluster: 'true'
-          appstudio.redhat.com/quality-dashboard: 'true'
-          appstudio.redhat.com/ci-helper-app: 'true'
-          appstudio.redhat.com/backup: 'true'
-          appstudio.redhat.com/toolchain-member: 'true'
