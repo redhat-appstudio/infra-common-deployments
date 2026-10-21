@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
   - ../../base
+  - kargo-git-signing-key.yaml
 
 namespace: kargo
 

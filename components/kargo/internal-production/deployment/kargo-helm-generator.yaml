@@ -73,6 +73,13 @@ valuesInline:
                 name: dex-client
                 key: token
   controller:
+    gitClient:
+      name: Kargo
+      email: no-reply@kargo.io
+      pushIntegrationPolicy: RebaseOrMerge
+      signingKeySecret:
+        name: kargo-git-signing-key
+        type: gpg
     resources:
       requests:
         cpu: 500m
