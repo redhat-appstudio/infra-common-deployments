@@ -36,15 +36,13 @@ spec:
       config:
         path: ${{ vars.srcPath }}
         message: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}'
-    # One branch per component/ring lets subsequent Promotions update the same PR.
-    # Kargo serializes Promotions within a Stage; CI must use this push's SHA.
+    # A new Promotion gets a fresh branch instead of replaying a prior PR's history.
     - uses: github-push
       as: push
       if: ${{ status('commit') == 'Succeeded' }}
       config:
         path: ${{ vars.srcPath }}
-        targetBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
-        force: true
+        generateTargetBranch: true
     - uses: git-open-pr
       as: open-pr
       if: ${{ status('push') == 'Succeeded' }}
@@ -56,7 +54,7 @@ spec:
         errorThreshold: 3
       config:
         repoURL: https://github.com/redhat-appstudio/infra-deployments.git
-        sourceBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
+        sourceBranch: ${{ task.outputs['push'].branch }}
         targetBranch: main
         title: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}'
         description: |
@@ -92,7 +90,7 @@ spec:
         timeout: 5m
       config:
         method: GET
-        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?state=open&base=main&head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}&per_page=2
+        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?state=open&base=main&head=redhat-appstudio:${{ task.outputs['push'].branch }}&per_page=2
         headers: &github-headers
           - name: Authorization
             value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
@@ -105,7 +103,7 @@ spec:
           len(response.body) == 1 && response.body[0].state == 'open' &&
           response.body[0].head.repo.full_name == 'redhat-appstudio/infra-deployments' &&
           response.body[0].base.repo.full_name == 'redhat-appstudio/infra-deployments' &&
-          response.body[0].head.ref == ${{ quote(ctx.project + '/' + vars.component + '/' + vars.targetRing) }} &&
+          response.body[0].head.ref == ${{ quote(task.outputs['push'].branch) }} &&
           response.body[0].base.ref == 'main' && response.body[0].head.sha == ${{ quote(task.outputs['push'].commit) }}
         failureExpression: |
           response.status in [401, 404] ||
