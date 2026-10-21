@@ -57,7 +57,7 @@ data:
                   valueFrom: [lastTransitionTime]
             # source is the map key. It is not on the remote-write allowlist, so the label will be dropped and won't get federated to RHOBS.
             # origin_kind and origin_name are kept.
-            # https://docs.kargo.io/api-docs#tag/core/GET/v1beta1/projects/{project}/stages/{stage}:~:text=%7D%2C%0A%20%20%20%20%22-,effectiveAutoPromotionHolds,-%22%3A%20%7B
+            # Reference: https://docs.kargo.io/api-docs#tag/core/GET/v1beta1/projects/{project}/stages/{stage}:~:text=%7D%2C%0A%20%20%20%20%22-,effectiveAutoPromotionHolds,-%22%3A%20%7B
             - name: effective_auto_promotion_hold_created_timestamp
               help: "Unix time when the Promotion that established this auto-promotion hold was created."
               each:
