@@ -25,6 +25,10 @@ spec:
       name: kflux-hub-stg-01
     - namespace: managed-release-team-tenant
       name: kflux-hub-stg-01
+    - namespace: '*-tenant'
+      name: kflux-stg-p02
+    - namespace: managed-release-team-tenant
+      name: kflux-stg-p02
 
   # Deny all namespaced-scoped resources from being created, except for the following
   namespaceResourceWhitelist:

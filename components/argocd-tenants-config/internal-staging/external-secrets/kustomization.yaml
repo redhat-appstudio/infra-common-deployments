@@ -2,6 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
+  - kflux-stg-p02-es.yaml
   - stg-rh01-es.yaml
   - stg-p01-es.yaml
   - kflux-hub-stg-01-es.yaml

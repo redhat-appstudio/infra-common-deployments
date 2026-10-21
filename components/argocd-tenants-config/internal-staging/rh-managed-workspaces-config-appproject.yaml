@@ -41,6 +41,15 @@ spec:
       name: kflux-hub-stg-01
     - namespace: rhtap-releng-tenant
       name: kflux-hub-stg-01
+    # Internal Staging ROKS
+    - namespace: managed-release-team-tenant
+      name: kflux-stg-p02
+    - namespace: managed-konflux-perfscale-tenant
+      name: kflux-stg-p02
+    - namespace: rh-managed-*-tenant
+      name: kflux-stg-p02
+    - namespace: rhtap-releng-tenant
+      name: kflux-stg-p02
 
   # Deny all namespaced-scoped resources from being created, except for the following
   namespaceResourceWhitelist:
