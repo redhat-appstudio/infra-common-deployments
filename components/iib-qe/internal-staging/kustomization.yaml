@@ -19,3 +19,5 @@ resources:
 - gitlab-git-auth.yaml
 - regenerate-bundle-universal-repository-gitlab-webhook-config-externalsecret.yaml
 - regenerate-bundle-universal-repository-git-auth-externalsecret.yaml
+- iib-api-test-binaryless-index-configs-gitlab-webhook-config-externalsecret.yaml
+- iib-api-test-binaryless-index-configs-git-auth-externalsecret.yaml

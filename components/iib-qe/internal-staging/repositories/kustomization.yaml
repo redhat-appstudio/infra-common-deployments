@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - iib-api-test-index-configs.yaml
   - regenerate-bundle-universal-repository.yaml
+  - iib-api-test-binaryless-index-configs.yaml
