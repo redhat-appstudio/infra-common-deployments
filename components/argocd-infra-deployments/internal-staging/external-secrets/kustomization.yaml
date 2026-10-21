@@ -9,3 +9,6 @@ resources:
   - redhat-appstudio-es.yaml
   - lightwell-dev-es.yaml
   - kflux-stg-p02-es.yaml
+  - kflux-hub-stg-01-es.yaml
+  - kflux-spoke-stg-01a-es.yaml
+  - kflux-spoke-stg-01b-es.yaml

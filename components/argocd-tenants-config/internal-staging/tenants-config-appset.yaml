@@ -10,6 +10,7 @@ spec:
         directories:
           - path: staging/tenants-config/auto-generated/cluster/stone-stage-p01/tenants/*
           - path: staging/tenants-config/auto-generated/cluster/stone-stg-rh01/tenants/*
+          - path: staging/tenants-config/auto-generated/cluster/kflux-hub-stg-01/tenants/*
   template:
     metadata:
       name: '{{path.basename}}-{{path[4]}}'
