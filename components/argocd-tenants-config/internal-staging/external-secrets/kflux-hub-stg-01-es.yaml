@@ -1,0 +1,32 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: kflux-hub-stg-01-es
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+    argocd.argoproj.io/secret-type: cluster
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: staging/platform/terraform/generated/kflux-hub-stg-01/kflux-hub-stg-01
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: appsre-stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: kflux-hub-stg-01-secret
+    template:
+      engineVersion: v2
+      # Keep Replace (not Merge): ApplicationSet-selecting labels must match this
+      # template exactly. Merge can leave stale labels on the Secret after removals
+      # (see #942), so Apps keep matching when they should not.
+      mergePolicy: Replace
+      metadata:
+        labels:
+          argocd.argoproj.io/secret-type: cluster

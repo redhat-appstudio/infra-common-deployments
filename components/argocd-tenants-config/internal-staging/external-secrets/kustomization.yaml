@@ -4,4 +4,5 @@ kind: Kustomization
 resources:
   - stg-rh01-es.yaml
   - stg-p01-es.yaml
+  - kflux-hub-stg-01-es.yaml
   - konflux-release-data-es.yaml
