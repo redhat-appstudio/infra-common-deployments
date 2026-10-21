@@ -38,7 +38,7 @@ spec:
         message: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}'
     # One branch per component/ring lets subsequent Promotions update the same PR.
     # Kargo serializes Promotions within a Stage; CI must use this push's SHA.
-    - uses: git-push
+    - uses: github-push
       as: push
       if: ${{ status('commit') == 'Succeeded' }}
       config:
