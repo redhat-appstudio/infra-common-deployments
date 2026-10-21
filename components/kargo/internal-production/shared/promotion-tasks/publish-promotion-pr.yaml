@@ -36,15 +36,29 @@ spec:
       config:
         path: ${{ vars.srcPath }}
         message: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}'
-    # One branch per component/ring lets subsequent Promotions update the same PR.
-    # Kargo serializes Promotions within a Stage; CI must use this push's SHA.
+    # Sign without comparing against an older PR branch. A rebuilt local commit
+    # gets a different signing ref; retries of the same commit retain its ancestry.
     - uses: github-push
-      as: push
+      as: sign
       if: ${{ status('commit') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}
+        targetBranch: kargo/signing/${{ ctx.project }}/${{ ctx.promotion }}/${{ task.outputs['commit'].commit }}
+        force: true
+    # github-push syncs the checkout to the API-created signed commit. Native
+    # force-push copies that exact object to the reusable PR branch without rebase.
+    - uses: git-push
+      as: push
+      if: ${{ status('sign') == 'Succeeded' }}
       config:
         path: ${{ vars.srcPath }}
         targetBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
         force: true
+    - uses: fail
+      as: validate-signed-head
+      if: ${{ status('push') == 'Succeeded' && task.outputs['push'].commit != task.outputs['sign'].commit }}
+      config:
+        message: The published head must be the exact GitHub-signed commit. CI and merge remain blocked.
     - uses: git-open-pr
       as: open-pr
       if: ${{ status('push') == 'Succeeded' }}

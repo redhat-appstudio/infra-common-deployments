@@ -155,8 +155,21 @@ Keep these rules when extending or generating configuration:
 ## What the checks guarantee
 
 **Publication:** each project/component/ring uses one stable branch:
-`<project>/<component>/<targetRing>`. Native `git-push` replaces that branch with
-the newly prepared changes. Native `git-open-pr` opens or reuses the PR using
+`<project>/<component>/<targetRing>`. After preparing one locally signed commit
+from `main`, `github-push` signs it through the GitHub API on
+`kargo/signing/<project>/<promotion>/<local-commit-SHA>`. Kargo synchronizes the
+checkout to that App-attributed, GitHub-signed commit. Native `git-push` with
+`force: true` then copies the exact signed object to the stable PR branch. The
+task checks that both push outputs have the same SHA before opening the PR.
+
+The signing ref avoids using the old PR branch as the API replay base, which
+could recreate intervening main commits. Including the original local SHA gives
+a rebuilt commit a different signing ref, even within the same Promotion.
+Signing branches have no PRs and are retained for retries; remove them manually
+only after their Promotions are terminal and will not be retried. The stable
+branch retains the signed commit. No automatic PR or branch cleanup is performed.
+
+Native `git-open-pr` opens or reuses the PR using
 Kargo's configured Git credentials. It allows up to three errors within five
 minutes before trying recovery. Successful native publication adds no PAT reads.
 
