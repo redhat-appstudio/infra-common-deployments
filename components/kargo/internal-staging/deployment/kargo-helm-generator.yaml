@@ -80,6 +80,8 @@ valuesInline:
       limits:
         memory: 256Mi
   controller:
+    githubPush:
+      maxRevisions: 50
     gitClient:
       name: Kargo
       email: no-reply+konflux-kargo-git-operations@redhat.com
