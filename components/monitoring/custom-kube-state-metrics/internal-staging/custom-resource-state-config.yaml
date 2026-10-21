@@ -56,7 +56,7 @@ data:
                     status: [status]
                   valueFrom: [lastTransitionTime]
             # One series per origin currently held. The series is absent when
-            # nothing is held. entry_name is the map key (Warehouse/authentication).
+            # nothing is held. source is the map key (Warehouse/authentication).
             # It is not on the remote-write allowlist, so RHOBS drops it.
             # origin_kind and origin_name come from the hold's origin object.
             # They are not named kind and name: those would replace the Stage
@@ -68,7 +68,7 @@ data:
                 type: Gauge
                 gauge:
                   path: [status, effectiveAutoPromotionHolds]
-                  labelFromKey: entry_name
+                  labelFromKey: source
                   labelsFromPath:
                     origin_kind: [origin, kind]
                     origin_name: [origin, name]
