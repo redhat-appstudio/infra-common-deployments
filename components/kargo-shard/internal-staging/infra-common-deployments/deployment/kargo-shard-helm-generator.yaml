@@ -10,7 +10,7 @@ releaseName: kargo-shard-infra-common-deployments
 valuesInline:
   image:
     repository: quay.io/konflux-ci/kargo
-    tag: v1.12.3-0-gd544d7c6a
+    tag: v1.12.4-0-g1b6a368d3
   # Controller-only shard: full Kargo on this cluster owns the data plane
   # (CRDs, ClusterRoles, webhooks, shared namespaces). Avoid SharedResourceWarning.
   api:

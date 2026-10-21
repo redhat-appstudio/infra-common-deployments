@@ -10,7 +10,7 @@ releaseName: kargo
 valuesInline:
   image:
     repository: quay.io/konflux-ci/kargo
-    tag: v1.12.3-0-gd544d7c6a
+    tag: v1.12.4-0-g1b6a368d3
   api:
     resources:
       requests:
