@@ -13,9 +13,9 @@ spec:
     - name: prNumber
     - name: promotionAsNoOp
     - name: mergeMode
-    # Matches the publisher's stable branch; component/targetRing are Stage vars.
+    # Matches github-push's generateTargetBranch naming for this Promotion.
     - name: sourceBranch
-      value: ${{ ctx.project + '/' + vars.component + '/' + vars.targetRing }}
+      value: ${{ 'kargo/promotion/' + ctx.promotion }}
   steps:
     - uses: fail
       as: validate-config

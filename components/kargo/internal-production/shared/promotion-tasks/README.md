@@ -154,9 +154,11 @@ Keep these rules when extending or generating configuration:
 
 ## What the checks guarantee
 
-**Publication:** each project/component/ring uses one stable branch:
-`<project>/<component>/<targetRing>`. Native `git-push` replaces that branch with
-the newly prepared changes. Native `git-open-pr` opens or reuses the PR using
+**Publication:** `github-push` uses `generateTargetBranch: true` to publish to
+`kargo/promotion/<promotionName>`. Each new Promotion gets a fresh branch and PR,
+avoiding replay of mainline history from an older promotion branch. Callers must
+clone `main` before preparing changes. Native `git-open-pr` opens or recovers the
+PR for that generated branch using
 Kargo's configured Git credentials. It allows up to three errors within five
 minutes before trying recovery. Successful native publication adds no PAT reads.
 
@@ -167,26 +169,27 @@ ambiguous results never permit CI or merge. `continueOnError` applies only to th
 native opener so verified recovery can succeed; an explicit failure step prevents
 unrecovered publication errors from being silently accepted.
 
-A new Promotion for the same Freight updates the existing PR. CI checks the
-newly pushed SHA; an earlier passing result cannot approve a different head.
+A new Promotion for the same Freight creates a new PR. Recovery can reuse a PR
+only for the same Promotion and exact pushed SHA; an earlier passing CI result
+cannot approve a different head.
 
-Kargo serializes Promotions within a Stage. Each branch must belong to exactly
-one Stage: do not configure two Stages with the same project/component/ring or
-push to these branches manually. If PR creation is skipped because the change
+Kargo serializes Promotions within a Stage. Do not push to its generated branches
+manually. If PR creation is skipped because the change
 may already exist, two HTTP reads verify exact Git-tree equality before accepting
 it as a no-op.
 
-Existing PRs on the older `<project>/promotions/<promotion>` branches are not
-adopted or closed automatically. The first promotion after this change starts the
-stable branch; later promotions reuse its open PR. Review and close obsolete
-per-Promotion PRs separately so they are not accidentally merged. A closed PR is not reopened;
-new changes can create a new PR on the same branch.
+Older PRs, including those on `<project>/<component>/<targetRing>` branches, are
+not adopted or closed automatically. Review and close superseded PRs manually.
+Generated branch names are fixed per Promotion, not per attempt: resuming after
+publication retains its captured branch and SHA. A full rebuild against newer
+`main` can encounter the same replay issue if that Promotion's branch already
+exists; create a new Promotion for that case.
 
 **CI and merge:** required checks must pass for the published head SHA. Automatic
 mode uses native `git-merge-pr`; manual mode uses native `git-wait-for-pr`. HTTP
 checks verify the PR's head, source branch, repositories, base branch and resulting merge SHA.
-The merge task defaults `sourceBranch` from the Stage's `component` and `targetRing`
-variables, matching the publisher's stable branch; no extra API call is needed. Missing or
+The merge task defaults `sourceBranch` to `kargo/promotion/<promotionName>`,
+matching the publisher's generated branch; no extra API call is needed. Missing or
 pending CI results wait; failed results block completion. Responses exceeding
 100 checks/statuses are rejected rather than approving a partial result set.
 
@@ -245,7 +248,7 @@ are made just to build the description. A reused PR may keep its original body.
 | GitHub rate limiting | HTTP CI/identity calls still use a shared PAT. Native Git steps use configured Kargo credentials. Task reuse alone does not reduce request volume. |
 | Merge fails on a transient API error | Native Kargo v1.11.3 merge errors can be terminal. A retry budget does not make every provider failure retryable. |
 | Branch changes during merge | Native merge lacks an atomic expected-head precondition. The final identity check can detect a mismatch but cannot undo an already completed merge. |
-| Repeating a promotion | An open PR on the stable branch is reused. The branch is replaced and CI checks the new head. A retry that resumes after publication keeps its captured head and fails the merge identity check if the branch has changed. |
+| Repeating a promotion | A new Promotion gets a new branch and PR. A retry that resumes after publication keeps its captured head and fails the merge identity check if the branch has changed. Close superseded PRs manually. |
 
 GitHub check-runs polling defaults to two minutes, with up to 2h30m.
 Prow polling defaults to 15 minutes, with up to 120 hours (five days). Automatic merge and
