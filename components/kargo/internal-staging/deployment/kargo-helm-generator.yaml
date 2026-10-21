@@ -82,7 +82,7 @@ valuesInline:
   controller:
     gitClient:
       name: Kargo
-      email: no-reply@kargo.io
+      email: no-reply@redhat.com
       pushIntegrationPolicy: RebaseOrMerge
       signingKeySecret:
         name: kargo-git-signing-key

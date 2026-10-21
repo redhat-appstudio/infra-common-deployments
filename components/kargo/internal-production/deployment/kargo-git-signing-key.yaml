@@ -1,6 +1,6 @@
 ---
 # Vault must provide an unencrypted ASCII-armored GPG private key under
-# `signingKey`, with identity Kargo <no-reply@kargo.io>.
+# `signingKey`, with identity Kargo <no-reply@redhat.com>.
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
