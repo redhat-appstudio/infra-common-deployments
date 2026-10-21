@@ -10,6 +10,7 @@ change deployment Git through pull requests; Argo CD reconciles the result.
 - [Production directory and ownership](internal-production/README.md)
 - [Onboard a component](internal-production/docs/onboarding.md)
 - [Operate and upgrade Kargo](internal-production/docs/operations.md)
+- [Commit signing and Vault key setup](internal-production/docs/commit-signing.md)
 - [Configure verification](internal-production/docs/verifications.md)
 - [Conformance test gate](internal-production/shared/verifications/konflux-conformance-tests/README.md)
 - [Existing Kargo owners](OWNERS)

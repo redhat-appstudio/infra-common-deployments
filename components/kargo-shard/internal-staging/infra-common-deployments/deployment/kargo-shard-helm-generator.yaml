@@ -52,6 +52,8 @@ valuesInline:
         additionalLabels:
           monitoring.rhobs/stack: appstudio-federate-ms
     shardName: infra-common-deployments-staging
+    githubPush:
+      maxRevisions: 50
     gitClient:
       name: Kargo
       email: no-reply+konflux-kargo-git-operations@redhat.com
