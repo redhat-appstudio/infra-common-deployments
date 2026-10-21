@@ -1,0 +1,24 @@
+---
+# Vault must provide an unencrypted ASCII-armored GPG private key under
+# `signingKey`, with identity Kargo <no-reply@kargo.io>.
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: kargo-git-signing-key
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  data:
+    - secretKey: signingKey
+      remoteRef:
+        key: staging/devprod/kargo-git-signing-key
+        property: signingKey
+        decodingStrategy: None
+  refreshInterval: 15m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: appsre-stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: kargo-git-signing-key

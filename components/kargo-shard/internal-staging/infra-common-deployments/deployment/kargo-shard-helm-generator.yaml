@@ -52,6 +52,13 @@ valuesInline:
         additionalLabels:
           monitoring.rhobs/stack: appstudio-federate-ms
     shardName: infra-common-deployments-staging
+    gitClient:
+      name: Kargo
+      email: no-reply@kargo.io
+      pushIntegrationPolicy: RebaseOrMerge
+      signingKeySecret:
+        name: kargo-git-signing-key
+        type: gpg
     argocd:
       integrationEnabled: true
       namespace: argocd-local
