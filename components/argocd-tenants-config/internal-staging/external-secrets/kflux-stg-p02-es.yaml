@@ -23,7 +23,10 @@ spec:
     name: kflux-stg-p02-secret
     template:
       engineVersion: v2
-      mergePolicy: Merge
+      # Keep Replace (not Merge): ApplicationSet-selecting labels must match this
+      # template exactly. Merge can leave stale labels on the Secret after removals
+      # (see #942), so Apps keep matching when they should not.
+      mergePolicy: Replace
       metadata:
         labels:
           argocd.argoproj.io/secret-type: cluster
