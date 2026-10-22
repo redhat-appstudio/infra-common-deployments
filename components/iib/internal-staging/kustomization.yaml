@@ -15,3 +15,15 @@ resources:
 - registry-proxy-push-secret.yaml
 - registry-redhat-io-read.yaml
 - brew-registry-redhat-read.yaml
+- iib-pub-index-configs-gitlab-webhook-config-externalsecret.yaml
+- iib-pub-index-configs-git-auth-externalsecret.yaml
+- iib-pub-pending-index-configs-gitlab-webhook-config-externalsecret.yaml
+- iib-pub-pending-index-configs-git-auth-externalsecret.yaml
+- redhat-marketplace-index-pending-stage-index-configs-gitlab-webhook-config-externalsecret.yaml
+- redhat-marketplace-index-pending-stage-index-configs-git-auth-externalsecret.yaml
+- community-operator-index-pending-stage-index-configs-gitlab-webhook-config-externalsecret.yaml
+- community-operator-index-pending-stage-index-configs-git-auth-externalsecret.yaml
+- certified-operator-index-pending-stage-index-configs-gitlab-webhook-config-externalsecret.yaml
+- certified-operator-index-pending-stage-index-configs-git-auth-externalsecret.yaml
+- iib-preview-rhtap-index-configs-gitlab-webhook-config-externalsecret.yaml
+- iib-preview-rhtap-index-configs-git-auth-externalsecret.yaml
