@@ -14,7 +14,9 @@ spec:
   endpoints:
   - params:
       'match[]':
-        - '{__name__=~".*"}'
+        # Forward all metrics except those matching the deny list below.
+        # Exclude metrics with high cardinality to reduce the volume sent to RHOBS.
+        - '{__name__=~".+",__name__!~"analysis_run_.*"}'
     relabelings:
     - action: replace
       targetLabel: __address__
