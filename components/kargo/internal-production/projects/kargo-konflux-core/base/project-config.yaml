@@ -5,6 +5,16 @@ metadata:
   name: kargo-konflux-core
 spec:
   promotionPolicies:
+    - stage: ring-0-pipeline-service
+      autoPromotionEnabled: false
+    - stage: ring-1-pipeline-service
+      autoPromotionEnabled: false
+    - stage: ring-2-pipeline-service
+      autoPromotionEnabled: false
+    - stage: ring-3-pipeline-service
+      autoPromotionEnabled: false
+    - stage: ring-4-pipeline-service
+      autoPromotionEnabled: false
     - stage: ring-0-konflux-operator
       autoPromotionEnabled: true
     - stage: ring-1-konflux-operator
