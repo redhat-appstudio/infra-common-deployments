@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: managed-tenant-bootstrap-config
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Bootstrap infrastructure-controlled managed tenant namespaces
+  sourceRepos:
+    - https://gitlab.cee.redhat.com/releng/konflux-release-data.git
+  destinations:
+    - namespace: art-token-broker
+      name: kflux-ocp-p01
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: LimitRange
+    - group: ""
+      kind: ResourceQuota
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  orphanedResources:
+    warn: false
