@@ -1,5 +1,17 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+
+namespace: iib
+
 resources:
 - ../base
+- iib-sa-token-rbac.yaml
+- serviceaccount.yaml
+- iib-pipelines-scc-rolebinding.yaml
+- iib-pipelinerun-reader.yaml
+- iib-pipelinerun-reader-token-rbac.yaml
+- trusted-ca-configmap.yaml
+- registry-proxy-push-secret.yaml
+- registry-redhat-io-read.yaml
+- brew-registry-redhat-read.yaml
