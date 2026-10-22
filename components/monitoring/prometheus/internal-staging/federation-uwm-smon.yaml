@@ -14,7 +14,9 @@ spec:
   endpoints:
   - params:
       'match[]':
-        - '{__name__=~".*"}'
+        # Deny raw AnalysisRun metrics with high cardinality; keep their UWM
+        # recording rules (e.g. kargo:verification:count) and all other metrics.
+        - '{__name__=~".+",__name__!~"analysis_run_.*"}'
     relabelings:
     - action: replace
       targetLabel: __address__
