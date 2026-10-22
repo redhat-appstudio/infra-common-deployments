@@ -15,6 +15,7 @@ resources:
 - registry-proxy-push-secret.yaml
 - registry-redhat-io-read.yaml
 - brew-registry-redhat-read.yaml
+- repositories
 - iib-pub-index-configs-gitlab-webhook-config-externalsecret.yaml
 - iib-pub-index-configs-git-auth-externalsecret.yaml
 - iib-pub-pending-index-configs-gitlab-webhook-config-externalsecret.yaml
