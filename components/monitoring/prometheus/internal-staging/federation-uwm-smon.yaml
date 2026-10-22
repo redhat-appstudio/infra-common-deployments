@@ -14,8 +14,8 @@ spec:
   endpoints:
   - params:
       'match[]':
-        # Deny raw AnalysisRun metrics with high cardinality; keep their UWM
-        # recording rules (e.g. kargo:verification:count) and all other metrics.
+        # Forward all metrics except those matching the deny list below.
+        # Exclude metrics with high cardinality to reduce the volume sent to RHOBS.
         - '{__name__=~".+",__name__!~"analysis_run_.*"}'
     relabelings:
     - action: replace
