@@ -1,0 +1,15 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: iib-pipelines-scc
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+subjects:
+  - kind: ServiceAccount
+    name: iib-pipeline
+    namespace: iib
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: pipelines-scc-clusterrole
