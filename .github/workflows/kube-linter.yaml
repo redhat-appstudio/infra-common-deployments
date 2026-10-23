@@ -23,10 +23,12 @@ jobs:
         shell: bash
         run: mkdir -p ../results kustomizedfiles
 
+      # 5.8.1+ supports Helm v4 (ubuntu-latest ships Helm 4; older kustomize
+      # calls `helm version -c` which Helm 4 removed).
       - name: Setup Kustomize
         uses: multani/action-setup-kustomize@bf96e027caf74ab03bb3f79bac2addb331b28f1d # v1
         with:
-          version: '5.7.1'
+          version: '5.8.1'
 
       # Step 1: Try to restore cache
       - name: Cache kustomize builds

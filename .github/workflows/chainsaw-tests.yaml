@@ -38,6 +38,13 @@ jobs:
 
     - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
+    # 5.8.1+ supports Helm v4 (ubuntu-latest ships Helm 4; older kustomize
+    # calls `helm version -c` which Helm 4 removed).
+    - name: Setup Kustomize
+      uses: multani/action-setup-kustomize@bf96e027caf74ab03bb3f79bac2addb331b28f1d # v1
+      with:
+        version: '5.8.1'
+
     - name: Install Dependencies
       shell: bash
       run: |
