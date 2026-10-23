@@ -1,4 +1,5 @@
-# SPRE-6648: API URLs for workload clusters, so a secret: ref can resolve them.
+# SPRE-6648: API URLs for workload clusters. connect_cluster passes the full
+# path, for example secret:/var/run/pharos-credentials/kflux-stg-p02.
 # data.config.yaml is one string, so this patch carries the full config.
 # Add one cluster_registry entry per cluster.
 apiVersion: v1
