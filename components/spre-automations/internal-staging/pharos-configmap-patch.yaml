@@ -1,0 +1,20 @@
+# SPRE-6648: API URLs for workload clusters. connect_cluster passes the full
+# path, for example secret:/var/run/pharos-credentials/kflux-stg-p02.
+# data.config.yaml is one string, so this patch carries the full config.
+# Add one cluster_registry entry per cluster.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pharos-config
+data:
+  config.yaml: |
+    profile: konflux
+    sources:
+      kubernetes:
+        discover_contexts: false
+        credential_ref_roots:
+          - /var/run/pharos-credentials
+        credential_ref_env_allowlist: []
+        cluster_registry:
+          kflux-stg-p02:
+            server: https://dadgb8nw06g868q4631g.vpe.private.us-east.containers.cloud.ibm.com:30486

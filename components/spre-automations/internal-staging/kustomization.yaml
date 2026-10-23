@@ -13,3 +13,5 @@ images:
   digest: sha256:9a2c5db1181f1bc936179b2a85916608efa334e362a1635d5017a7dac8049b3b
 patches:
 - path: route-patch.yaml
+- path: pharos-deployment-patch.yaml
+- path: pharos-configmap-patch.yaml
