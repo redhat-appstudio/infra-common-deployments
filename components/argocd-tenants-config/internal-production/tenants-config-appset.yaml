@@ -63,7 +63,6 @@ spec:
         - group: appstudio.redhat.com
           kind: ReleasePlan
           jsonPointers:
-            - /metadata/labels/release.appstudio.openshift.io~1author
             - /metadata/labels/release.appstudio.openshift.io~1standing-attribution
         # OpenShift auto-injects dockercfg secrets into SA secrets/imagePullSecrets;
         # ignore to prevent ArgoCD prune → OpenShift recreate → endless OutOfSync loop
