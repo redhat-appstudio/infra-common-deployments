@@ -41,7 +41,7 @@ infra-common-deployments/
 
 ```mermaid
 graph LR
-    A{{infra-common-clusters}}
+    A[infra-common-deployments]
 
     A --> B1
     A --> C1
@@ -49,26 +49,40 @@ graph LR
     A --> E1
 
     subgraph StagingInternal[kflux-c-stg-i01]
-        B1>ArgoCD]
-        B2[internal-services]
+        B1>Local Argo CD]
+        B2["local component (e.g. internal-services)"]
         B1 --> B2
+    
+        B3>Ring Deployments Argo CD]
+        B4>Tenants Config Argo CD]
     end
 
+    F["Staging Tenant Clusters"]
+    B3 --> F
+    B4 --> F
+
     subgraph StagingExternal[kflux-c-stg-e01]
-        C1>ArgoCD]
-        C2[smee]
+        C1>Local Argo CD]
+        C2["local component (e.g. smee)"]
         C1 --> C2
     end
 
     subgraph ProductionInternal[kflux-c-prd-i01]
         D1>ArgoCD]
-        D2[internal-services]
+        D2["local component (e.g. internal services)"]
         D1 --> D2
+
+        D3>Ring Deployments Argo CD]
+        D4>Tenants Config Argo CD]
     end
 
+    G["Production Tenant Clusters"]
+    D3 --> G
+    D4 --> G
+
     subgraph ProductionExternal[kflux-c-prd-e01]
-        E1>ArgoCD]
-        E2[smee]
+        E1>Local Argo CD]
+        E2["local component (e.g. smee)"]
         E1 --> E2
     end
 ```
@@ -81,65 +95,6 @@ This repository uses the **App-of-Apps pattern** where:
 2. ApplicationSets automatically discover and deploy components
 3. Components are deployed using Kustomize overlays per environment
 
-## Current Components
-
-### All-Clusters Components
-
-#### Cluster Secret Store
-
-- **Purpose**: TODO
-- **Location**: `components/cluster-secret-store/`
-- **Deployment**: Applied only to all clusters via `all-clusters` base
-- **Resources**: ClusterSecretStore
-
-#### External Secrets Operator
-
-- **Purpose**: Manages external secrets from various secret stores
-- **Location**: `components/external-secrets-operator/`
-- **Deployment**: Applied to all clusters via `all-clusters` base
-- **Resources**: Subscription, operator configuration, and namespace setup
-
-#### IAM (Identity and Access Management)
-
-- **Purpose**: Group synchronization and RBAC management
-- **Location**: `components/IAM/`
-- **Deployment**: Applied to all clusters via `all-clusters` base
-- **Resources**: Group sync operator, Konflux Rover groups, role bindings, and test platform CI admin groups
-
-### Environment-Specific Components
-
-#### Smee (External Clusters Only)
-
-- **Purpose**: Webhook forwarding service for external webhooks
-- **Location**: `components/smee/`
-- **Deployment**: Applied only to external clusters (staging/production)
-- **Resources**: Deployment, service, and route for webhook forwarding
-
-#### Internal Services (Internal Clusters Only)
-
-- **Purpose**: RBAC, service accounts, and internal service configurations
-- **Location**: `components/internal-services/`
-- **Deployment**: Applied only to internal clusters (staging/production)
-- **Resources**: Cluster roles, role bindings, service accounts, secrets, and CRD references
-
-#### Openshift Pipelines (Internal Clusters Only)
-
-- **Purpose**: TODO
-- **Location**: `components/openshift-pipelines/`
-- **Deployment**: Applied only to internal clusters (staging/production)
-- **Resources**: ConfigMap, Namespace, and Subscription for OpenShift Pipelines Operator
-
-### Component Deployment Matrix
-
-| Component | All Clusters | External Only | Internal Only |
-|-----------|--------------|---------------|---------------|
-| **External Secrets Operator** | ✅ | - | - |
-| **IAM (Group Sync)** | ✅ | - | - |
-| **Smee** | - | ✅ | - |
-| **Internal Services** | - | - | ✅ |
-| **Cluster Secret Store** | ✅ | - | - |
-| **Openshift Pipelines** | - | - | ✅ |
-
 ### Environment Overlay Structure
 
 Each overlay includes:
@@ -150,29 +105,14 @@ Each overlay includes:
 
 ## Reusable Components (k-components)
 
-This repository uses Kustomize Components to eliminate duplication between environments. These components are located in `k-components/` directories within each component folder.
+This repository uses Kustomize Components to eliminate duplication between environments. These components are located in `k-components/` directories within each component folder. 
 
-### Benefits of k-components
+Benefits include:
 
 - **DRY Principle**: Eliminates code duplication between environments
 - **Maintainability**: Changes only need to be made in one place
 - **Consistency**: Ensures identical behavior across environments
 - **Reusability**: Components can be easily used in new environments
-
-### IAM k-components
-
-Located in `components/iam/k-components/`:
-
-- **external-ldap-url**: Configures LDAP URL for external clusters
-- **internal-ldap-url**: Configures LDAP URL for internal clusters
-- **konflux-ldap-sa**: Manages Konflux LDAP service account configuration
-- **mtls-ca-validators**: Manages mTLS CA validators configuration
-
-### Cluster Secret Store k-components
-
-Located in `components/cluster-secret-store/k-components/`:
-
-- **approle-id**: Configures AppRole ID for Vault authentication
 
 ## Component Development
 
@@ -185,44 +125,41 @@ Located in `components/cluster-secret-store/k-components/`:
    cd components/my-component/base
    ```
 
-2. **Create Kustomize base**:
+2. **Add resources shared across all clusters**:
 
    ```yaml
-   # kustomization.yaml
-   apiVersion: kustomize.config.k8s.io/v1beta1
-   kind: Kustomization
-
-   resources:
-   - deployment.yaml
-   - service.yaml
-
-   namespace: my-component
+    ├── my-component/
+    │   ├── base/
+    │   │   ├── database-es.yaml
+    │   │   ├── kustomize.yaml
+    │   │   └── my-component-svc.yaml
+    |   ...
    ```
 
    *Note: Be sure to name Kubernetes resource files after their Kubernetes kind*
 
-3. **Add environment overlay(s)**:
+3. **Add environment overlay(s) for each overlay to be deployed to**:
 
    ```bash
-   mkdir components/my-component/internal-staging
-   mkdir components/my-component/internal-production
+   mkdir components/my-component/<(internal | external)-(staging | production)>
    ```
 
-4. **Create overlay kustomization(s)**:
+4. **Add overlay-specific resources/patches to each overlay**:
 
    ```yaml
-   # components/my-component/internal-staging/kustomization.yaml
-   apiVersion: kustomize.config.k8s.io/v1beta1
-   kind: Kustomization
-
-   namespace: my-component-staging
-
-   resources:
-   - ../base
-
-   patchesStrategicMerge:
-   - staging-patches.yaml
+    ├── my-component/
+    │   ├── base/
+    │   │   ├── database-es.yaml
+    │   │   ├── kustomize.yaml
+    │   │   └── my-component-svc.yaml
+    │   ├── internal-staging/
+    │   │   ├── external-secret-path-patch.yaml
+    │   │   ├── kustomize.yaml
+    │   │   └── int-staging-cm.yaml
+    |   ...
    ```
+
+*Note: Be sure to reference the `base` folder as a resource in the Kustomize file of each overlay*
 
 5. **Create a base ApplicationSet overlay**:
 
@@ -275,12 +212,32 @@ Located in `components/cluster-secret-store/k-components/`:
    - appset.yaml
    ```
 
-6. **Add component to base overlay**:
+6. **Add component to both staging overlay Kustomize files**:
 
-   *Note: If your component is only on either internal or external clusters, add the component to the environment's base overlay*
+   *Note: If your component is only on either internal or external clusters, add the component to only that staging environment's file*
 
    ```yaml
-   # argo-cd-apps/base/internal/base/kustomization.yaml
+   # argo-cd-apps/overlays/internal-staging/kustomization.yaml
+   apiVersion: kustomize.config.k8s.io/v1beta1
+   kind: Kustomization
+   resources:
+   - internal-services
+   # Testing on only staging first
+   - my-component
+   ```
+   
+7. **Add component to base Kustomize file (all-clusters, internal, or external) and remove the component entry from staging overlay Kustomize file(s)**:
+
+   *Note: Only do this once the cmponent has been fully tested on staging*
+
+   ```yaml
+   # argo-cd-apps/overlays/internal-staging/kustomization.yaml
+   apiVersion: kustomize.config.k8s.io/v1beta1
+   kind: Kustomization
+   resources:
+   - internal-services
+
+   # argo-cd-apps/base/internal/kustomization.yaml
    apiVersion: kustomize.config.k8s.io/v1beta1
    kind: Kustomization
    resources:
@@ -288,27 +245,6 @@ Located in `components/cluster-secret-store/k-components/`:
    - my-component
    ```
 
-7. **Update other environment overlays if need be**:
-
-   ```yaml
-   # argo-cd-apps/overlays/internal-staging/kustomization.yaml
-   apiVersion: kustomize.config.k8s.io/v1beta1
-   kind: Kustomization
-   resources:
-   - ../base
-   patches:
-   - path: environment-patch.yaml
-      target:
-         group: argoproj.io
-         version: v1alpha1
-         kind: Application
-   - path: special-patch.yaml
-      target:
-         group: argoproj.io
-         version: v1alpha1
-         kind: Application
-         name: my-component
-   ```
 ### Creating Reusable Components (k-components)
 
 When you have identical patches or configurations across multiple environments, consider creating a k-component:
@@ -380,56 +316,14 @@ kustomize build argo-cd-apps/overlays/internal-production/
 kustomize build argo-cd-apps/overlays/internal-staging/
 ```
 
-#### 2. Validate Component Structure
-
-```bash
-# Check what components are included in each overlay
-kustomize build argo-cd-apps/overlays/external-production/ | grep "kind:" | sort | uniq
-
-# Expected output should include:
-# - ApplicationSet (for IAM, External Secrets Operator, Smee)
-# - Any other resources from the components
-```
-
-#### 3. Verify Environment Patches
-
-```bash
-# Check that environment patches are applied correctly
-kustomize build argo-cd-apps/overlays/external-production/ | grep -A 5 -B 5 "environment:"
-
-# Should show "external-production" for external-production overlay
-```
-
-### Testing Specific Components
-
-#### Test External Secrets Operator
+#### 2. Testing Specific Components
 
 ```bash
 # Build just the component
-kustomize build components/external-secrets-operator/base/
+kustomize build components/my-componentr/base/
 
-# Build with environment overlay
-kustomize build components/external-secrets-operator/external-production/
-```
-
-#### Test IAM Component
-
-```bash
-# Build just the component
-kustomize build components/IAM/base/
-
-# Build with environment overlay
-kustomize build components/IAM/external-production/
-```
-
-#### Test k-components
-
-```bash
-# Test individual k-component
-kustomize build components/iam/k-components/konflux-ldap-sa/
-
-# Test component with k-components
-kustomize build components/iam/external-production/
+# Build with just a specific overlay
+kustomize build components/my-component/internal-production/
 ```
 
 ### Validation Checklist
@@ -438,7 +332,7 @@ When testing, verify that:
 
 - [ ] **All overlays build successfully** without errors
 - [ ] **Environment patches are applied** correctly
-- [ ] **Component resources are included** as expected
+- [ ] **Component resources are included** as expected in the overlay
 - [ ] **No duplicate resources** are generated
 - [ ] **Namespace assignments** are correct
 - [ ] **Resource references** are valid
