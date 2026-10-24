@@ -1,0 +1,10 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - iib-pub-index-configs.yaml
+  - iib-pub-pending-index-configs.yaml
+  - redhat-marketplace-index-pending-stage-index-configs.yaml
+  - community-operator-index-pending-stage-index-configs.yaml
+  - certified-operator-index-pending-stage-index-configs.yaml
+  - iib-preview-rhtap-index-configs.yaml
