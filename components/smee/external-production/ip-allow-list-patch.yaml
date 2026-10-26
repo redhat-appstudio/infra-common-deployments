@@ -1,21 +1,53 @@
 ---
-# The IP whitelist below allows getting webhook traffic from GitHub [1],
-# GitLab.com [2] and our internal cluster.
+# Route ip_whitelist for the external production smee server.
 #
-# [1]: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-githubs-ip-addresses
-# [2]: https://docs.gitlab.com/ee/user/gitlab_com/#ip-range
+# This annotation is applied to the OpenShift Route that fronts gosmee. HAProxy
+# only accepts clients whose source IP is listed. That includes:
+#   1) SCM webhook publishers (GitHub / GitLab.com) POSTing events into smee
+#   2) Private-cluster smee clients / health-check sidecars (NAT / egress IPs)
 #
-# Note that the configuration string below is very sensitive. It has to be
-# a single-space-separated list of IPs and CIDR ranges. Any extra whitespace
-# added to it makes OpenShift ignore it.
-
-# The current "whitelisted" clusters are:
-# - stone-prod-p01
-# - stone-prod-p02
-# - kflux-ocp-p01
-# - kflux-rhel-p01
-# - kflux-osp-p01
-# - kflux-lw-p01
+# Sources:
+#   [1] GitHub hooks: https://api.github.com/meta -> .hooks
+#       https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-githubs-ip-addresses
+#   [2] GitLab.com: https://docs.gitlab.com/ee/user/gitlab_com/#ip-range
+#
+# IMPORTANT: the annotation value must be a single-space-separated list of IPs
+# and CIDRs. Do not put comments or blank lines inside the `value:` folded
+# block — YAML would treat them as part of the string and OpenShift would
+# ignore/break the whitelist. Keep group documentation here, and keep the
+# `value:` entries in the same order as the groups below.
+#
+# --- Group order in `value:` (do not reorder casually) ---
+#
+# GitHub webhook source ranges [1]:
+#   192.30.252.0/22
+#   185.199.108.0/22
+#   140.82.112.0/20
+#   143.55.64.0/20
+#   9.234.106.48/28
+#   9.234.98.160/28
+#   9.234.98.176/28
+#   2a0a:a440::/29
+#   2606:50c0::/32
+#
+# GitLab.com webhook source ranges [2]:
+#   34.74.90.64/28
+#   34.74.226.0/24
+#
+# Private-cluster NAT / egress IPs (smee client + health-check sidecar):
+#   stone-prod-p01:
+#     44.217.103.151 44.221.194.189 54.156.92.180
+#   stone-prod-p02:
+#     44.214.26.171 100.28.40.7 18.205.172.54
+#   kflux-ocp-p01:
+#     54.159.68.99 44.210.9.190 3.92.249.206
+#   kflux-rhel-p01:
+#     32.199.2.171 100.56.87.8 100.52.115.228
+#     44.210.196.152 72.44.38.203 100.57.143.76
+#   kflux-osp-p01:
+#     34.206.181.215 35.172.93.139 54.173.112.174
+#   kflux-lw-p01:
+#     150.239.81.114 169.63.191.11 150.239.221.187
 - op: add
   path: /metadata/annotations/haproxy.router.openshift.io~1ip_whitelist
   value: >-
@@ -23,6 +55,9 @@
     185.199.108.0/22
     140.82.112.0/20
     143.55.64.0/20
+    9.234.106.48/28
+    9.234.98.160/28
+    9.234.98.176/28
     2a0a:a440::/29
     2606:50c0::/32
     34.74.90.64/28
