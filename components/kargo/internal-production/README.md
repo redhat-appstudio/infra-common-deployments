@@ -17,7 +17,7 @@ internal-production/
   shared/
     promotion-tasks/             # Reusable project-scoped PromotionTasks
     verifications/               # Reusable project-scoped AnalysisTemplates
-  projects/                      # Six existing projects and their components
+  projects/                      # Seven existing projects and their components
   docs/                          # Onboarding, operations, verifications
 ```
 
@@ -27,8 +27,8 @@ are deployed once in `kargo-shared-resources`; individual definitions determine
 shared access and replication. This is not a Component to include per project.
 
 The two `shared/` directories are Kustomize Components, included by project
-Kustomizations so their resources receive the project's namespace. Five projects
-include promotion tasks; all six include verifications. Inclusion makes a task
+Kustomizations so their resources receive the project's namespace. Six projects
+include promotion tasks; all seven include verifications. Inclusion makes a task
 or template available; each Stage explicitly selects what it uses. See the
 [shared workflow contract](shared/promotion-tasks/README.md).
 
@@ -40,6 +40,7 @@ or template available; each Stage explicitly selects what it uses. See the
 | [kargo-production-playground](projects/kargo-production-playground/) | Dummy deployment for exercising the shared workflow |
 | [kargo-konflux-core](projects/kargo-konflux-core/) | Konflux Operator |
 | [kargo-konflux-infrastructure](projects/kargo-konflux-infrastructure/) | Infrastructure components, including repository validator and multi-platform controller |
+| [kargo-konflux-kubearchive](projects/kargo-konflux-kubearchive/) | Vector Kubearchive log collector |
 | [kargo-konflux-monitoring](projects/kargo-konflux-monitoring/) | Reserved project; shared definitions only, no components currently |
 | [kargo-konflux-vanguard](projects/kargo-konflux-vanguard/) | Proxy, notification, crossplane and related components |
 
