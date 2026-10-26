@@ -5,6 +5,7 @@ resources:
   - kargo-production-playground
   - kargo-konflux-core
   - kargo-konflux-infrastructure
+  - kargo-konflux-kubearchive
   - kargo-konflux-monitoring
   - kargo-konflux-vanguard
 
