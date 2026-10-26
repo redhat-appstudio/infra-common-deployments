@@ -1,0 +1,167 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-kubearchive
+spec:
+  vars:
+    - name: srcPath
+    - name: freightPath
+    - name: repoURL
+    - name: component
+    - name: targetRing
+    - name: vacuumImageURL
+      value: quay.io/kubearchive/vacuum
+  steps:
+    - uses: fail
+      as: validate-freight
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'kubearchive' || vars.component != ctx.targetFreight.origin.name
+        || vars.targetRing not in ['ring-0', 'ring-1', 'ring-2', 'ring-3', 'ring-4']
+        || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$')
+      config:
+        message: Expected ${{ vars.component }} Freight with a Git commit, targeting ring 0-4.
+
+    - uses: yaml-parse
+      as: read-layout
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        outputs:
+          - name: resources
+            fromExpression: resources ?? []
+
+    - uses: fail
+      as: validate-layout
+      if: >-
+        ${{ status('read-layout') == 'Succeeded' &&
+        len(filter(task.outputs['read-layout'].resources, {# == 'base-snapshot'})) != 1 }}
+      config:
+        message: Expected exactly one base-snapshot resource in the target ring; ring-specific configuration must stay outside the snapshot.
+
+    # Read and validate the previous release version from the target ring's VERSION file, the migration version from
+    # the target ring's Kustomization file, and the new release version from the freight's VERSION file.
+    - uses: yaml-parse
+      as: read-prev-version
+      if: ${{ status('validate-freight') == 'Skipped' && status('validate-layout') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot/VERSION.yaml
+        outputs:
+          - name: prevVersion
+            fromExpression: version
+
+    - uses: fail
+      as: validate-prev-version
+      if: >-
+        ${{ status('read-prev-version') == 'Succeeded' && len(task.outputs['read-prev-version'].version) != 1
+        && matches(task.outputs['read-prev-version'].version, "^[0-9]+\\.[0-9]+\\.[0-9]+$")}}
+      config:
+        message: Expected one semantic version (e.g. 1.23.0) in the target ring's VERSION file.
+
+    - uses: yaml-parse
+      as: read-migration-version
+      if: ${{ status('validate-freight') == 'Skipped' && status('validate-layout') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        outputs:
+          - name: migrationVersion
+            fromExpression: string(last(split(configMapGenerator[0].literals[0], "=")))
+
+    - uses: fail
+      as: validate-migration-version
+      if: >-
+        ${{ status('read-migration-version') == 'Succeeded' && len(task.outputs['read-migration-version'].migrationVersion) != 1
+        && matches(last(split(task.outputs['read-migration-version'].migrationVersion, "=")), "^[0-9]+$")}}
+      config:
+        message: Expected one integer migration version in the target ring's Kustomization file.
+
+    - uses: yaml-parse
+      as: read-new-version
+      if: ${{ status('validate-freight') == 'Skipped' && status('validate-layout') == 'Skipped' }}
+      config:
+        path: ${{ vars.freightPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot/VERSION.yaml
+        outputs:
+          - name: newVersion
+            fromExpression: version
+
+    - uses: fail
+      as: validate-new-version
+      if: >-
+        ${{ status('read-new-version') == 'Succeeded' && len(task.outputs['read-new-version'].newVersion) != 1
+        && matches(task.outputs['read-new-version'].newVersion, "^[0-9]+\\.[0-9]+\\.[0-9]+$")}}
+      config:
+        message: Expected one semantic version (e.g. 1.23.0) in the freight's VERSION file.
+
+
+    # Copy the new base snapshot from the freight to the target ring (thus copying the new release version's `kubearchive.yaml``
+    # release artifact).
+    - uses: delete
+      as: delete-old-base-snapshot
+      if: ${{ status('read-prev-version') == 'Succeeded' && status('validate-layout') == 'Skipped' && status('validate-new-version') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+
+    - uses: copy
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-base-snapshot') == 'Succeeded' }}
+      config:
+        inPath: ${{ vars.freightPath }}/components/${{ vars.component }}/base
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+
+    # Update all CronJob images with the new release version.
+    - uses: yaml-update
+      as: update-pipelines-vacuum-cronjob-image
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/vacuum/pipelines-vacuum-cronjob.yaml
+        updates:
+          - key: spec.jobTemplate.spec.template.spec.containers.0.image
+            value: ${{ vars.vacuumImageURL }}:{{ task.outputs['read-new-version'].version }}
+
+    - uses: yaml-update
+      as: update-releases-vacuum-cronjob-image
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/vacuum/releases-vacuum-cronjob.yaml
+        updates:
+          - key: spec.jobTemplate.spec.template.spec.containers.0.image
+            value: ${{ vars.vacuumImageURL }}:{{ task.outputs['read-new-version'].version }}
+
+    - uses: yaml-update
+      as: update-vacuum-all-cronjob-image
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/vacuum/vacuum-all-cronjob.yaml
+        updates:
+          - key: spec.jobTemplate.spec.template.spec.containers.0.image
+            value: ${{ vars.vacuumImageURL }}:{{ task.outputs['read-new-version'].version }}
+
+    # Update the schema migration job name with the new release version and the original migration version.
+    - uses: yaml-update
+      as: update-schema-migration-job-name
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/patches/schema-migration-job-name-patch.yaml
+        updates:
+          - key: metadata.name
+            value: kubearchive-schema-migration-v${{ task.outputs['read-migration-version'].migrationVersion }}-v${{ task.outputs['read-new-version'].version }}
+
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-freight') == 'Skipped' && status('read-prev-version') == 'Succeeded' && status('validate-prev-version') == 'Succeeded'
+        && status('read-migration-version') == 'Succeeded' && status('validate-migration-version') == 'Succeeded'
+        && status('read-new-version') == 'Succeeded' && status('validate-new-version') == 'Succeeded'
+        && status('copy-freight-manifests') == 'Succeeded' && status('update-pipelines-vacuum-cronjob-image') == 'Succeeded'
+        && status('update-releases-vacuum-cronjob-image') == 'Succeeded' && status('update-vacuum-all-cronjob-image') == 'Succeeded'
+        && status('update-schema-migration-job-name') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: >-
+          Update ${{ vars.component }} base snapshot and release version in ${{ vars.targetRing }}.
+        prChanges:
+          - kind: Release Version
+            previous: >-
+              ${{ task.outputs['read-prev-version'].version }}
+            proposed: ${{ task.outputs['read-new-version'].version }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot/VERSION.yaml
