@@ -1,0 +1,17 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: kargo-konflux-kubearchive
+spec:
+  promotionPolicies:
+    - stage: ring-0-vector-kubearchive-log-collector
+      autoPromotionEnabled: true
+    - stage: ring-1-vector-kubearchive-log-collector
+      autoPromotionEnabled: true
+    - stage: ring-2-vector-kubearchive-log-collector
+      autoPromotionEnabled: true
+    - stage: ring-3-vector-kubearchive-log-collector
+      autoPromotionEnabled: true
+    - stage: ring-4-vector-kubearchive-log-collector
+      autoPromotionEnabled: true
