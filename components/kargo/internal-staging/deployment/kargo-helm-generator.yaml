@@ -52,7 +52,7 @@ valuesInline:
             memory: 128Mi
         image:
           repository: quay.io/konflux-ci/dex
-          tag: b4ddb84b65d22876479e19773cf6ecff24da884e
+          tag: b4642ec380ea86efcbbe4559c60ee90d9a21abca
         skipApprovalScreen: true
         tls:
           selfSignedCert: false
