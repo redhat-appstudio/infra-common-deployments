@@ -6,6 +6,7 @@ namespace: kargo-konflux-kubearchive
 
 resources:
   - base
+  - components/kubearchive
   - components/vector-kubearchive-log-collector
 
 components:
