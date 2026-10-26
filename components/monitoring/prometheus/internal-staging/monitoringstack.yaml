@@ -38,7 +38,7 @@ spec:
       writeRelabelConfigs:
       - action: LabelKeep
         regex: "__name__|source_environment|source_cluster|namespace|app|pod|container|\
-          label_pipelines_appstudio_openshift_io_type|health_status|dest_namespace|\
+          label_pipelines_appstudio_openshift_io_type|health_status|sync_status|dest_namespace|\
           controller|service|reason|phase|type|resource|resourcequota|le|image|\
           commit_hash|job|operation|tokenName|rateLimited|state|persistentvolumeclaim|\
           storageclass|volumename|release_reason|instance|result|deployment_reason|\
