@@ -1,0 +1,39 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kargo-manager
+rules:
+  # For manually approving freights and starting promotions
+  - apiGroups:
+    - kargo.akuity.io
+    resources:
+      - freights/status
+    verbs:
+      - patch
+  - apiGroups:
+    - kargo.akuity.io
+    resources:
+      - stages
+    verbs:
+      - promote
+  # For aborting promotions & verifications
+  - apiGroups:
+    - kargo.akuity.io
+    resources:
+      - promotions
+    verbs:
+      - create
+      - patch
+  - apiGroups:
+    - kargo.akuity.io
+    resources:
+      - stages
+    verbs:
+      - patch
+  # For manually refreshing warehouses
+  - apiGroups:
+    - kargo.akuity.io
+    resources:
+      - warehouses
+    verbs:
+      - patch

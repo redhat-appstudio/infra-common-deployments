@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kargo-promoter-extras
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kargo-promoter-extras
+subjects:
+  - kind: ServiceAccount
+    name: kargo-konflux-infrastructure-promoter
+    namespace: kargo-konflux-infrastructure
