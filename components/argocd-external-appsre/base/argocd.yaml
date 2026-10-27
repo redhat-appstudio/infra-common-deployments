@@ -311,7 +311,7 @@ spec:
         memory: 5Gi
     sharding:
       enabled: true
-      replicas: 2
+      replicas: 3
     env:
       - name: ARGOCD_CONTROLLER_SHARDING_ALGORITHM
         value: round-robin
