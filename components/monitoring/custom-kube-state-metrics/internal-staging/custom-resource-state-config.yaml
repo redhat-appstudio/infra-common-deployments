@@ -28,15 +28,6 @@ data:
                   labelsFromPath:
                     phase: [status, phase]
                   valueFrom: [finishedAt]
-            - name: current_promotion_started_timestamp
-              help: "Unix time when the in-progress promotion started. Absent while the Stage is idle."
-              each:
-                type: Gauge
-                gauge:
-                  path: [status, currentPromotion]
-                  labelsFromPath:
-                    phase: [status, phase]
-                  valueFrom: [status, startedAt]
             - name: health
               help: "Stage object generation. The health label is status.health.status."
               labelsFromPath:

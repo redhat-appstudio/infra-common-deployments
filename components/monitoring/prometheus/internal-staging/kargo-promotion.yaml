@@ -30,17 +30,6 @@ spec:
                 "component", "$1", "name", "ring-[0-9]+-(.+)"
               )
             )
-        - record: kargo:stage:current_promotion:started_timestamp
-          expr: |
-            max by (exported_namespace, stage, component, phase) (
-              label_replace(
-                label_replace(
-                  kargo_stage_current_promotion_started_timestamp,
-                  "stage", "$1", "name", "(ring-[0-9]+)-.+"
-                ),
-                "component", "$1", "name", "ring-[0-9]+-(.+)"
-              )
-            )
         - record: kargo:stage:health
           expr: |
             count by (exported_namespace, stage, component, health) (
