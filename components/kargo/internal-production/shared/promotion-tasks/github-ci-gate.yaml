@@ -20,6 +20,10 @@
 #   repoOwner                  — GitHub org (default: redhat-appstudio)
 #   repoName                   — GitHub repo (default: infra-deployments)
 #   requiredCheckRuns          — regex filter for check-run names (default: .*)
+#   excludedCheckRuns          — regex of check-run names to ignore even if they
+#                                match requiredCheckRuns (default: fullsend's
+#                                dispatch/* and stop-fix jobs — not a real CI
+#                                signal, but can go non-success and block promotion)
 #   requiredProwChecks         — regex filter for prow context names (default: .*)
 #   skipProwChecks             — set "true" to skip prow phase entirely
 apiVersion: kargo.akuity.io/v1alpha1
@@ -36,6 +40,8 @@ spec:
       value: infra-deployments
     - name: requiredCheckRuns
       value: ".*"
+    - name: excludedCheckRuns
+      value: "^(dispatch / .*|stop-fix)$"
     - name: requiredProwChecks
       value: ".*"
     - name: skipProwChecks
@@ -57,13 +63,13 @@ spec:
             value: application/vnd.github+json
         successExpression: |
           response.status == 200 &&
-          len(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}'})) > 0 &&
-          all(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}'}), {.conclusion in ['success', 'neutral', 'skipped']})
+          len(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}' && !(.name matches '${{ vars.excludedCheckRuns }}')})) > 0 &&
+          all(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}' && !(.name matches '${{ vars.excludedCheckRuns }}')}), {.conclusion in ['success', 'neutral', 'skipped']})
         failureExpression: |
           response.status in [401, 403, 404] ||
           (response.status == 200 &&
-          len(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}'})) > 0 &&
-          any(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}'}), {.conclusion in ['failure', 'cancelled', 'timed_out', 'action_required', 'stale']}))
+          len(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}' && !(.name matches '${{ vars.excludedCheckRuns }}')})) > 0 &&
+          any(filter(response.body.check_runs, {.name matches '${{ vars.requiredCheckRuns }}' && !(.name matches '${{ vars.excludedCheckRuns }}')}), {.conclusion in ['failure', 'cancelled', 'timed_out', 'action_required', 'stale']}))
         timeout: 30s
     # Phase 2: Wait for Prow status checks (skipped when skipProwChecks=true or promotionAsNoOp=true)
     # Filters out the 'tide' context since it reflects merge state, not test results
