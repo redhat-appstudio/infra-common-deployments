@@ -38,6 +38,8 @@ valuesInline:
           - dedicated-admins
           - konflux-infra
           - konflux-devprod
+          - konflux-vanguard
+          - sp-resilience-team
       viewers:
         claims:
           groups:
