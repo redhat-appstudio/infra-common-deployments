@@ -14,9 +14,11 @@ spec:
         includePaths:
           - components/smee-client/base
     - image:
-        repoURL: ghcr.io/chmouel/gosmee
-        semverConstraint: ^0.28.0
+        repoURL: quay.io/konflux-ci/gosmee
+        imageSelectionStrategy: NewestBuild
         discoveryLimit: 5
+        allowTagsRegexes:
+          - ^[0-9a-f]{40}$
     - image:
         repoURL: quay.io/konflux-ci/smee-sidecar
         imageSelectionStrategy: NewestBuild
