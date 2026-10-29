@@ -1,0 +1,24 @@
+# SPRE-6648: mount read-only SA tokens for workload clusters.
+# Each ExternalSecret writes key "token", which becomes the file token in
+# that cluster's directory. connect_cluster uses the full path, for this
+# cluster secret:/var/run/pharos-credentials/kflux-stg-p02.
+# Add one volume and one volumeMount per cluster.
+# The ExternalSecret has no CA. If connect_cluster returns dial_failed with a
+# TLS error, add ca.crt to the Secret and ca_file for that cluster.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pharos
+spec:
+  template:
+    spec:
+      containers:
+        - name: pharos
+          volumeMounts:
+            - name: pharos-kflux-stg-p02
+              mountPath: /var/run/pharos-credentials/kflux-stg-p02
+              readOnly: true
+      volumes:
+        - name: pharos-kflux-stg-p02
+          secret:
+            secretName: pharos-kflux-stg-p02-token
