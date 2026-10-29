@@ -138,6 +138,11 @@ spec:
       - '{__name__="kube_job_status_failed"}'
 
       # =================================================================
+      # Tenant Namespace Readiness (SPRE-7685)
+      # =================================================================
+      - '{__name__="kube_namespace_status_phase"}'
+
+      # =================================================================
       # ArgoCD Metrics
       # =================================================================
       - '{__name__="argocd_app_reconcile_bucket", namespace="gitops-service-argocd"}'
