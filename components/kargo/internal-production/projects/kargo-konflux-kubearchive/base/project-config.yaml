@@ -14,4 +14,11 @@ spec:
     - stage: ring-3-vector-kubearchive-log-collector
       autoPromotionEnabled: true
     - stage: ring-4-vector-kubearchive-log-collector
+    - stage: ring-1-kubearchive
+      autoPromotionEnabled: true
+    - stage: ring-2-kubearchive
+      autoPromotionEnabled: true
+    - stage: ring-3-kubearchive
+      autoPromotionEnabled: true
+    - stage: ring-4-kubearchive
       autoPromotionEnabled: true
