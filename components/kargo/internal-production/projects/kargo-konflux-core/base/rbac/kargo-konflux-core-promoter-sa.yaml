@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kargo-konflux-core-promoter
+  namespace: kargo-konflux-core
+  annotations:
+    kargo.akuity.io/description: |
+      Permissions to promote components in the Kargo project 'kargo-konflux-core'.
+    rbac.kargo.akuity.io/claims: '{"groups": ["konflux-pipeline-service", "konflux-operator-foundry"]}'

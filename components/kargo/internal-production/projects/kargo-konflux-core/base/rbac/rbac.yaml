@@ -41,25 +41,6 @@ roleRef:
   kind: Role
   name: kargo-resources-admin
 ---
-# Binds the chart's built-in kargo-admin ClusterRole (covers the
-# cluster-scoped namespaces/projects.kargo.akuity.io get/list/watch that a
-# namespaced Role can never grant) to sp-resilience-team, scoped to this
-# namespace only since this is a RoleBinding, not a ClusterRoleBinding.
-# Mirrors the kargo-access pattern in
-# components/kargo/internal-staging/projects/base/rbac.yaml.
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: kargo-admin
-subjects:
-  - apiGroup: rbac.authorization.k8s.io
-    kind: Group
-    name: sp-resilience-team
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: kargo-admin
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:

@@ -1,0 +1,22 @@
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: konflux-kargo-admin
+  namespace: kargo
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: konflux-devprod
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: konflux-infra
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: konflux-sre
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: sp-resilience-team
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: konflux-kargo-admin

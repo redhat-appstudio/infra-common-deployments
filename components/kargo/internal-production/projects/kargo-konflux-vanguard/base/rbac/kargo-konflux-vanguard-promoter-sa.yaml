@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kargo-konflux-vanguard-promoter
+  namespace: kargo-konflux-vanguard
+  annotations:
+    kargo.akuity.io/description: |
+      Permissions to promote components in the Kargo project 'kargo-konflux-vanguard'.
+    rbac.kargo.akuity.io/claims: '{"groups": ["konflux-vanguard"]}'
