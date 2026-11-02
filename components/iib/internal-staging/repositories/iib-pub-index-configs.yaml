@@ -6,7 +6,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"
 spec:
-  url: https://gitlab.cee.redhat.com/exd-guild-hello-operator-gitlab/iib-pub-index-configs.git
+  url: https://gitlab.cee.redhat.com/exd-guild-hello-operator-gitlab/iib-pub-index-configs
   git_provider:
     url: "https://gitlab.cee.redhat.com"
     secret:
