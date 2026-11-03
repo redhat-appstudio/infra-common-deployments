@@ -1,0 +1,44 @@
+# This role allows users to fully implement Kargo promotions without providing
+# full kargo-admin access and undermining the established GitOps pattern for
+# any of the Kargo projects' resources.
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: konflux-kargo-admin
+  namespace: kargo
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+      - delete
+  - apiGroups:
+      - ''
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+      - delete
+  - apiGroups:
+      - ''
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - get
+      - list
+      - watch
+      - delete

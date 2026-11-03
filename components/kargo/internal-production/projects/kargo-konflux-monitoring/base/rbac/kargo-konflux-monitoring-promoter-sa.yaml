@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kargo-konflux-monitoring-promoter
+  namespace: kargo-konflux-monitoring
+  annotations:
+    kargo.akuity.io/description: |
+      Permissions to promote components in the Kargo project 'kargo-konflux-monitoring'.
+    rbac.kargo.akuity.io/claims: '{"groups": ["konflux-o11y", "konflux-o11y-admins"]}'

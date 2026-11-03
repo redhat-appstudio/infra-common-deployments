@@ -1,0 +1,14 @@
+# Kargo RBAC — required by Kargo admission webhook to allow the kargo-manager
+# ServiceAccount to create and update Promotions in this project.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kargo-manager-promoter
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kargo-promoter
+subjects:
+  - kind: ServiceAccount
+    name: kargo-manager
+    namespace: kargo

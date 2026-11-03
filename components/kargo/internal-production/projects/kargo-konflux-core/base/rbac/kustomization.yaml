@@ -5,3 +5,9 @@ resources:
   - rbac.yaml
   - analysis-template-rbac.yaml
   - argocd-app-reader.yaml
+  - kargo-konflux-core-promoter-sa.yaml
+  - kargo-konflux-core-promoter-rb.yaml
+  - kargo-promoter-extras-role.yaml
+  - kargo-promoter-extras-rb.yaml
+  - kargo-manager-promoter-extras-rb.yaml
+  - kargo-manager-promoter-rb.yaml

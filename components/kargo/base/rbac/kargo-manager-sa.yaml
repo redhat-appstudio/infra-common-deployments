@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kargo-manager
+  namespace: kargo
+  annotations:
+    kargo.akuity.io/description: |
+      Permissions to manage the Kargo instance and all Kargo projects.
+    rbac.kargo.akuity.io/claims: '{"groups": ["konflux-admins", "konflux-infra", "konflux-sre", "konflux-devprod", "sp-resilience-team"]}'

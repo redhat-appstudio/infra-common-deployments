@@ -30,16 +30,6 @@ valuesInline:
       configMapName: ocp-service-ca
     oidc:
       enabled: true
-      admins:
-        claims:
-          groups:
-          - konflux-admins
-          - cluster-admins
-          - dedicated-admins
-          - konflux-infra
-          - konflux-devprod
-          - konflux-vanguard
-          - sp-resilience-team
       viewers:
         claims:
           groups:

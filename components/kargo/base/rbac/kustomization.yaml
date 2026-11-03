@@ -2,4 +2,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - rbac.yaml
+  - konflux-kargo-admin-role.yaml
+  - konflux-kargo-admin-rb.yaml
+  - kargo-manager-sa.yaml
+  - kargo-manager-crb.yaml
+  - kargo-manager-cr.yaml
+  - kargo-manager-viewer-crb.yaml
