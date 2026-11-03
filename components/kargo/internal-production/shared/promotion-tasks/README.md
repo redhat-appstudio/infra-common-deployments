@@ -49,9 +49,12 @@ checks have a different scope from its two-cluster deployment readiness check.
 Ring 2 runs the production `kanary-up` signal against both single-arch and
 multi-arch signals on all five ring 2 clusters listed above for 72 checks at 40-minute intervals
 (approximately 48 hours), with a 14-failure limit. Ring 3 sources verified
-Freight from Ring 2 after a 48-hour soak, then runs production Kanary and
-Argo CD readiness checks on `stone-prd-rh01`; its promotion PR requires manual
-merge.
+Freight from Ring 2 after a 48-hour soak, then runs production Kanary on
+`stone-prd-rh01` and `stone-prod-p02`, with an expected cluster count of two,
+for 108 checks at 40-minute intervals (approximately 72 hours), with a
+21-failure limit.
+Argo CD readiness checks target the operator deployment on `stone-prd-rh01`;
+its promotion PR requires manual merge.
 
 Operator Ring 2 already used automatic merging. Its previous PR description said
 manual approval; the new description matches the actual executable policy.

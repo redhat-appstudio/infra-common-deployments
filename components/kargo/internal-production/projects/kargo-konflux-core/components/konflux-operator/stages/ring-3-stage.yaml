@@ -22,11 +22,15 @@ spec:
       - name: kanary-production
     args:
       - name: clusters
-        value: stone-prd-rh01
+        value: stone-prd-rh01|stone-prod-p02
       - name: expected-cluster-count
-        value: '1'
+        value: '2'
       - name: types
         value: container-single-arch|container-multi-arch
+      - name: check-count
+        value: '108'
+      - name: failure-limit
+        value: '21'
   promotionTemplate:
     spec:
       vars:
