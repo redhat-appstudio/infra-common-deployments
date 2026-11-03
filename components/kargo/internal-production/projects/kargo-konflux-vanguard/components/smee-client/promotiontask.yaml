@@ -13,7 +13,7 @@ spec:
     - name: sidecarImageRepoURL
       value: quay.io/konflux-ci/smee-sidecar
     - name: gosmeeImageRepoURL
-      value: ghcr.io/chmouel/gosmee
+      value: quay.io/konflux-ci/gosmee
   steps:
     - uses: fail
       as: validate-bundle
