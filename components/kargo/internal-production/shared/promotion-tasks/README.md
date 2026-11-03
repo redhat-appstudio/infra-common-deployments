@@ -39,20 +39,20 @@ These tasks currently target `redhat-appstudio/infra-deployments`, branch `main`
 | Playground | 1 | Automatic | Disabled | `stone-stg-rh01`, `stone-stage-p01` |
 | Konflux Operator | 0 | Automatic | Required | None; Git-only promotion |
 | Konflux Operator | 1 | Automatic | Disabled | `stone-stage-p01` |
-| Konflux Operator | 2 | Automatic | Disabled | `kflux-fedora-01`, `kflux-ocp-p01`, `kflux-osp-p01`, `kflux-prd-rh03`, `stone-prod-p01`; production Kanary for ~48h |
-| Konflux Operator | 3 | Manual | Disabled | `stone-prd-rh01`; 48h ring-2 soak |
+| Konflux Operator | 2 | Automatic | Disabled | `kflux-fedora-01`, `kflux-ocp-p01`, `kflux-osp-p01`, `kflux-prd-rh03`, `stone-prod-p01`; production Kanary for ~24h |
+| Konflux Operator | 3 | Manual | Disabled | `stone-prd-rh01`; 24h ring-2 soak |
 
 Operator Ring 0 requires `^ci/prow/konflux-ring-deployments-conformance-tests$`.
 Operator Ring 1 also runs Kanary and conformance verification on
-`stone-stage-p01`, with single-arch and multi-arch signals. Those verification
-checks have a different scope from its two-cluster deployment readiness check.
-Ring 2 runs the production `kanary-up` signal against both single-arch and
-multi-arch signals on all five ring 2 clusters listed above for 72 checks at 40-minute intervals
-(approximately 48 hours), with a 14-failure limit. Ring 3 sources verified
-Freight from Ring 2 after a 48-hour soak, then runs production Kanary on
-`stone-prd-rh01` and `stone-prod-p02`, with an expected cluster count of two,
-for 108 checks at 40-minute intervals (approximately 72 hours), with a
-21-failure limit.
+`stone-stage-p01`, with single-arch and multi-arch signals.
+All three operator rings with Kanary verification (1–3) use a 40-minute initial
+delay and 36 checks at 40-minute intervals, completing after approximately 24
+hours, with a seven-failure limit. These timing overrides are local to the
+operator Stages.
+Ring 2 runs production Kanary on all five ring 2 clusters listed above.
+Ring 3 sources verified Freight from Ring 2 after a 24-hour soak, then runs
+production Kanary on `stone-prd-rh01` and `stone-prod-p02`, with an expected
+cluster count of two.
 Argo CD readiness checks target the operator deployment on `stone-prd-rh01`;
 its promotion PR requires manual merge.
 
