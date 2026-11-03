@@ -16,6 +16,20 @@ spec:
       sources:
         stages:
           - ring-1-konflux-operator
+  verification:
+    analysisTemplates:
+      - name: kanary-production
+    args:
+      - name: clusters
+        value: kflux-lw-p01
+      - name: expected-cluster-count
+        value: '1'
+      - name: types
+        value: container-single-arch|container-multi-arch
+      - name: check-count
+        value: '72'
+      - name: failure-limit
+        value: '14'
   promotionTemplate:
     spec:
       vars:
