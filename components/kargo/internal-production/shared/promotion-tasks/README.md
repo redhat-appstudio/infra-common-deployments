@@ -39,7 +39,7 @@ These tasks currently target `redhat-appstudio/infra-deployments`, branch `main`
 | Playground | 1 | Automatic | Disabled | `stone-stg-rh01`, `stone-stage-p01` |
 | Konflux Operator | 0 | Automatic | Required | None; Git-only promotion |
 | Konflux Operator | 1 | Automatic | Disabled | `stone-stage-p01` |
-| Konflux Operator | 2 | Automatic | Disabled | `kflux-lw-p01`; production Kanary for ~48h |
+| Konflux Operator | 2 | Automatic | Disabled | `kflux-fedora-01`, `kflux-ocp-p01`, `kflux-osp-p01`, `kflux-prd-rh03`, `stone-prod-p01`; production Kanary for ~48h |
 | Konflux Operator | 3 | Manual | Disabled | `stone-prd-rh01`; 48h ring-2 soak |
 
 Operator Ring 0 requires `^ci/prow/konflux-ring-deployments-conformance-tests$`.
@@ -47,7 +47,7 @@ Operator Ring 1 also runs Kanary and conformance verification on
 `stone-stage-p01`, with single-arch and multi-arch signals. Those verification
 checks have a different scope from its two-cluster deployment readiness check.
 Ring 2 runs the production `kanary-up` signal against both single-arch and
-multi-arch signals on `kflux-lw-p01` for 72 checks at 40-minute intervals
+multi-arch signals on all five ring 2 clusters listed above for 72 checks at 40-minute intervals
 (approximately 48 hours), with a 14-failure limit. Ring 3 sources verified
 Freight from Ring 2 after a 48-hour soak, then runs production Kanary and
 Argo CD readiness checks on `stone-prd-rh01`; its promotion PR requires manual

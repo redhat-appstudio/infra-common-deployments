@@ -21,9 +21,9 @@ spec:
       - name: kanary-production
     args:
       - name: clusters
-        value: kflux-lw-p01
+        value: kflux-fedora-01|kflux-ocp-p01|kflux-osp-p01|kflux-prd-rh03|stone-prod-p01
       - name: expected-cluster-count
-        value: '1'
+        value: '5'
       - name: types
         value: container-single-arch|container-multi-arch
       - name: check-count
@@ -135,6 +135,6 @@ spec:
             - name: component
               value: ${{ vars.component }}
             - name: clusters
-              value: kflux-lw-p01
+              value: kflux-fedora-01|kflux-ocp-p01|kflux-osp-p01|kflux-prd-rh03|stone-prod-p01
             - name: tokenSecret
               value: argocd-app-reader-token
