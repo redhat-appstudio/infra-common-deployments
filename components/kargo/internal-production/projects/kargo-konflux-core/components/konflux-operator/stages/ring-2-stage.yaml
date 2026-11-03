@@ -16,6 +16,24 @@ spec:
       sources:
         stages:
           - ring-1-konflux-operator
+  verification:
+    analysisTemplates:
+      - name: kanary-production
+    args:
+      - name: clusters
+        value: kflux-fedora-01|kflux-ocp-p01|kflux-osp-p01|kflux-prd-rh03|stone-prod-p01
+      - name: expected-cluster-count
+        value: '5'
+      - name: types
+        value: container-single-arch|container-multi-arch
+      - name: initial-delay
+        value: '40m'
+      - name: check-interval
+        value: '40m'
+      - name: check-count
+        value: '36'
+      - name: failure-limit
+        value: '7'
   promotionTemplate:
     spec:
       vars:
@@ -121,6 +139,6 @@ spec:
             - name: component
               value: ${{ vars.component }}
             - name: clusters
-              value: kflux-lw-p01
+              value: kflux-fedora-01|kflux-ocp-p01|kflux-osp-p01|kflux-prd-rh03|stone-prod-p01
             - name: tokenSecret
               value: argocd-app-reader-token

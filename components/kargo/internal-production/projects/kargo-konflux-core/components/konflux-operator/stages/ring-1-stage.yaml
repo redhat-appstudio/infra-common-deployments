@@ -27,6 +27,14 @@ spec:
         value: "1"
       - name: types
         value: container-single-arch|container-multi-arch
+      - name: initial-delay
+        value: '40m'
+      - name: check-interval
+        value: '40m'
+      - name: check-count
+        value: '36'
+      - name: failure-limit
+        value: '7'
   promotionTemplate:
     spec:
       vars:
