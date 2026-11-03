@@ -32,3 +32,4 @@ spec:
           argocd.argoproj.io/secret-type: cluster
           appstudio.redhat.com/cluster-type: tenant
           appstudio.redhat.com/internal-cluster: "true"
+          appstudio.redhat.com/hub-spoke-model: spoke

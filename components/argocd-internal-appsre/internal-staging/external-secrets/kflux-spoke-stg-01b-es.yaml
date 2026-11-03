@@ -34,3 +34,4 @@ spec:
           appstudio.redhat.com/member-cluster: 'true'
           appstudio.redhat.com/internal-member-cluster: "true"
           appstudio.redhat.com/toolchain-member: 'true'
+          appstudio.redhat.com/hub-spoke-model: spoke
