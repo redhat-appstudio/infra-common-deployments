@@ -4,7 +4,7 @@ imageTag: v1.0.3-beta7
 lake:
   image:
     repository: quay.io/konflux-ci/konflux-devprod/devlake-backend
-    tag: 141eb90b74b8ddbc3f98d28fc86ad00a189ee206
+    tag: fd271a961ebca697a2de2d35901c6362ed9dd9df
   encryptionSecret:
     secretName: konflux-devlake-secrets
     autoCreateSecret: false
