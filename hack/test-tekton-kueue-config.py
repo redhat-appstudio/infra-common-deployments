@@ -18,7 +18,7 @@ Test Coverage:
       * Partial labels (rate-limited only, group only)
       * Invalid label values (rate-limited=false, wrong group)
       * Label preservation through mutation
-    - PaC labels for advisory-push resource allocation (staging only):
+    - PaC labels for advisory-push resource allocation:
       * Both repository + original-prname labels (allocates advisories-push-request)
       * Partial labels (repository only, original-prname only)
       * Wrong repository or pipeline name
@@ -29,8 +29,8 @@ Environments:
 
 Note: infra-common uses a simplified kueue configuration with basic queue
 assignment, default priority, and conditional resource allocation for
-signing-server (rate-limiting labels) and advisory-push (PaC labels, staging
-only). Platform detection and event-type routing are not used.
+signing-server (rate-limiting labels) and advisory-push (PaC labels).
+Platform detection and event-type routing are not used.
 
 Usage:
     # Check if all prerequisites are met
@@ -590,10 +590,13 @@ TEST_COMBINATIONS: Dict[str, TestCombination] = {
         "pipelinerun_key": "rate_limiting_wrong_group",
         "config_key": "internal-production"
     },
-    # advisories-push CEL exists only in internal-staging today
     "advisories_push_match_internal_staging": {
         "pipelinerun_key": "advisories_push_match",
         "config_key": "internal-staging"
+    },
+    "advisories_push_match_internal_production": {
+        "pipelinerun_key": "advisories_push_match",
+        "config_key": "internal-production"
     },
     "advisories_repository_only_internal_staging": {
         "pipelinerun_key": "advisories_repository_only",

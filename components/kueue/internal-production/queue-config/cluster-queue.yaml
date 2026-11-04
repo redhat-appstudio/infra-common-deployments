@@ -20,6 +20,7 @@ spec:
   - coveredResources:
     - tekton.dev/pipelineruns
     - signing-server-request
+    - advisories-push-request
     flavors:
     - name: default-flavor
       resources:
@@ -27,4 +28,6 @@ spec:
         nominalQuota: '500'
       - name: signing-server-request
         nominalQuota: '100'
+      - name: advisories-push-request
+        nominalQuota: '4'
   stopPolicy: None
