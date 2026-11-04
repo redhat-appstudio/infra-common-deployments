@@ -14,7 +14,7 @@ spec:
         includePaths:
           - components/kueue/base
     - image:
-        repoURL: quay.io/konflux-ci/tekton-kueue
+        repoURL: quay.io/openshift-pipeline/pipelines-scheduler-rhel9
         imageSelectionStrategy: NewestBuild
         discoveryLimit: 5
         allowTagsRegexes:
