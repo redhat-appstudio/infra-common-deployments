@@ -12,7 +12,7 @@ spec:
     - name: imageRepoURL
       value: quay.io/openshift-pipeline/pipelines-scheduler-rhel9
     - name: externalRepoURL
-      value: http://github.com/openshift-pipelines/tekton-kueue/upstream/config/default
+      value: https://github.com/konflux-ci/tekton-kueue/config/default
 
   steps:
     - uses: fail
@@ -33,7 +33,7 @@ spec:
           - name: resources
             fromExpression: resources ?? []
           - name: images
-            fromExpression: filter(images ?? [], {.name == 'ghcr.io/tektoncd/tekton-kueue'})
+            fromExpression: filter(images ?? [], {.name == 'konflux-ci/tekton-kueue' || .name == 'ghcr.io/tektoncd/tekton-kueue'})
     - uses: fail
       as: validate-layout
       if: >-
@@ -58,7 +58,7 @@ spec:
       config:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/tekton-kueue
         images:
-          - image: "ghcr.io/tektoncd/tekton-kueue"
+          - image: "konflux-ci/tekton-kueue"
             newName: ${{ vars.imageRepoURL }}
             tag: ${{ imageFrom(vars.imageRepoURL).Tag }}
     - uses: yaml-parse
