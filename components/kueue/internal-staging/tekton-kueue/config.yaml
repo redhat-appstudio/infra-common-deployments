@@ -11,3 +11,11 @@ cel:
         'internal-services.appstudio.openshift.io/rate-limiting-group' in pipelineRun.metadata.labels &&
         pipelineRun.metadata.labels['internal-services.appstudio.openshift.io/rate-limiting-group'] == 'signing-server' ?
         [resource('signing-server-request', 1)] : []
+
+    - |
+        has(pipelineRun.metadata.labels) &&
+        'pipelinesascode.tekton.dev/repository' in pipelineRun.metadata.labels &&
+        pipelineRun.metadata.labels['pipelinesascode.tekton.dev/repository'] == 'advisories' &&
+        'pipelinesascode.tekton.dev/original-prname' in pipelineRun.metadata.labels &&
+        pipelineRun.metadata.labels['pipelinesascode.tekton.dev/original-prname'] == 'advisory-push' ?
+        [resource('advisories-push-request', 1)] : []
