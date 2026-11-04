@@ -21,9 +21,9 @@ spec:
       - name: kanary-staging
     args:
       - name: clusters
-        value: kflux-stg-p02|lightwell-dev|stone-stage-p01|stone-stg-rh01
+        value: kflux-stg-p02|stone-stage-p01|stone-stg-rh01
       - name: expected-cluster-count
-        value: '4'
+        value: '3'
   promotionTemplate:
     spec:
       vars:
@@ -139,6 +139,6 @@ spec:
             - name: component
               value: ${{ vars.component }}
             - name: clusters
-              value: kflux-stg-p02|lightwell-dev|stone-stage-p01|stone-stg-rh01
+              value: kflux-stg-p02|stone-stage-p01|stone-stg-rh01
             - name: tokenSecret
               value: argocd-app-reader-token-staging
