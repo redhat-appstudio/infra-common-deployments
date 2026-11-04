@@ -33,7 +33,8 @@ spec:
           - name: resources
             fromExpression: resources ?? []
           - name: images
-            fromExpression: filter(images ?? [], {.name == '    - uses: fail
+            fromExpression: filter(images ?? [], {.name == 'ghcr.io/tektoncd/tekton-kueue'})
+    - uses: fail
       as: validate-layout
       if: >-
         ${{ status('read-previous') == 'Succeeded' && (len(task.outputs['read-previous'].images) != 1
