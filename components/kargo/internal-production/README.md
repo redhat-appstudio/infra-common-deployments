@@ -42,6 +42,7 @@ or template available; each Stage explicitly selects what it uses. See the
 | [kargo-konflux-infrastructure](projects/kargo-konflux-infrastructure/) | Infrastructure components, including repository validator and multi-platform controller |
 | [kargo-konflux-kubearchive](projects/kargo-konflux-kubearchive/) | Vector Kubearchive log collector |
 | [kargo-konflux-monitoring](projects/kargo-konflux-monitoring/) | Reserved project; shared definitions only, no components currently |
+| [konflux-pulp](projects/konflux-pulp/) | Pulp access controller |
 | [kargo-konflux-vanguard](projects/kargo-konflux-vanguard/) | Proxy, notification, crossplane and related components |
 
 [projects/kustomization.yaml](projects/kustomization.yaml) is the deployed project

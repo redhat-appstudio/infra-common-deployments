@@ -8,6 +8,7 @@ resources:
   - kargo-konflux-kubearchive
   - kargo-konflux-monitoring
   - kargo-konflux-vanguard
+  - konflux-pulp
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
