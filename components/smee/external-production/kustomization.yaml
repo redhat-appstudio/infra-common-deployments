@@ -5,6 +5,9 @@ resources:
   - ../base
 
 images:
+  - name: ghcr.io/chmouel/gosmee
+    newName: quay.io/konflux-ci/gosmee
+    newTag: 927584c5a270609d27840212df51765a02db37ef
   - name: quay.io/konflux-ci/smee-sidecar
     newName: quay.io/konflux-ci/smee-sidecar
     newTag: 10668475e087a18ba9ea5f86b6322f4ce130e200
