@@ -2,12 +2,12 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- https://github.com/konflux-ci/tekton-kueue/config/default?ref=f6ea94781e283709dbbf33a626f6be4b96a61c85
+- https://github.com/openshift-pipelines/tekton-kueue/upstream/config/default?ref=v1.24.2
 
 images:
-- name: konflux-ci/tekton-kueue
-  newName: quay.io/konflux-ci/tekton-kueue
-  newTag: f6ea94781e283709dbbf33a626f6be4b96a61c85
+- name: ghcr.io/tektoncd/tekton-kueue
+  newName: quay.io/openshift-pipeline/pipelines-scheduler-rhel9
+  newTag: v1.24.2
 
 namespace: tekton-kueue
 
