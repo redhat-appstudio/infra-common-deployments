@@ -100,6 +100,6 @@ spec:
             path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/tekton-kueue/kustomization.yaml
           - kind: Manifest ref
             previous: >-
-              ${{ quote(find(task.outputs['read-previous'].resources, {# startsWith(vars.externalRepoURL)})) }}
+              ${{ quote(find(task.outputs['read-previous'].resources, {# startsWith('${{ vars.externalRepoURL }}') || # startsWith('https://github.com/konflux-ci/tekton-kueue/config/default')})) }}
             proposed: "${{ vars.externalRepoURL }}?ref=${{ imageFrom(vars.imageRepoURL).Tag }}"
             path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/tekton-kueue/kustomization.yaml
