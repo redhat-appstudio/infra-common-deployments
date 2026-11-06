@@ -35,6 +35,7 @@ rules:
       - konflux-operator-foundry
       - konflux-performance
       - konflux-pipeline-service
+      - konflux-prodsec-spog
       - konflux-qe
       - konflux-qe-admins
       - konflux-release-team
