@@ -21,9 +21,9 @@ spec:
         ${{ ctx.targetFreight.origin.name != 'kueue' || vars.component != ctx.targetFreight.origin.name
         || vars.targetRing not in ['ring-0', 'ring-1', 'ring-2', 'ring-3', 'ring-4']
         || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$')
-        || !(imageFrom(vars.imageRepoURL).Tag matches '^[0-9a-f]{40}$') }}
+        || !(imageFrom(vars.imageRepoURL).Tag matches '^[0-9a-f]{40}$' || imageFrom(vars.imageRepoURL).Tag matches '^v\d+\.\d+\.\d+$')
       config:
-        message: Expected kueue Freight with a Git commit and a SHA-tagged image, targeting Ring 0-4.
+        message: Expected kueue Freight with a Git commit and a SHA or version-tagged image, targeting Ring 0-4.
     - uses: yaml-parse
       as: read-previous
       if: ${{ status('validate-bundle') == 'Skipped' }}
@@ -38,7 +38,7 @@ spec:
       as: validate-layout
       if: >-
         ${{ status('read-previous') == 'Succeeded' && (len(task.outputs['read-previous'].images) != 1
-        || len(filter(task.outputs['read-previous'].resources, {# startsWith(vars.externalRepoURL) || # startsWith('https://github.com/konflux-ci/tekton-kueue/config/default')})) != 1
+        || len(filter(task.outputs['read-previous'].resources, {# startsWith(vars.externalRepoURL) || # startsWith('https://github.com/konflux-ci/tekton-kueue/config/default')})) != 1) }}
       config:
         message: Expected one tekton-kueue image and one external repo reference in the ring Kustomization.
     - uses: delete
@@ -68,7 +68,7 @@ spec:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/tekton-kueue/kustomization.yaml
         outputs:
           - name: externalRepoIndex
-            fromExpression: "string(findIndex(resources, # startsWith(vars.externalRepoURL) || # startsWith('https://github.com/konflux-ci/tekton-kueue/config/default')))"
+            fromExpression: "string(findIndex(resources, # startsWith('${{ vars.externalRepoURL }}') || # startsWith('https://github.com/konflux-ci/tekton-kueue/config/default')))"
     - uses: fail
       as: external-repo-ref-not-found
       if: ${{ status('get-external-repo-index') == 'Succeeded' && !(task.outputs['get-external-repo-index'].externalRepoIndex matches "^[0-9]+$") }}
