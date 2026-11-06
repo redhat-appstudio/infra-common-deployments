@@ -19,3 +19,4 @@ spec:
         discoveryLimit: 5
         allowTagsRegexes:
           - ^[0-9a-f]{40}$
+          - ^v\d+\.\d+\.\d+$
