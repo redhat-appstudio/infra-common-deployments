@@ -101,6 +101,7 @@ These env vars are set directly in the AnalysisTemplate for each cluster file:
 | `RUNNER_NAMESPACE` | `konflux-managed-tests` | Namespace on the staging cluster where the PipelineRun is created and the `conformance-test-runner` SA lives |
 | `APP_NAMESPACE` | `konflux-conformance-tests` | Namespace on the staging cluster where test Applications/Components are created |
 | `POLL_INTERVAL` | `30` | Seconds between PipelineRun status polls |
+| `SKIP_CLEANUP` | `true` (default) | Forwarded to the suite as `E2E_SKIP_CLEANUP`. Also makes the Launcher skip deleting the PipelineRun itself on pass/fail, so Applications/namespaces/PipelineRuns stay on the staging cluster for inspection. Set to `"false"` to restore auto-cleanup. |
 
 The Launcher also reads these **template placeholders** from the ConfigMap and substitutes at run time:
 
@@ -125,6 +126,7 @@ and consumed by the pre-compiled Ginkgo binary:
 | `E2E_ITS_REPO` | `testrepo` | Public integration test repo |
 | `TEST_ENVIRONMENT` | `upstream` | Tells the suite to target upstream Konflux (not OpenShift-specific paths) |
 | `GITHUB_TOKEN` | `__GITHUB_TOKEN__` → substituted at launch | GitHub PAT for managing PRs in test repos |
+| `E2E_SKIP_CLEANUP` | `__SKIP_CLEANUP__` → substituted at launch from `SKIP_CLEANUP` | When `"true"` (the default), the conformance suite's `AfterAll` skips deleting Applications/namespaces/PipelineRuns it created, so you can inspect them afterward |
 | `CUSTOM_DOCKER_BUILD_OCI_TA_MIN_PIPELINE_BUNDLE` | Optional — if unset, the binary uses the value baked in at image build time from the operator manifest at the same commit | Override the pipeline bundle digest for docker-build-oci-ta-min |
 
 ### Secrets
