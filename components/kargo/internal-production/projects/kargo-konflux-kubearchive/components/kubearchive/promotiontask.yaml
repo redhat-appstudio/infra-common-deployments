@@ -54,7 +54,7 @@ spec:
       as: validate-prev-version
       if: >-
         ${{ status('read-prev-version') == 'Succeeded' &&
-        !matches(task.outputs['read-prev-version'].prevVersion, "^[0-9]+\\.[0-9]+\\.[0-9]+$"))}}
+        !matches(task.outputs['read-prev-version'].prevVersion, "^[0-9]+\\.[0-9]+\\.[0-9]+$") }}
       config:
         message: Expected one semantic version (e.g. 1.23.0) in the target ring's VERSION file.
 
@@ -71,7 +71,7 @@ spec:
       as: validate-migration-version
       if: >-
         ${{ status('read-migration-version') == 'Succeeded' &&
-        !matches(task.outputs['read-migration-version'].migrationVersion, "^[0-9]+$"))}}
+        !matches(task.outputs['read-migration-version'].migrationVersion, "^[0-9]+$") }}
       config:
         message: Expected one integer migration version in the target ring's Kustomization file.
 
@@ -88,12 +88,12 @@ spec:
       as: validate-new-version
       if: >-
         ${{ status('read-new-version') == 'Succeeded' &&
-        !matches(task.outputs['read-new-version'].newVersion, "^[0-9]+\\.[0-9]+\\.[0-9]+$"))}}
+        !matches(task.outputs['read-new-version'].newVersion, "^[0-9]+\\.[0-9]+\\.[0-9]+$") }}
       config:
         message: Expected one semantic version (e.g. 1.23.0) in the freight's VERSION file.
 
 
-    # Copy the new base snapshot from the freight to the target ring (thus copying the new release version's `kubearchive.yaml``
+    # Copy the new base snapshot from the freight to the target ring (thus copying the new release version's `kubearchive.yaml`
     # release artifact).
     - uses: delete
       as: delete-old-base-snapshot
