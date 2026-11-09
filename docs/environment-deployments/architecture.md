@@ -20,9 +20,8 @@ Environment-based promotion pipeline for [infra-common-deployments](https://gith
    - 3.8 [Observability and Auditability](#38-observability-and-auditability)
 4. [Component Interaction Model](#4-component-interaction-model)
 5. [Freight Lifecycle](#5-freight-lifecycle)
-6. [Kargo Resource Examples](#6-kargo-resource-examples)
-7. [Failure Mode Analysis](#7-failure-mode-analysis)
-8. [Definitions](#8-definitions)
+6. [Failure Mode Analysis](#6-failure-mode-analysis)
+7. [Definitions](#7-definitions)
 
 ---
 
@@ -48,7 +47,7 @@ An environment-based model isolates blast radius, preserves platform availabilit
 
 ### 3.1 Kargo Project and Pipeline Structure
 
-Each Konflux infrastructure repository is modeled as a **Kargo Project**—the unit of tenancy that scopes all pipeline resources (Warehouses, Stages, Promotions, Freight) to a single Kubernetes namespace. The two primary Kargo Projects map to the existing infrastructure repos:
+Each Konflux infrastructure repository is modeled as a **Kargo Project**—the unit of tenancy that scopes all pipeline resources (Warehouses, Stages, Promotions, Freight) to a single Kubernetes namespace. All Kargo Projects map to the two existing infrastructure repos:
 
 - **[infra-deployments](https://github.com/redhat-appstudio/infra-deployments)** — Application-level component deployments (Konflux services, operators, controllers). Uses rings.
 - **[infra-common-deployments](https://github.com/redhat-appstudio/infra-common-deployments)** — Shared infrastructure and platform-level resources (cluster config, RBAC, networking, observability). Uses environments.
@@ -144,7 +143,7 @@ Freight is identified by a SHA-1 hash of its origin Warehouse and artifact versi
 
 The Warehouse's `FreightCreationPolicy` controls whether Freight is created automatically upon discovery or requires an explicit manual trigger.
 
-A Git-subscription Warehouse can also detect changes in the component's `shared-resources/` directory. On promotion to an environment, Kargo deletes the environment's old `shared-resources-ref/` directory in `components/{component}/{environment}/` and copies `shared-resources-ref/` from the previous environment (or from the component's `shared-resources/` directory when promoting to staging), writing the new `shared-resources-ref/` within the same Promotion and avoiding an all-environments-at-once merge path. See [Canonical Directory Layout — Tier 1](directory-layout.md#41-tier-1--shared-resources) for details.
+A Git-subscription Warehouse can also detect changes in the component's `shared-resources/` directory. On promotion to an environment, Kargo deletes the environment's old `shared-resources-ref/` directory in the component's environment folder and copies the component's `shared-resources/` directory from the repo at the SHA commit indicated in the freight, writing the new `shared-resources-ref/` within the same Promotion and avoiding an all-environments-at-once merge path. See [Canonical Directory Layout — Tier 1](directory-layout.md#41-tier-1--shared-resources) for details.
 
 ```mermaid
 sequenceDiagram
@@ -243,16 +242,16 @@ sequenceDiagram
 
     Note over FR,SP: VerifiedIn: staging ✅
 
+    activate SOAK
+    SOAK->>SOAK: 24h soak period begins in staging
+    Note over SOAK: Monitor: error rates,<br/>latency, resource usage
+    SOAK-->>FR: Soak complete → eligible for production
+    deactivate SOAK
+
     FR->>PP: Available for promotion
     OP->>FR: Manual Approval for production
     PP->>PP: Execute Promotion steps<br/>(internal-production + external-production)
     PP-->>FR: Mark CurrentlyIn: production
-
-    activate SOAK
-    SOAK->>SOAK: 24h soak period begins
-    Note over SOAK: Monitor: error rates,<br/>latency, resource usage
-    SOAK-->>FR: Soak complete → VerifiedIn: production ✅
-    deactivate SOAK
 
     Note over FR: Fully promoted across all environments
 ```
@@ -358,7 +357,7 @@ Kargo provides built-in observability through its resource status model:
 
 Additional observability requirements:
 
-- Grafana dashboards for environment transition latency, promotion success rates, and soak period compliance.
+- Grafana dashboards for environment transition latency, promotion success rates, and soak period compliance — see the [Kargo monitoring overview dashboard](https://grafana.stage.devshift.net/d/fg1ew0fv3xa0w7/kargo-monitoring-overview).
 - Alerting on promotion failures, verification failures, and Freight stuck in an environment beyond expected soak windows.
 - Integration with existing Konflux monitoring for correlated deployment-to-incident analysis.
 
@@ -519,205 +518,7 @@ Freight.Status:
 
 ---
 
-## 6. Kargo Resource Examples
-
-### 6.1 Warehouse — Image Subscription
-
-```yaml
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Warehouse
-metadata:
-  name: example-component
-  namespace: example-component
-spec:
-  interval: 5m
-  freightCreationPolicy: Automatic
-  subscriptions:
-    - image:
-        repoURL: quay.io/konflux/component-x
-        semverConstraint: ">=1.0.0"
-        discoveryLimit: 5
-    - chart:
-        repoURL: https://charts.konflux.dev
-        name: component-x
-        semverConstraint: ">=1.0.0"
-```
-
-### 6.2 Stage — staging (Auto-Promote)
-
-```yaml
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: staging
-  namespace: example-component
-spec:
-  requestedFreight:
-    - origin:
-        kind: Warehouse
-        name: example-component
-      sources:
-        direct: true
-  promotionTemplate:
-    spec:
-      steps:
-        - uses: git-clone
-          config:
-            repoURL: https://github.com/redhat-appstudio/infra-common-deployments
-            checkout:
-              branch: main
-            path: ./src
-        - uses: kustomize-set-image
-          config:
-            path: ./src/components/example-component/internal-staging
-            images:
-              - image: quay.io/konflux/component-x
-        # External components only. Internal-only components omit this step.
-        - uses: kustomize-set-image
-          config:
-            path: ./src/components/example-component/external-staging
-            images:
-              - image: quay.io/konflux/component-x
-        - uses: git-commit
-          config:
-            path: ./src
-            message: "chore: promote component-x to staging"
-        - uses: git-push
-          config:
-            path: ./src
-            targetBranch: kargo-example-component/component-x/staging
-        - uses: git-open-pr
-          config:
-            repoURL: https://github.com/redhat-appstudio/infra-common-deployments
-            sourceBranch: kargo-example-component/component-x/staging
-            targetBranch: main
-            createTargetBranch: false
-        - uses: git-merge-pr
-          config:
-            repoURL: https://github.com/redhat-appstudio/infra-common-deployments
-            provider: github
-  verification:
-    analysisTemplates:
-      - name: smoke-tests
-    analysisRunMetadata:
-      labels:
-        environment: staging
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: ProjectConfig
-metadata:
-  name: example-component
-  namespace: example-component
-spec:
-  promotionPolicies:
-    - stage: staging
-      autoPromotionEnabled: true
-```
-
-### 6.3 Stage — production (Gated)
-
-```yaml
-apiVersion: kargo.akuity.io/v1alpha1
-kind: Stage
-metadata:
-  name: production
-  namespace: example-component
-spec:
-  requestedFreight:
-    - origin:
-        kind: Warehouse
-        name: example-component
-      sources:
-        stages:
-          - staging
-      requiredSoakTime: 24h
-  promotionTemplate:
-    spec:
-      steps:
-        - uses: git-clone
-          config:
-            repoURL: https://github.com/redhat-appstudio/infra-common-deployments
-            checkout:
-              branch: main
-            path: ./src
-        - uses: kustomize-set-image
-          config:
-            path: ./src/components/example-component/internal-production
-            images:
-              - image: quay.io/konflux/component-x
-        # External components only. Internal-only components omit this step.
-        - uses: kustomize-set-image
-          config:
-            path: ./src/components/example-component/external-production
-            images:
-              - image: quay.io/konflux/component-x
-        - uses: git-commit
-          config:
-            path: ./src
-            message: "chore: promote component-x to production"
-        - uses: git-push
-          config:
-            path: ./src
-            targetBranch: kargo-example-component/component-x/production
-            force: true
-        - uses: git-open-pr
-          config:
-            repoURL: https://github.com/redhat-appstudio/infra-common-deployments
-            sourceBranch: kargo-example-component/component-x/production
-            targetBranch: main
-        - uses: git-merge-pr
-          config:
-            repoURL: https://github.com/redhat-appstudio/infra-common-deployments
-            provider: github
-  verification:
-    analysisTemplates:
-      - name: slo-compliance-check
-      - name: error-rate-threshold
----
-apiVersion: kargo.akuity.io/v1alpha1
-kind: ProjectConfig
-metadata:
-  name: example-component
-  namespace: example-component
-spec:
-  promotionPolicies:
-    - stage: production
-      autoPromotionEnabled: false   # Requires manual approval
-```
-
-### 6.4 AnalysisTemplate — Smoke Tests
-
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: smoke-tests
-  namespace: example-component
-spec:
-  metrics:
-    - name: smoke-test-suite
-      provider:
-        job:
-          spec:
-            backoffLimit: 0
-            template:
-              spec:
-                containers:
-                  - name: tests
-                    image: quay.io/konflux/test-runner:latest
-                    command: ["/bin/sh", "-c"]
-                    args:
-                      - |
-                        run-smoke-tests --target=$STAGE_URL
-                restartPolicy: Never
-      count: 1
-      successCondition: result.exitCode == 0
-      failureLimit: 0
-```
-
----
-
-## 7. Failure Mode Analysis
+## 6. Failure Mode Analysis
 
 This section catalogs expected failure scenarios and the system's behavior in each case.
 
@@ -758,7 +559,7 @@ flowchart TD
 
 ---
 
-## 8. Definitions
+## 7. Definitions
 
 | Term | Definition |
 |------|-----------|

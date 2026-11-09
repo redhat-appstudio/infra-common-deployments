@@ -60,7 +60,7 @@ Most components in this repository are deployed to internal clusters only. Those
 
 **[Kargo](https://kargo.io)** is the promotion engine that layers on top of ArgoCD. Without Kargo, ArgoCD alone would deploy changes to every cluster the moment they merge — there would be no controlled, environment-by-environment rollout. Kargo watches for new component versions — container image tags, upstream Git commits, Helm charts, or commits in infra-common-deployments itself (e.g. resources authored directly in the repo that need environment-by-environment rollout) — and promotes them environment-by-environment by updating the Git repo. Kargo serializes promotions within each Stage — it queues them and processes one at a time, with verification blocking subsequent promotions. This ensures each change is individually verified before the next one lands.
 
-**Why this matters for directory structure:** Kargo writes to one of two computable paths per environment; given a component name and an environment, the path is either `components/{component}/{environment}/kustomization.yaml` for image and Helm chart-based changes or `components/{component}/{environment}/shared-resources-ref/` for manifest-based changes. Each component has its own [PromotionTask](architecture.md#8-definitions) per environment, but the canonical layout means all PromotionTasks follow the same pattern — the path is computable from `{component}` and `{environment}`, keeping PromotionTask definitions simple and consistent.
+**Why this matters for directory structure:** Kargo writes to one of two computable paths per environment; given a component name and an environment, the path is either `components/{component}/{environment}/kustomization.yaml` for image and Helm chart-based changes or `components/{component}/{environment}/shared-resources-ref/` for manifest-based changes. Each component has its own [PromotionTask](architecture.md#7-definitions) per environment, but the canonical layout means all PromotionTasks follow the same pattern — the path is computable from `{component}` and `{environment}`, keeping PromotionTask definitions simple and consistent.
 
 **How promotion works:** Kargo does not commit directly to `main`. Instead, it pushes to a branch and opens a PR. Staging promotions auto-merge. Production promotions require approval or are configured for automated merge only when the PR contains Kargo's verified commit. Every promotion remains a reviewable PR. This mirrors the promotion policy described in the [architecture](architecture.md).
 
@@ -139,18 +139,18 @@ components/{component-name}/
 >
 > Don't create empty environment directories for environments the component doesn't deploy to.
 
-> **Where Kargo Writes**
->
-> Kargo **solely** writes to Tier 2: `components/{component}/{environment}/` — the image tags, Helm chart versions, upstream `?ref=` values in `kustomization.yaml`, and the `shared-resources-ref/` folder. The path is computable from `{component}` and `{environment}`, enabling a single generic [PromotionTask](architecture.md#8-definitions).
->
-> **Where does my change go?** Two questions:
->
-> 1. **What type of change is it?**
->    - **Helm chart or image-based?** → **Kargo takes care of this automatically**. Kargo automatically detects when a new Helm chart or image is available based on the sources it has configured. The component's [PromotionTask](architecture.md#8-definitions) is defined to make the appropriate changes to the Tier 2 Kustomize files (e.g. external repo reference updates, overwrites to the `newTag` image field etc.) and then automatically open a PR with those changes.
->    - **Manifest-based change?** → **Move on to question 2**
-> 2. **Does it differ across environments?**
->    - **Yes** → **Tier 2**. This covers **environment-authored configs** like ExternalSecret vault paths or feature flags — authored independently in each environment because the values differ (e.g., staging vault path ≠ production vault path). Changes should occur in the environment folder `components/{component}/{environment}/` because they apply only to that environment.
->    - **No, it applies to every environment** → **Tier 1**. This covers all changes not covered by the previous answer. They are promoted environment by environment (staging → production) via `shared-resources-ref/` (see below).
+**Where Kargo Writes**
+
+Kargo **solely** writes to Tier 2: `components/{component}/{environment}/` — the image tags, Helm chart versions, upstream `?ref=` values in `kustomization.yaml`, and the `shared-resources-ref/` folder. The path is computable from `{component}` and `{environment}`, enabling a single generic [PromotionTask](architecture.md#7-definitions).
+
+**Where does my change go?** Two questions:
+
+1. **What type of change is it?**
+   - **Helm chart or image-based?** → **Kargo takes care of this automatically**. Kargo automatically detects when a new Helm chart or image is available based on the sources it has configured. The component's [PromotionTask](architecture.md#7-definitions) is defined to make the appropriate changes to the Tier 2 Kustomize files (e.g. external repo reference updates, overwrites to the `newTag` image field etc.) and then automatically open a PR with those changes.
+   - **Manifest-based change?** → **Move on to question 2**
+2. **Does it differ across environments?**
+   - **Yes** → **Tier 2**. This covers **environment-authored configs** like ExternalSecret vault paths or feature flags — authored independently in each environment because the values differ (e.g., staging vault path ≠ production vault path). Changes should occur in the environment folder `components/{component}/{environment}/` because they apply only to that environment.
+   - **No, it applies to every environment** → **Tier 1**. This covers all changes not covered by the previous answer. They are promoted environment by environment (staging → production) via `shared-resources-ref/` (see below).
 
 ---
 
@@ -178,7 +178,7 @@ Resources that have a base definition shared by all environments belong here: De
 
 > **Promoting shared-resources changes through environments (`shared-resources-ref/`)**
 >
-> When Tier 1 (`shared-resources/`) changes occur, they still follow an environment-by-environment rollout; Kargo promotes them via `shared-resources-ref/` — a copy of Tier 1's `shared-resources/` folder in each environment directory — which is always copied from the previous environment (or from Tier 1 if there is no previous environment) so changes never skip environments and are never deployed to more than one environment at a time. This also allows back-to-back manifest-based changes to occur while one change has still not made it through all environments.
+> When Tier 1 (`shared-resources/`) changes occur, they still follow an environment-by-environment rollout; Kargo promotes them via `shared-resources-ref/` — a copy of Tier 1's `shared-resources/` folder in each environment directory — which is copied from the component's `shared-resources/` folder in the repo at the SHA commit indicated in the freight so changes never skip environments and are never deployed to more than one environment at a time. This also allows back-to-back manifest-based changes to occur while one change has still not made it through all environments.
 
 ```yaml
 # components/example-component/shared-resources/kustomization.yaml
@@ -227,32 +227,13 @@ internal-staging/
 
 Promoted resources (image refs and `shared-resources-ref`) and environment-authored resources (ExternalSecrets, feature flags) both live in Tier 2 but in their own subdirectories for clarity.
 
-> **Invariant Subdirectory Pattern**
->
-> Components that deploy an operator with a Custom Resource can isolate the Kargo-promoted content into an `invariant/` subdirectory within Tier 2. This separates what Kargo writes (upstream ref, image pin) from environment-authored configuration (CR components, environment-specific patches):
->
-> ```
-> internal-staging/
-> ├── kustomization.yaml              # resources: [invariant], components: [cr/*], patches: [release-config.yaml]
-> ├── invariant/                      # Kargo-promoted content only
-> │   ├── kustomization.yaml          # upstream ref (?ref=SHA), images block, konflux.yaml
-> │   └── konflux.yaml                # minimal CR shell
-> ├── cr/                             # environment-owned CR overlay components (team-owned, with OWNERS)
-> │   ├── build/
-> │   ├── integration/
-> │   └── ...
-> └── release-config.yaml             # environment-specific CR settings (non-team-owned)
-> ```
->
-> Kargo promotes by updating `invariant/kustomization.yaml` (the `?ref=` and `images:` block). The CR components and `release-config.yaml` are environment-authored and not promoted — each environment defines its own values. See `components/konflux-operator/` for a concrete example.
-
 ```yaml
 # components/example-component/internal-staging/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- shared-resources-ref                # ← Tier 1 reference: Kargo copies from environment to environment
+- shared-resources-ref                # ← Tier 1 reference: Kargo copies from the component's shared-resources/ at the freight's commit
 - external-secrets/                   # ← environment-authored: Kargo ignores
 - https://github.com/konflux-ci/example/config/default?ref=04a4744 # ← promoted: upstream ref
 
