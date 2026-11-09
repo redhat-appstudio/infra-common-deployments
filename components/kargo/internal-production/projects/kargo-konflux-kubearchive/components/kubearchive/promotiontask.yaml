@@ -116,7 +116,7 @@ spec:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/releases-vacuum-cj.yaml
         updates:
           - key: spec.jobTemplate.spec.template.spec.containers.0.image
-            value: ${{ vars.vacuumImageURL }}:${{ task.outputs['read-new-version'].newVersion }}
+            value: ${{ vars.vacuumImageURL }}:v${{ task.outputs['read-new-version'].newVersion }}
 
     # -- Rings 0 & 1 are special and have multiple CronJob images in the `vacuum`/ folder
     - uses: yaml-update
@@ -126,7 +126,7 @@ spec:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/vacuum/pipelines-vacuum-cj.yaml
         updates:
           - key: spec.jobTemplate.spec.template.spec.containers.0.image
-            value: ${{ vars.vacuumImageURL }}:${{ task.outputs['read-new-version'].newVersion }}
+            value: ${{ vars.vacuumImageURL }}:v${{ task.outputs['read-new-version'].newVersion }}
 
     - uses: yaml-update
       as: update-ring-0-or-1-releases-vacuum-cronjob-image
@@ -135,7 +135,7 @@ spec:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/vacuum/releases-vacuum-cj.yaml
         updates:
           - key: spec.jobTemplate.spec.template.spec.containers.0.image
-            value: ${{ vars.vacuumImageURL }}:${{ task.outputs['read-new-version'].newVersion }}
+            value: ${{ vars.vacuumImageURL }}:v${{ task.outputs['read-new-version'].newVersion }}
 
     - uses: yaml-update
       as: update-ring-0-or-1-vacuum-all-cronjob-image
@@ -144,7 +144,7 @@ spec:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/vacuum/vacuum-all-cj.yaml
         updates:
           - key: spec.jobTemplate.spec.template.spec.containers.0.image
-            value: ${{ vars.vacuumImageURL }}:${{ task.outputs['read-new-version'].newVersion }}
+            value: ${{ vars.vacuumImageURL }}:v${{ task.outputs['read-new-version'].newVersion }}
 
     # Update the schema migration job name with the new release version and the original migration version.
     - uses: yaml-update
