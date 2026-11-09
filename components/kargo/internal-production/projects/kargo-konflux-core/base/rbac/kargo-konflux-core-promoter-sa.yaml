@@ -6,4 +6,4 @@ metadata:
   annotations:
     kargo.akuity.io/description: |
       Permissions to promote components in the Kargo project 'kargo-konflux-core'.
-    rbac.kargo.akuity.io/claims: '{"groups": ["konflux-pipeline-service", "konflux-operator-foundry"]}'
+    rbac.kargo.akuity.io/claims: '{"groups": ["konflux-pipeline-service", "konflux-operator-foundry", "konflux-vanguard"]}'
