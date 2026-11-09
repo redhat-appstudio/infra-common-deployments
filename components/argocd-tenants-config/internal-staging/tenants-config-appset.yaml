@@ -47,6 +47,8 @@ spec:
           jsonPointers:
             - /spec/actions
             - /status
+            - /metadata/annotations/perform_migration
+            - /metadata/annotations/migration_map
         - group: appstudio.redhat.com
           kind: ImageRepository
           jsonPointers:
