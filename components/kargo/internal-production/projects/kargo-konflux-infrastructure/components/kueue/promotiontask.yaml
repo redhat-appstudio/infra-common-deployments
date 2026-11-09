@@ -58,7 +58,7 @@ spec:
       config:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/tekton-kueue
         images:
-          - image: "konflux-ci/tekton-kueue"
+          - image: "ghcr.io/tektoncd/tekton-kueue"
             newName: ${{ vars.imageRepoURL }}
             tag: ${{ imageFrom(vars.imageRepoURL).Tag }}
     - uses: yaml-parse
