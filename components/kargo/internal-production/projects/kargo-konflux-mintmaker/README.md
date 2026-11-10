@@ -15,7 +15,7 @@ One Warehouse creates Freight containing five independently discovered inputs:
 | `quay.io/konflux-ci/mintmaker` | `NewestBuild`, full 40-character lowercase Git SHA tags | Controller tag and both controller manifest source refs |
 | `quay.io/konflux-ci/mintmaker-renovate-image` | `NewestBuild`, full Git SHA tags | Renovate image tag in both pod annotations |
 | `quay.io/konflux-ci/mintmaker-schedule-calculator` | `NewestBuild`, full Git SHA tags | Schedule-calculator CronJob image tag |
-| `quay.io/openshift/origin-cli` | `SemVer`, stable `4.21` / `4.21.x` tags only | CLI image tag in MintMaker CronJobs |
+| `quay.io/openshift/origin-cli` | `SemVer`, stable three-part `4.X.Y` tags only | CLI image tag in MintMaker CronJobs |
 
 Discovery runs every two hours. The public `quay.io/konflux-ci` repositories are
 release destinations; `quay.io/redhat-user-workloads/konflux-mintmaker-tenant`
@@ -93,12 +93,14 @@ CLI release tag, and Rings 1–4 receive the same explicit override. Renovate's
 previous `latest` alias becomes the selected release tag.
 
 The origin-cli subscription shares the same Freight and ring gates as the
-three MintMaker releases. Its SemVer constraint stays below 4.22, and its tag
-filter excludes prereleases, `latest`, SHA tags and artifact tags. It does not
-use `cacheByTag`, because the `4.21` tag can be republished. A moved tag can
+three MintMaker releases. Its SemVer constraint is `>=4.0.0 <5.0.0`, and its tag
+filter requires all three version components. For example, `4.21.0` and `4.22.0`
+are eligible, while `4.21`, prereleases, `latest`, SHA tags, artifact tags and
+5.x are excluded. SemVer selects the highest eligible version. It does not
+use `cacheByTag`, because release tags can be republished. A moved tag can
 produce new Freight without changing the generated `newTag`; tag-only
 configuration does not pin the discovered digest or guarantee a new rollout.
-Changing the supported CLI minor requires updating both the Warehouse filter
+Changing the supported CLI major or tag format requires updating both the Warehouse filter
 and the promotion validation together.
 
 The shared base snapshot carries CLI job definitions and Redis configuration.
