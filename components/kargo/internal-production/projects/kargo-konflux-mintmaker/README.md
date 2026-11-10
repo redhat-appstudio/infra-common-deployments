@@ -29,7 +29,7 @@ must not be forced to match. This Freight is a combination of releases, not an
 atomic cross-repository release; Ring 0 CI and subsequent verification gate the
 combination. Warehouse discovery can find versions newer than the existing deployment pins
 immediately; all rings start promotions automatically when their Freight is
-eligible under the configured predecessor verification and soak requirements.
+eligible under the configured predecessor verification requirements.
 
 Preparation writes all four images using **`name`, `newName`, and `newTag`**
 with their independently selected release tags from Freight, using
@@ -116,19 +116,31 @@ used by generated PipelineRuns or add subscriptions that cannot affect them.
 | Stage | Source | Soak on predecessor | PR merge | Gate |
 |---|---|---|---|---|
 | `ring-0-mintmaker` | Warehouse | — | Automatic | Required ring-deployments conformance Prow check |
-| `ring-1-mintmaker` | Verified Ring 0 | — | Automatic | Staging Argo readiness + shared staging Kanary |
-| `ring-2-mintmaker` | Verified Ring 1 | 48 hours | Manual | Production Argo readiness + shared production Kanary |
-| `ring-3-mintmaker` | Verified Ring 2 | 48 hours | Manual | Production Argo readiness + shared production Kanary |
-| `ring-4-mintmaker` | Verified Ring 3 | 72 hours | Manual | Production Argo readiness + shared production Kanary |
+| `ring-1-mintmaker` | Verified Ring 0 | — | Automatic | Staging Argo readiness + ~24h staging Kanary |
+| `ring-2-mintmaker` | Verified Ring 1 | — | Manual | Production Argo readiness + ~24h production Kanary |
+| `ring-3-mintmaker` | Verified Ring 2 | — | Manual | Production Argo readiness + ~24h production Kanary |
+| `ring-4-mintmaker` | Verified Ring 3 | — | Manual | Production Argo readiness + ~24h production Kanary |
 
 All Rings 0–4 allow automatic promotion initiation when Freight is eligible.
 Rings 0 and 1 merge their promotion PRs automatically after required checks
 pass; Rings 2–4 still require a human PR merge. Existing predecessor
-verification, readiness, Kanary and soak requirements still apply. Ring 0 requires
+verification, readiness and Kanary checks still apply; no additional soak time is required. Ring 0 requires
 `^ci/prow/konflux-ring-deployments-conformance-tests$`; nonzero rings follow the
 existing component policy of skipping Prow while retaining the shared GitHub
 CI checks. The historical MintMaker overlay-update Tekton pipeline refers to
 removed directories and is not used as a gate.
+
+After each promotion to Rings 1–4, verification samples Kanary 36 times at
+40-minute intervals, starting after a 40-minute warm-up. The final scheduled
+sample is approximately 24 hours after verification starts; controller scheduling
+or metric-provider retries can extend that time. Up to seven failed samples are
+allowed, preserving an approximately 80% successful-sample requirement. An
+unsuccessful verification blocks downstream promotion and can fail early.
+Successful verification makes Freight eligible for the next ring without an
+additional `requiredSoakTime`. This is a verification window for each promoted
+Freight, not a daily re-verification schedule. Ring 4 verifies for the same window
+although it has no downstream ring. These overrides are specific to MintMaker;
+shared template defaults remain unchanged.
 
 Ring 0 targets dynamic development member clusters and follows the existing
 CI-only Kargo development-stage pattern. Its Applications lack the production
@@ -168,7 +180,7 @@ from the deployment inventory. This is a configuration inventory check, not a
 live cluster-health measurement.
 
 Kanary is a sampled fleet-health signal, **not a MintMaker dependency-update
-functional test**. Shared default sampling is retained. MintMaker jobs generally
+functional test**. Rings 1–4 use the 24-hour sampling window described above. MintMaker jobs generally
 run every four hours; Ring 3's main dependency-update job runs only at 00:00 and
 04:00 UTC. Readiness and a successful Kanary sample do not demonstrate a
 completed MintMaker work cycle. Before the first production merge, operators

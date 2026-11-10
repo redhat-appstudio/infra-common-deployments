@@ -24,6 +24,15 @@ spec:
         value: stone-stage-p01|stone-stg-rh01
       - name: expected-cluster-count
         value: "2"
+      # Nominal 24-hour window: first check at 40m, then 35 further 40m intervals.
+      - name: initial-delay
+        value: "40m"
+      - name: check-interval
+        value: "40m"
+      - name: check-count
+        value: "36"
+      - name: failure-limit
+        value: "7"
   promotionTemplate:
     spec:
       vars:

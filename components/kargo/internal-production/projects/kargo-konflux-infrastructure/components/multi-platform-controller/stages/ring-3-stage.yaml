@@ -25,6 +25,8 @@ spec:
         value: stone-prd-rh01
       - name: expected-cluster-count
         value: '1'
+      - name: types
+        value: container-single-arch|container-multi-arch
   promotionTemplate:
     spec:
       vars:

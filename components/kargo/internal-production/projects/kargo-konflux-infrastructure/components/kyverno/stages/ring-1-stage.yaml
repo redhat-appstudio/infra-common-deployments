@@ -26,7 +26,7 @@ spec:
       - name: expected-cluster-count
         value: "1"
       - name: types
-        value: container-single-arch|container-multi-arch
+        value: container-single-arch
   promotionTemplate:
     spec:
       vars:

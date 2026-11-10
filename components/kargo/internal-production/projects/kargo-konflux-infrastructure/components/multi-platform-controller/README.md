@@ -33,7 +33,9 @@ match the rendered staging/production ApplicationSets and existing ring paths;
 this onboarding does not add clusters. The infrastructure Kanary templates add
 sampled verification: Ring 1 checks `stone-stage-p01` and `stone-stg-rh01`, Ring 2
 checks `stone-prod-p01`, `kflux-fedora-01` and `kflux-prd-rh03`, Ring 3 checks
-`stone-prd-rh01`, and Ring 4 checks `kflux-prd-rh02`.
+`stone-prd-rh01`, and Ring 4 checks `kflux-prd-rh02`. Rings 1–4 explicitly select
+both `container-single-arch` and `container-multi-arch` Kanary signals. This
+component is the exception to the single-architecture policy for other components.
 
 ## What a promotion changes
 
