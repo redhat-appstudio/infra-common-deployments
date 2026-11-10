@@ -210,6 +210,14 @@ spec:
         && task.outputs['read-ring-3-ansible-cli'].valid == true && task.outputs['read-ring-3-osci-cli'].valid == true)) }}
       config:
         prepared: 'yes'
+        # A digest takes precedence over newTag in Kustomize. Never interpret a
+        # stale tag, latest, or a manifest ref as the image's previous source SHA.
+        previousControllerSHA: >-
+          ${{ quote((task.outputs['read-previous'].controllerImages[0].digest ?? '') == '' ? string(task.outputs['read-previous'].controllerImages[0].newTag ?? '') : '') }}
+        previousRenovateSHA: >-
+          ${{ quote((task.outputs['read-previous'].renovateImages[0].digest ?? '') == '' ? string(task.outputs['read-previous'].renovateImages[0].newTag ?? '') : '') }}
+        previousSchedulerSHA: >-
+          ${{ quote((task.outputs['read-previous'].schedulerImages[0].digest ?? '') == '' ? string(task.outputs['read-previous'].schedulerImages[0].newTag ?? '') : '') }}
         prSummary: |
           Update the controller, Renovate, schedule calculator and origin-cli to their selected release tags in ${{ vars.targetRing }}.
           Align both controller manifest refs to controller source revision ${{ imageFrom(vars.controllerImageRepoURL).Tag }}.
