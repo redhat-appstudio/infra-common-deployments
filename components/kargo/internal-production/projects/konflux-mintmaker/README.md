@@ -12,9 +12,9 @@ One Warehouse creates Freight containing four independently discovered inputs:
 | Input | Selection | Promotion use |
 |---|---|---|
 | `redhat-appstudio/infra-deployments` Git | Newest `main` commit changing `components/mintmaker/base` | Immutable shared base snapshot |
-| `quay.io/konflux-ci/mintmaker` | `NewestBuild`, full 40-character lowercase Git SHA tags | Controller digest and both controller manifest source refs |
-| `quay.io/konflux-ci/mintmaker-renovate-image` | `NewestBuild`, full Git SHA tags | Renovate image digest in both pod annotations |
-| `quay.io/konflux-ci/mintmaker-schedule-calculator` | `NewestBuild`, full Git SHA tags | Schedule-calculator CronJob image digest |
+| `quay.io/konflux-ci/mintmaker` | `NewestBuild`, full 40-character lowercase Git SHA tags | Controller tag and both controller manifest source refs |
+| `quay.io/konflux-ci/mintmaker-renovate-image` | `NewestBuild`, full Git SHA tags | Renovate image tag in both pod annotations |
+| `quay.io/konflux-ci/mintmaker-schedule-calculator` | `NewestBuild`, full Git SHA tags | Schedule-calculator CronJob image tag |
 
 Discovery runs every two hours. The public `quay.io/konflux-ci` repositories are
 release destinations; `quay.io/redhat-user-workloads/konflux-mintmaker-tenant`
@@ -29,8 +29,19 @@ atomic cross-repository release; Ring 0 CI and subsequent verification gate the
 combination. Warehouse discovery can find versions newer than the existing deployment pins
 immediately; only Ring 0 starts promotions automatically.
 
-Preparation pins all three images to the **digests recorded in Freight** using
+Preparation writes all three images using **`name`, `newName`, and `newTag`**
+with their independently selected release tags from Freight, using
 [`kustomize-set-image`](https://docs.kargo.io/user-guide/reference-docs/promotion-steps/kustomize-set-image).
+It replaces any existing digest pin on these three entries; unrelated image
+overrides, including `quay.io/openshift/origin-cli:4.21`, remain unchanged.
+For example, the controller entry keeps this structure:
+
+```yaml
+- name: quay.io/konflux-ci/mintmaker
+  newName: quay.io/konflux-ci/mintmaker
+  newTag: <controller SHA tag>
+```
+
 The controller's SHA tag, not the Git-base commit or another image's SHA, sets
 both remote resources:
 
@@ -51,7 +62,7 @@ The working checkout starts at deployment `main` for the PR base. A separate
 checkout uses `commitFrom(repoURL).ID` for the selected shared base. For the target
 ring only, preparation:
 
-1. Validates origin, repository, ring, all three image tags/digests and layout.
+1. Validates origin, repository, ring, all three image tags and layout.
 2. Requires exactly one entry for each image, both remote resource URLs, and the
    two Deployment annotation paths in `kustomizeconfig.yaml`.
 3. Replaces only `base/base-snapshot/` from the selected Git commit's
@@ -69,7 +80,7 @@ would not configure Renovate TaskRuns.
 Ring-specific files remain intact: resource limits, profiling/blackbox settings,
 Kite configuration, quotas, trusted CA mounts, secret references, tenant
 CronJobs and schedules. Ring 0's extra origin-cli image override remains intact;
-its previous Renovate `latest` alias becomes the selected digest.
+its previous Renovate `latest` alias becomes the selected release tag.
 
 The shared base snapshot carries incidental CLI and Redis configuration.
 Ring 1's blackbox image stays ring-local. Controller-generated Tekton steps also
