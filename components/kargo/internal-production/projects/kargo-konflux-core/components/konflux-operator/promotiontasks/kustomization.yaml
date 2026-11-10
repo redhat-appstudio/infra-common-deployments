@@ -6,3 +6,4 @@ resources:
   - konflux-operator-promote-ring-1.yaml
   - konflux-operator-promote-ring-2.yaml
   - konflux-operator-promote-ring-3.yaml
+  - konflux-operator-promote-ring-4.yaml

@@ -6,3 +6,4 @@ resources:
   - ring-1-stage.yaml
   - ring-2-stage.yaml
   - ring-3-stage.yaml
+  - ring-4-stage.yaml

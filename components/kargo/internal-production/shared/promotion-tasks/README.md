@@ -41,6 +41,7 @@ These tasks currently target `redhat-appstudio/infra-deployments`, branch `main`
 | Konflux Operator | 1 | Automatic | Disabled | `stone-stage-p01` |
 | Konflux Operator | 2 | Automatic | Disabled | `kflux-fedora-01`, `kflux-ocp-p01`, `kflux-osp-p01`, `kflux-prd-rh03`, `stone-prod-p01`; production Kanary for ~24h |
 | Konflux Operator | 3 | Manual | Disabled | `stone-prd-rh01`; 24h ring-2 soak |
+| Konflux Operator | 4 | Manual | Disabled | `kflux-prd-rh02`; 72h ring-3 soak; production Kanary for ~24h |
 
 Operator Ring 0 requires `^ci/prow/konflux-ring-deployments-conformance-tests$`.
 Operator Ring 1 also runs Kanary and conformance verification on

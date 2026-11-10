@@ -23,3 +23,5 @@ spec:
       autoPromotionEnabled: true
     - stage: ring-3-konflux-operator
       autoPromotionEnabled: true
+    - stage: ring-4-konflux-operator
+      autoPromotionEnabled: true

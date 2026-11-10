@@ -1,0 +1,78 @@
+---
+# Read the previous Git configuration before mutation; this is not live cluster state.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: konflux-operator-promote-ring-4
+spec:
+  vars:
+    - name: srcPath
+  steps:
+    - uses: fail
+      as: validate-freight
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'konflux-operator'
+        || imageFrom('quay.io/konflux-ci/konflux-operator') == nil
+        || !(imageFrom('quay.io/konflux-ci/konflux-operator').Tag matches '^[0-9a-f]{40}$') }}
+      config:
+        message: Expected konflux-operator Freight with a full source-SHA image tag.
+    - uses: yaml-parse
+      as: read-previous
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/konflux-operator/rings/ring-4/base/invariant/kustomization.yaml
+        outputs:
+          - name: imageTag
+            fromExpression: string(images[0].newTag ?? 'unknown')
+          - name: manifestSource
+            fromExpression: string(resources[0] ?? 'unknown')
+          - name: imageName
+            fromExpression: string(images[0].name ?? '')
+          - name: imageRepo
+            fromExpression: string(images[0].newName ?? '')
+          - name: imageDigest
+            fromExpression: string(images[0].digest ?? '')
+    - uses: fail
+      as: validate-layout
+      if: >-
+        ${{ status('read-previous') == 'Succeeded' && (
+        task.outputs['read-previous'].imageName != 'localhost/konflux-operator'
+        || task.outputs['read-previous'].imageRepo != 'quay.io/konflux-ci/konflux-operator'
+        || task.outputs['read-previous'].imageDigest != ''
+        || !(task.outputs['read-previous'].manifestSource startsWith 'https://github.com/konflux-ci/konflux-ci/operator/config/default?ref=')) }}
+      config:
+        message: Expected the operator image and manifest ref at the first entries of Ring 4's invariant Kustomization, without a conflicting digest pin.
+    - uses: yaml-update
+      as: update-konflux-operator
+      if: ${{ status('read-previous') == 'Succeeded' && status('validate-layout') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/konflux-operator/rings/ring-4/base/invariant/kustomization.yaml
+        updates:
+          - key: images.0.newTag
+            value: ${{ imageFrom("quay.io/konflux-ci/konflux-operator").Tag }}
+          - key: resources.0
+            value: https://github.com/konflux-ci/konflux-ci/operator/config/default?ref=${{ imageFrom("quay.io/konflux-ci/konflux-operator").Tag
+              }}
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-freight') == 'Skipped' && status('read-previous') == 'Succeeded'
+        && status('validate-layout') == 'Skipped' && status('update-konflux-operator') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: Update the konflux-operator image and manifest reference in the ring-4 configuration.
+        prChanges:
+          - kind: Image tag
+            previous: ${{ quote(task.outputs['read-previous'].imageTag) }}
+            proposed: ${{ quote(imageFrom("quay.io/konflux-ci/konflux-operator").Tag) }}
+            path: components/konflux-operator/rings/ring-4/base/invariant/kustomization.yaml
+          - kind: Manifest source
+            previous: ${{ task.outputs['read-previous'].manifestSource }}
+            proposed: https://github.com/konflux-ci/konflux-ci/operator/config/default?ref=${{ imageFrom("quay.io/konflux-ci/konflux-operator").Tag
+              }}
+            path: components/konflux-operator/rings/ring-4/base/invariant/kustomization.yaml
+        prCompareURL: >-
+          ${{ task.outputs['read-previous'].manifestSource matches '^https://github\\.com/konflux-ci/konflux-ci/operator/config/default\\?ref=[0-9a-f]{40}$'
+          && imageFrom("quay.io/konflux-ci/konflux-operator").Tag matches '^[0-9a-f]{40}$' ? 'https://github.com/konflux-ci/konflux-ci/compare/'
+          + split(task.outputs['read-previous'].manifestSource, '?ref=')[1] + '...' + imageFrom("quay.io/konflux-ci/konflux-operator").Tag
+          : '' }}
