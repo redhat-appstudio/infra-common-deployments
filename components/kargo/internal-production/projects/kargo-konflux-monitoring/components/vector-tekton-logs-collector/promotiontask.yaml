@@ -1,0 +1,67 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-vector-tekton-logs-collector
+spec:
+  vars:
+    - name: srcPath
+    - name: freightPath
+    - name: repoURL
+    - name: component
+    - name: targetRing
+    - name: chartRepoURL
+      value: https://helm.vector.dev
+  steps:
+    - uses: fail
+      as: validate-bundle
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'vector-tekton-logs-collector' || vars.component != ctx.targetFreight.origin.name ||
+        vars.targetRing not in ['ring-0', 'ring-1', 'ring-2', 'ring-3', 'ring-4'] ||
+        !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$') || chartFrom(vars.chartRepoURL).Version == '' }}
+      config:
+        message: Expected vector-tekton-logs-collector Freight containing a Git commit and chart version, targeting ring 0–4.
+    - uses: yaml-parse
+      as: read-previous-chart
+      if: ${{ status('validate-bundle') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/vector-helm-generator.yaml
+        outputs:
+          - name: version
+            fromExpression: string(version)
+    # Always copy from the immutable Freight checkout, including source deletions.
+    - uses: delete
+      as: delete-old-base-snapshot
+      if: ${{ status('read-previous-chart') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: copy
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-base-snapshot') == 'Succeeded' }}
+      config:
+        inPath: ${{ vars.freightPath }}/components/${{ vars.component }}/base
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: yaml-update
+      as: update-chart-version
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/vector-helm-generator.yaml
+        updates:
+          - key: version
+            value: ${{ quote(chartFrom(vars.chartRepoURL).Version) }}
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-bundle') == 'Skipped' && status('read-previous-chart') == 'Succeeded' &&
+        status('delete-old-base-snapshot') == 'Succeeded' && status('copy-freight-manifests') == 'Succeeded' && status('update-chart-version') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: |
+          Update vector-tekton-logs-collector's base manifests and vector chart in ${{ vars.targetRing }}.
+
+          Manifest source: [${{ commitFrom(vars.repoURL).ID[0:12] }}](https://github.com/redhat-appstudio/infra-deployments/commit/${{ commitFrom(vars.repoURL).ID }}).
+        prChanges:
+          - kind: Vector Helm chart
+            previous: ${{ quote(task.outputs['read-previous-chart'].version) }}
+            proposed: ${{ quote(chartFrom(vars.chartRepoURL).Version) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/vector-helm-generator.yaml

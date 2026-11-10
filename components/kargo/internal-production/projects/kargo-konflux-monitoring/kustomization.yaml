@@ -10,6 +10,7 @@ resources:
 components:
   - ../../shared/promotion-tasks
   - ../../shared/verifications
+  - components/vector-tekton-logs-collector
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
