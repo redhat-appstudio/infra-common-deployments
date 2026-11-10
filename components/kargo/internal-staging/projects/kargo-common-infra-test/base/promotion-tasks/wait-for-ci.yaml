@@ -11,6 +11,9 @@ spec:
       value: redhat-appstudio
     - name: repoName
       value: infra-common-deployments
+    # Keep the Fullsend exclusion aligned with the production shared CI gates.
+    - name: excludedCheckRuns
+      value: "^(dispatch / .*|stop-fix)$"
   steps:
     - uses: http
       as: wait-for-check-runs
@@ -29,6 +32,6 @@ spec:
         successExpression: |
           response.status == 200 &&
           response.body.total_count <= len(response.body.check_runs) &&
-          len(response.body.check_runs) > 0 &&
-          all(response.body.check_runs, {.status == 'completed' && .conclusion == 'success'})
+          len(filter(response.body.check_runs, {!(.name matches ${{ quote(vars.excludedCheckRuns) }})})) > 0 &&
+          all(filter(response.body.check_runs, {!(.name matches ${{ quote(vars.excludedCheckRuns) }})}), {.status == 'completed' && .conclusion == 'success'})
         timeout: 30s
