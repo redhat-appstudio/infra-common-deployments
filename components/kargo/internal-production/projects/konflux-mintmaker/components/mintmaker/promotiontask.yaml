@@ -33,12 +33,9 @@ spec:
         || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$')
         || !(imageFrom(vars.controllerImageRepoURL).Tag matches '^[0-9a-f]{40}$')
         || !(imageFrom(vars.renovateImageRepoURL).Tag matches '^[0-9a-f]{40}$')
-        || !(imageFrom(vars.schedulerImageRepoURL).Tag matches '^[0-9a-f]{40}$')
-        || !(imageFrom(vars.controllerImageRepoURL).Digest matches '^sha256:[0-9a-f]{64}$')
-        || !(imageFrom(vars.renovateImageRepoURL).Digest matches '^sha256:[0-9a-f]{64}$')
-        || !(imageFrom(vars.schedulerImageRepoURL).Digest matches '^sha256:[0-9a-f]{64}$') }}
+        || !(imageFrom(vars.schedulerImageRepoURL).Tag matches '^[0-9a-f]{40}$') }}
       config:
-        message: Expected MintMaker Freight with an infra-deployments commit and three independently SHA-tagged release images with sha256 digests, targeting Rings 0-4.
+        message: Expected MintMaker Freight with an infra-deployments commit and three independently SHA-tagged release images, targeting Rings 0-4.
     - uses: yaml-parse
       as: read-previous
       if: ${{ status('validate-freight') == 'Skipped' }}
@@ -99,7 +96,7 @@ spec:
       config:
         inPath: ${{ vars.freightPath }}/components/${{ vars.component }}/base
         outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
-    # Pin the selected digests, including the Renovate image used in pod annotations.
+    # Keep explicit image names and release tags, including Renovate pod annotations.
     - uses: kustomize-set-image
       as: update-images
       if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
@@ -107,11 +104,14 @@ spec:
         path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base
         images:
           - image: ${{ vars.controllerImageRepoURL }}
-            digest: ${{ imageFrom(vars.controllerImageRepoURL).Digest }}
+            newName: ${{ vars.controllerImageRepoURL }}
+            tag: ${{ imageFrom(vars.controllerImageRepoURL).Tag }}
           - image: ${{ vars.renovateImageRepoURL }}
-            digest: ${{ imageFrom(vars.renovateImageRepoURL).Digest }}
+            newName: ${{ vars.renovateImageRepoURL }}
+            tag: ${{ imageFrom(vars.renovateImageRepoURL).Tag }}
           - image: ${{ vars.schedulerImageRepoURL }}
-            digest: ${{ imageFrom(vars.schedulerImageRepoURL).Digest }}
+            newName: ${{ vars.schedulerImageRepoURL }}
+            tag: ${{ imageFrom(vars.schedulerImageRepoURL).Tag }}
     # Controller source refs follow its own release SHA, never the independent Git/Renovate/scheduler SHA.
     - uses: yaml-update
       as: update-manifest-refs
@@ -136,22 +136,22 @@ spec:
       config:
         prepared: 'yes'
         prSummary: |
-          Pin the controller, Renovate and schedule calculator to their selected release digests in ${{ vars.targetRing }}.
+          Update the controller, Renovate and schedule calculator to their selected release tags in ${{ vars.targetRing }}.
           Align both controller manifest refs to controller source revision ${{ imageFrom(vars.controllerImageRepoURL).Tag }}.
 
           Shared base source: [${{ commitFrom(vars.repoURL).ID[0:12] }}](https://github.com/redhat-appstudio/infra-deployments/commit/${{ commitFrom(vars.repoURL).ID }}).
         prChanges:
           - kind: Controller image
             previous: ${{ quote(string(task.outputs['read-previous'].controllerImages[0].digest ?? task.outputs['read-previous'].controllerImages[0].newTag ?? 'not configured')) }}
-            proposed: ${{ imageFrom(vars.controllerImageRepoURL).Tag + ' @ ' + imageFrom(vars.controllerImageRepoURL).Digest }}
+            proposed: ${{ quote(imageFrom(vars.controllerImageRepoURL).Tag) }}
             path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
           - kind: Renovate image (both pod annotations)
             previous: ${{ quote(string(task.outputs['read-previous'].renovateImages[0].digest ?? task.outputs['read-previous'].renovateImages[0].newTag ?? 'not configured')) }}
-            proposed: ${{ imageFrom(vars.renovateImageRepoURL).Tag + ' @ ' + imageFrom(vars.renovateImageRepoURL).Digest }}
+            proposed: ${{ quote(imageFrom(vars.renovateImageRepoURL).Tag) }}
             path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
           - kind: Schedule calculator image
             previous: ${{ quote(string(task.outputs['read-previous'].schedulerImages[0].digest ?? task.outputs['read-previous'].schedulerImages[0].newTag ?? 'not configured')) }}
-            proposed: ${{ imageFrom(vars.schedulerImageRepoURL).Tag + ' @ ' + imageFrom(vars.schedulerImageRepoURL).Digest }}
+            proposed: ${{ quote(imageFrom(vars.schedulerImageRepoURL).Tag) }}
             path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
           - kind: Controller manifest ref
             previous: ${{ quote(split(find(task.outputs['read-previous'].resources, {# startsWith 'https://github.com/konflux-ci/mintmaker/config/default?ref='}), '?ref=')[1]) }}
