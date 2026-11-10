@@ -40,8 +40,8 @@ These tasks currently target `redhat-appstudio/infra-deployments`, branch `main`
 | Konflux Operator | 0 | Automatic | Required | None; Git-only promotion |
 | Konflux Operator | 1 | Automatic | Disabled | `stone-stage-p01` |
 | Konflux Operator | 2 | Automatic | Disabled | `kflux-fedora-01`, `kflux-ocp-p01`, `kflux-osp-p01`, `kflux-prd-rh03`, `stone-prod-p01`; production Kanary for ~24h |
-| Konflux Operator | 3 | Manual | Disabled | `stone-prd-rh01`; 24h ring-2 soak |
-| Konflux Operator | 4 | Manual | Disabled | `kflux-prd-rh02`; 72h ring-3 soak; production Kanary for ~24h |
+| Konflux Operator | 3 | Automatic | Disabled | `stone-prd-rh01`; 24h ring-2 soak |
+| Konflux Operator | 4 | Automatic | Disabled | `kflux-prd-rh02`; 72h ring-3 soak; production Kanary for ~24h |
 
 Operator Ring 0 requires `^ci/prow/konflux-ring-deployments-conformance-tests$`.
 Operator Ring 1 also runs Kanary and conformance verification on
@@ -55,11 +55,12 @@ Ring 3 sources verified Freight from Ring 2 after a 24-hour soak, then runs
 production Kanary on `stone-prd-rh01` and `stone-prod-p02`, with an expected
 cluster count of two.
 Argo CD readiness checks target the operator deployment on `stone-prd-rh01`;
-its promotion PR requires manual merge.
+its promotion PR merges automatically after required checks pass.
 
-Operator Ring 2 already used automatic merging. Its previous PR description said
-manual approval; the new description matches the actual executable policy.
-Changing to human merging requires an explicit `mergeMode: manual` choice.
+All Operator rings enable automatic promotion initiation and automatic PR
+merging after required checks pass. Rings 2–4 retain their existing verification
+and soak gates. Existing Promotions keep their expanded steps; create a new
+Promotion after reconciliation to use a changed merge policy.
 
 The shared publisher uses `github-push` for all callers so trusted Kargo-signed
 commits are attributed and signed by the GitHub App.
