@@ -9,6 +9,7 @@ resources:
   - kargo-konflux-vanguard
   - kargo-production-playground
   - konflux-pulp
+  - konflux-mintmaker
 
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

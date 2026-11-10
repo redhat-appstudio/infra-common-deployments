@@ -1,0 +1,15 @@
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: konflux-mintmaker-promoter
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kargo-promoter
+subjects:
+  - kind: ServiceAccount
+    name: konflux-mintmaker-promoter
+    namespace: konflux-mintmaker
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: konflux-mintmaker-team

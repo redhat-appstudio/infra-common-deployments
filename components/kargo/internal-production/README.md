@@ -43,6 +43,7 @@ or template available; each Stage explicitly selects what it uses. See the
 | [kargo-konflux-kubearchive](projects/kargo-konflux-kubearchive/) | Vector Kubearchive log collector |
 | [kargo-konflux-monitoring](projects/kargo-konflux-monitoring/) | Reserved project; shared definitions only, no components currently |
 | [konflux-pulp](projects/konflux-pulp/) | Pulp access controller |
+| [konflux-mintmaker](projects/konflux-mintmaker/) | MintMaker controller, Renovate and schedule calculator |
 | [kargo-konflux-vanguard](projects/kargo-konflux-vanguard/) | Proxy, notification, crossplane and related components |
 
 [projects/kustomization.yaml](projects/kustomization.yaml) is the deployed project

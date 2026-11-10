@@ -1,0 +1,12 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - rbac.yaml
+  - analysis-template-rbac.yaml
+  - argocd-app-reader.yaml
+  - konflux-mintmaker-promoter-sa.yaml
+  - konflux-mintmaker-promoter-rb.yaml
+  - kargo-promoter-extras-role.yaml
+  - kargo-manager-promoter-extras-rb.yaml
+  - kargo-manager-promoter-rb.yaml
