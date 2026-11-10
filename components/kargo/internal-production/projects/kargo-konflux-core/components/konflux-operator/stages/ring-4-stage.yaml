@@ -16,7 +16,6 @@ spec:
       sources:
         stages:
           - ring-3-konflux-operator
-        requiredSoakTime: 72h0m0s
   verification:
     analysisTemplates:
       - name: kanary-production
