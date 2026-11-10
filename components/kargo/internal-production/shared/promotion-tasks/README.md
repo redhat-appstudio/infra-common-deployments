@@ -100,8 +100,21 @@ When forwarding the Stage variable into a task, use:
 ```
 
 `quote()` prevents Kargo from converting the string into a boolean.
-`requiredCheckRuns` defaults to `.*`. An enabled Prow gate requires a nonempty
-`requiredProwChecks` regex. Each selector must match at least one check. A regex
+`requiredCheckRuns` defaults to `.*`. `excludedCheckRuns` defaults to
+`^(dispatch / .*|stop-fix)$`, matching Fullsend's GitHub API job names such as
+`dispatch / Review`, `dispatch / Fix` and `stop-fix`. Excluded checks cannot
+block success or cause failure and are omitted from failure diagnostics. At
+least one non-excluded required check must still exist; an all-Fullsend response
+does not pass. The complete-response and non-Fullsend CI requirements remain.
+The same exclusion is used by the legacy production `github-ci-gate` and
+staging `wait-for-ci`; keep these policies aligned when changing job names.
+
+This only changes Kargo gating. Fullsend workflows still run, and GitHub branch
+protection requirements are not modified. New Promotions use the updated task;
+already-running Promotions retain their expanded steps and are not rewritten.
+
+An enabled Prow gate requires a nonempty `requiredProwChecks` regex. Each selector
+must match at least one non-excluded check. A regex
 with alternatives does not prove that every alternative exists; prefer a reliable
 aggregate suite when every constituent test is required.
 
@@ -226,8 +239,8 @@ a retest does not reset that budget. The stage queue stays occupied while waitin
 An already Failed or timed-out Promotion needs an explicit Kargo retry; later
 Prow success does not restart it automatically. Existing Promotions retain their
 expanded steps, so this change applies to newly created Promotions. A failure in
-the earlier GitHub check-runs gate (for example, `dispatch / Fix`) still fails
-immediately and is outside this Prow-only retest behavior. Authentication errors,
+a non-excluded check in the earlier GitHub check-runs gate (for example,
+`yamllint`) still fails immediately and is outside this Prow-only retest behavior. Authentication errors,
 missing API resources, and truncated status responses still fail closed.
 
 **Readiness:** every configured Application must appear in the same complete
