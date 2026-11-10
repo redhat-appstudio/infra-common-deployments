@@ -24,6 +24,8 @@ spec:
         value: stone-stg-rh01|stone-stage-p01
       - name: expected-cluster-count
         value: '2'
+      - name: types
+        value: container-single-arch|container-multi-arch
   promotionTemplate:
     spec:
       vars:

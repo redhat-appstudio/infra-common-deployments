@@ -16,7 +16,6 @@ spec:
       sources:
         stages:
           - ring-1-mintmaker
-        requiredSoakTime: 48h0m0s
   verification:
     analysisTemplates:
       - name: kanary-production
@@ -25,6 +24,15 @@ spec:
         value: kflux-fedora-01|kflux-ocp-p01|kflux-osp-p01|kflux-prd-rh03|kflux-rhel-p01|stone-prod-p01
       - name: expected-cluster-count
         value: "6"
+      # Nominal 24-hour window: first check at 40m, then 35 further 40m intervals.
+      - name: initial-delay
+        value: "40m"
+      - name: check-interval
+        value: "40m"
+      - name: check-count
+        value: "36"
+      - name: failure-limit
+        value: "7"
   promotionTemplate:
     spec:
       vars:

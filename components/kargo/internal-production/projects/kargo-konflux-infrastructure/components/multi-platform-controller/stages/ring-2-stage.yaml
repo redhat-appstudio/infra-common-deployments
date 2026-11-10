@@ -28,6 +28,8 @@ spec:
         value: '72'
       - name: failure-limit
         value: '14'
+      - name: types
+        value: container-single-arch|container-multi-arch
   promotionTemplate:
     spec:
       vars:

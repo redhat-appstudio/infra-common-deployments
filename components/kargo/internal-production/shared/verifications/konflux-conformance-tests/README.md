@@ -173,7 +173,7 @@ spec:
       - name: expected-cluster-count
         value: "1"
       - name: types
-        value: container-single-arch|container-multi-arch
+        value: container-single-arch
 ```
 
 Both metrics run in parallel inside the same AnalysisRun. Kargo marks freight
@@ -330,7 +330,7 @@ verification:
     - name: expected-cluster-count
       value: "2"
     - name: types
-      value: container-single-arch|container-multi-arch
+      value: container-single-arch
 ```
 
 ## Extending the tests

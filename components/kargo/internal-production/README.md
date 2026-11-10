@@ -84,7 +84,7 @@ history needed for audit or rollback before the old definitions are pruned.
 After synchronization, verify both new projects, their group access, credential
 availability and shard reconciliation. Warehouses rediscover Freight. MintMaker
 All MintMaker Rings 0–4 start promotions automatically when Freight meets
-their predecessor verification and soak requirements.
+their predecessor verification requirements; no additional MintMaker soak time is required.
 Rings 0 and 1 merge promotion PRs automatically after required checks pass;
 Rings 2–4 require manual merge. Re-establish verification in ring order rather than treating old
 project history as verification in the new project. Pulp retains its existing
@@ -103,3 +103,12 @@ Rollback: stop promotions in the new projects, then restore the old project
 configuration from Git. Retain the new namespaces as well before removing their
 project definitions if their runtime state is needed. Kargo configuration
 rollback does not revert infra-deployments PRs that have already merged.
+
+## Kanary architecture selection
+
+All projects use `container-single-arch` for Kanary verification by default,
+including the operator and Kyverno. Only `multi-platform-controller` selects
+both `container-single-arch|container-multi-arch`, explicitly in Rings 1–4.
+Keep the staging and production shared template defaults single-architecture;
+add the exception at that component's Stage arguments. Stages without Kanary
+verification do not acquire a new check from this policy.
