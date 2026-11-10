@@ -10,6 +10,7 @@ resources:
   - kargo-production-playground
   - kargo-konflux-pulp
   - kargo-konflux-mintmaker
+  - kargo-konflux-kite
   - retained-project-namespaces.yaml
 
 commonAnnotations:

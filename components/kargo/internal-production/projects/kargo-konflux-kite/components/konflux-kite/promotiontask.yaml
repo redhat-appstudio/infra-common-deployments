@@ -1,0 +1,100 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-konflux-kite
+spec:
+  vars:
+    - name: srcPath
+    - name: freightPath
+    - name: repoURL
+    - name: component
+    - name: targetRing
+    - name: apiImageRepoURL
+      value: quay.io/konflux-ci/kite-prod
+    - name: initImageRepoURL
+      value: quay.io/konflux-ci/kite-init
+  steps:
+    - uses: fail
+      as: validate-freight
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'konflux-kite' || vars.component != 'konflux-kite'
+        || vars.repoURL != 'https://github.com/redhat-appstudio/infra-deployments.git'
+        || vars.apiImageRepoURL != 'quay.io/konflux-ci/kite-prod'
+        || vars.initImageRepoURL != 'quay.io/konflux-ci/kite-init'
+        || vars.targetRing not in ['ring-0', 'ring-1', 'ring-2', 'ring-3', 'ring-4']
+        || commitFrom(vars.repoURL) == nil || imageFrom(vars.apiImageRepoURL) == nil || imageFrom(vars.initImageRepoURL) == nil
+        || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$')
+        || !(imageFrom(vars.apiImageRepoURL).Tag matches '^[0-9a-f]{40}$')
+        || !(imageFrom(vars.initImageRepoURL).Tag matches '^[0-9a-f]{40}$')
+        || imageFrom(vars.apiImageRepoURL).Tag != imageFrom(vars.initImageRepoURL).Tag }}
+      config:
+        message: Expected Kite Freight with an infra-deployments commit and both API and migration images tagged with the same full source SHA, targeting Rings 0-4.
+    - uses: yaml-parse
+      as: read-previous
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        outputs:
+          - name: resources
+            fromExpression: resources ?? []
+          - name: apiImages
+            fromExpression: filter(images ?? [], {.name == 'quay.io/konflux-ci/kite-prod'})
+          - name: initImages
+            fromExpression: filter(images ?? [], {.name == 'quay.io/konflux-ci/kite-init'})
+    - uses: fail
+      as: validate-layout
+      if: >-
+        ${{ status('read-previous') == 'Succeeded' && (
+        len(filter(task.outputs['read-previous'].resources, {# == 'base-snapshot'})) != 1
+        || len(task.outputs['read-previous'].apiImages) != 1 || len(task.outputs['read-previous'].initImages) != 1
+        || (task.outputs['read-previous'].apiImages[0].newName ?? vars.apiImageRepoURL) != vars.apiImageRepoURL
+        || (task.outputs['read-previous'].initImages[0].newName ?? vars.initImageRepoURL) != vars.initImageRepoURL) }}
+      config:
+        message: Expected one base snapshot and one image entry for each of the Kite API and migration release repositories.
+    # Copy only the shared snapshot from immutable Freight. Database settings,
+    # credential paths, certificates and cluster overrides remain ring-local.
+    - uses: delete
+      as: delete-old-base-snapshot
+      if: ${{ status('read-previous') == 'Succeeded' && status('validate-layout') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: copy
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-base-snapshot') == 'Succeeded' }}
+      config:
+        inPath: ${{ vars.freightPath }}/components/${{ vars.component }}/base
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: kustomize-set-image
+      as: update-images
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base
+        images:
+          - image: ${{ vars.apiImageRepoURL }}
+            newName: ${{ vars.apiImageRepoURL }}
+            tag: ${{ quote(imageFrom(vars.apiImageRepoURL).Tag) }}
+          - image: ${{ vars.initImageRepoURL }}
+            newName: ${{ vars.initImageRepoURL }}
+            tag: ${{ quote(imageFrom(vars.initImageRepoURL).Tag) }}
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-freight') == 'Skipped' && status('read-previous') == 'Succeeded'
+        && status('validate-layout') == 'Skipped' && status('delete-old-base-snapshot') == 'Succeeded'
+        && status('copy-freight-manifests') == 'Succeeded' && status('update-images') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: |
+          Update the Kite API and database migration images together to source revision ${{ imageFrom(vars.apiImageRepoURL).Tag }} in ${{ vars.targetRing }}.
+
+          Shared base source: [${{ commitFrom(vars.repoURL).ID[0:12] }}](https://github.com/redhat-appstudio/infra-deployments/commit/${{ commitFrom(vars.repoURL).ID }}).
+        prChanges:
+          - kind: Kite API image
+            previous: ${{ quote(string(task.outputs['read-previous'].apiImages[0].digest ?? task.outputs['read-previous'].apiImages[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.apiImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+          - kind: Kite database migration image
+            previous: ${{ quote(string(task.outputs['read-previous'].initImages[0].digest ?? task.outputs['read-previous'].initImages[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.initImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
