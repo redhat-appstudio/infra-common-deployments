@@ -9,7 +9,6 @@ spec:
         values:
           sourceRoot: components/cert-manager
           environment: ""
-          clusterName: ""
   template:
     metadata:
       name: cert-manager-{{nameNormalized}}
