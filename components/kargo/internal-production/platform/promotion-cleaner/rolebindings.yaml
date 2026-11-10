@@ -118,12 +118,12 @@ subjects:
     name: kargo-promotion-cleaner
     namespace: kargo
 ---
-# konflux-pulp — Kubernetes RBAC
+# kargo-konflux-pulp — Kubernetes RBAC
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: kargo-promotion-cleaner
-  namespace: konflux-pulp
+  namespace: kargo-konflux-pulp
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -133,12 +133,12 @@ subjects:
     name: kargo-promotion-cleaner
     namespace: kargo
 ---
-# konflux-pulp — Kargo RBAC
+# kargo-konflux-pulp — Kargo RBAC
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: kargo-promotion-cleaner-promoter
-  namespace: konflux-pulp
+  namespace: kargo-konflux-pulp
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -148,12 +148,12 @@ subjects:
     name: kargo-promotion-cleaner
     namespace: kargo
 ---
-# konflux-mintmaker — Kubernetes RBAC
+# kargo-konflux-mintmaker — Kubernetes RBAC
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: kargo-promotion-cleaner
-  namespace: konflux-mintmaker
+  namespace: kargo-konflux-mintmaker
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -163,12 +163,12 @@ subjects:
     name: kargo-promotion-cleaner
     namespace: kargo
 ---
-# konflux-mintmaker — Kargo RBAC
+# kargo-konflux-mintmaker — Kargo RBAC
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: kargo-promotion-cleaner-promoter
-  namespace: konflux-mintmaker
+  namespace: kargo-konflux-mintmaker
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role

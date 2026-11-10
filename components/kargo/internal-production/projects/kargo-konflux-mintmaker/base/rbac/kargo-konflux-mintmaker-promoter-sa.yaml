@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kargo-konflux-mintmaker-promoter
+  namespace: kargo-konflux-mintmaker
+  annotations:
+    kargo.akuity.io/description: |
+      Permissions to promote components in the Kargo project 'kargo-konflux-mintmaker'.
+    rbac.kargo.akuity.io/claims: '{"groups": ["konflux-mintmaker-team"]}'
