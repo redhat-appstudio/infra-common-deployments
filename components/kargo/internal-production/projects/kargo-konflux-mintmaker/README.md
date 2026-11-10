@@ -28,7 +28,8 @@ The three MintMaker images come from **three different source repositories**. Th
 must not be forced to match. This Freight is a combination of releases, not an
 atomic cross-repository release; Ring 0 CI and subsequent verification gate the
 combination. Warehouse discovery can find versions newer than the existing deployment pins
-immediately; only Ring 0 starts promotions automatically.
+immediately; all rings start promotions automatically when their Freight is
+eligible under the configured predecessor verification and soak requirements.
 
 Preparation writes all four images using **`name`, `newName`, and `newTag`**
 with their independently selected release tags from Freight, using
@@ -120,10 +121,10 @@ used by generated PipelineRuns or add subscriptions that cannot affect them.
 | `ring-3-mintmaker` | Verified Ring 2 | 48 hours | Manual | Production Argo readiness + shared production Kanary |
 | `ring-4-mintmaker` | Verified Ring 3 | 72 hours | Manual | Production Argo readiness + shared production Kanary |
 
-Only Ring 0 allows automatic promotion initiation. Rings 0 and 1 merge their
-promotion PRs automatically after the required checks pass. Ring 1 still
-requires manual promotion initiation; Rings 2–4 require both manual initiation
-and a human PR merge. Existing verification and soak requirements still apply. Ring 0 requires
+All Rings 0–4 allow automatic promotion initiation when Freight is eligible.
+Rings 0 and 1 merge their promotion PRs automatically after required checks
+pass; Rings 2–4 still require a human PR merge. Existing predecessor
+verification, readiness, Kanary and soak requirements still apply. Ring 0 requires
 `^ci/prow/konflux-ring-deployments-conformance-tests$`; nonzero rings follow the
 existing component policy of skipping Prow while retaining the shared GitHub
 CI checks. The historical MintMaker overlay-update Tekton pipeline refers to
