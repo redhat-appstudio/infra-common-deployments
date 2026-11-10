@@ -8,10 +8,10 @@ spec:
     - stage: ring-0-mintmaker
       autoPromotionEnabled: true
     - stage: ring-1-mintmaker
-      autoPromotionEnabled: false
+      autoPromotionEnabled: true
     - stage: ring-2-mintmaker
-      autoPromotionEnabled: false
+      autoPromotionEnabled: true
     - stage: ring-3-mintmaker
-      autoPromotionEnabled: false
+      autoPromotionEnabled: true
     - stage: ring-4-mintmaker
-      autoPromotionEnabled: false
+      autoPromotionEnabled: true

@@ -83,7 +83,8 @@ history needed for audit or rollback before the old definitions are pruned.
 
 After synchronization, verify both new projects, their group access, credential
 availability and shard reconciliation. Warehouses rediscover Freight. MintMaker
-Ring 0 starts automatically; Rings 1–4 still require manual initiation.
+All MintMaker Rings 0–4 start promotions automatically when Freight meets
+their predecessor verification and soak requirements.
 Rings 0 and 1 merge promotion PRs automatically after required checks pass;
 Rings 2–4 require manual merge. Re-establish verification in ring order rather than treating old
 project history as verification in the new project. Pulp retains its existing
