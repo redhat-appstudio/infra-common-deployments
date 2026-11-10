@@ -1,0 +1,16 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: kargo-konflux-kite
+
+resources:
+  - base
+  - components/konflux-kite
+
+components:
+  - ../../shared/promotion-tasks
+  - ../../shared/verifications
+
+commonAnnotations:
+  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

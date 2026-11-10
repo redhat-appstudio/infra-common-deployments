@@ -1,0 +1,19 @@
+# Kite maintainers review component changes; platform owners approve executable
+# workflow, access and policy changes. Maintainers may approve documentation.
+filters:
+  .*:
+    reviewers:
+    - JoaoPedroPP
+    - abhinandan13jan
+    - Katka92
+    - sahil143
+    - rrosatti
+    - StanislavJochman
+  \.md$:
+    approvers:
+    - JoaoPedroPP
+    - abhinandan13jan
+    - Katka92
+    - sahil143
+    - rrosatti
+    - StanislavJochman

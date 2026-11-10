@@ -1,0 +1,17 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: kargo-konflux-kite
+spec:
+  promotionPolicies:
+    - stage: ring-0-konflux-kite
+      autoPromotionEnabled: true
+    - stage: ring-1-konflux-kite
+      autoPromotionEnabled: true
+    - stage: ring-2-konflux-kite
+      autoPromotionEnabled: true
+    - stage: ring-3-konflux-kite
+      autoPromotionEnabled: true
+    - stage: ring-4-konflux-kite
+      autoPromotionEnabled: true
