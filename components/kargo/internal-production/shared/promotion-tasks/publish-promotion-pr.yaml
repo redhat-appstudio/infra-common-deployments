@@ -8,11 +8,21 @@ spec:
   vars:
     - name: srcPath
     - name: component
-    - name: targetRing
     - name: prepared
     - name: baseCommitSHA
     - name: mergeMode
     - name: skipProwChecks
+    # If the component is located in infra-deployments, targetRing must be populated. If located in infra-common-deployments,
+    # environment must be populated.
+    - name: targetRing
+      value: ${{ '' }}
+    - name: environment
+      value: ${{ '' }}
+    # Falls back to 'redhat-appstudio' & 'infra-deployments'
+    - name: githubRepo
+      value: infra-deployments
+    - name: githubOrg
+      value: redhat-appstudio
     # Optional presentation data; missing metadata must not change promotion policy.
     - name: prSummary
       value: ${{ '' }}
@@ -26,16 +36,16 @@ spec:
     - uses: fail
       as: validate-config
       if: >-
-        ${{ vars.prepared != 'yes' || vars.baseCommitSHA == '' || vars.mergeMode not in ['auto', 'manual'] || vars.skipProwChecks not in ['true',
-        'false'] }}
+        ${{ vars.prepared != 'yes' || vars.baseCommitSHA == '' || vars.githubRepo == '' || vars.githubOrg == '' || vars.mergeMode not in ['auto', 'manual'] ||
+        vars.skipProwChecks not in ['true', 'false'] || (vars.targetRing == '' && vars.environment == '') || (vars.targetRing != '' && vars.environment != '') }}
       config:
-        message: Component preparation must succeed; supply baseCommitSHA and explicit merge/Prow policies.
+        message: Component preparation must succeed; supply baseCommitSHA, GitHub repo & organization, target ring OR environment, and explicit merge/Prow policies.
     - uses: git-commit
       as: commit
       if: ${{ status('validate-config') == 'Skipped' }}
       config:
         path: ${{ vars.srcPath }}
-        message: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}'
+        message: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing != "" ? vars.targetRing : vars.environment }}'
     # Sign without comparing against an older PR branch. A rebuilt local commit
     # gets a different signing ref; retries of the same commit retain its ancestry.
     - uses: github-push
@@ -52,7 +62,7 @@ spec:
       if: ${{ status('sign') == 'Succeeded' }}
       config:
         path: ${{ vars.srcPath }}
-        targetBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
+        targetBranch: '${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing != "" ? vars.targetRing : vars.environment }}'
         force: true
     - uses: fail
       as: validate-signed-head
@@ -69,12 +79,12 @@ spec:
         timeout: 5m
         errorThreshold: 3
       config:
-        repoURL: https://github.com/redhat-appstudio/infra-deployments.git
-        sourceBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
+        repoURL: https://github.com/${{ vars.githubOrg }}/${{ vars.githubRepo }}.git
+        sourceBranch: '${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing != "" ? vars.targetRing : vars.environment }}'
         targetBranch: main
-        title: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}'
+        title: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing != "" ? vars.targetRing : vars.environment }}'
         description: |
-          ## Promote ${{ vars.component }} to ${{ vars.targetRing }}
+          ## Promote ${{ vars.component }} to ${{ vars.targetRing != "" ? vars.targetRing : vars.environment }}
 
           ${{ vars.prSummary != '' ? vars.prSummary : 'Update the component to the selected Freight.' }}
 
@@ -97,7 +107,7 @@ spec:
           </details>
 
           ${{ len(vars.prChanges) > 0 ? 'Previous values reflect Git configuration, not necessarily the running deployment.' : '' }}
-        labels: "${{ filter(split(vars.targetRing + ',automated-promotion,component/' + vars.component + (vars.extraPRLabels != '' ? ',' + vars.extraPRLabels : ''), ','), {# != ''}) }}"
+        labels: "${{ filter(split((vars.targetRing != '' ? vars.targetRing : vars.environment) + ',automated-promotion,component/' + vars.component + (vars.extraPRLabels != '' ? ',' + vars.extraPRLabels : ''), ','), {# != ''}) }}"
     # Recovery only: adopt an existing PR after native discovery exhausts retries.
     - uses: http
       as: find-pr
@@ -106,10 +116,10 @@ spec:
         timeout: 5m
       config:
         method: GET
-        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?state=open&base=main&head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}&per_page=2
+        url: 'https://api.github.com/repos/${{ vars.githubOrg }}/${{ vars.githubRepo }}/pulls?state=open&base=main&head=${{ vars.githubOrg }}:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing != "" ? vars.targetRing : vars.environment }}&per_page=2'
         headers: &github-headers
           - name: Authorization
-            value: Bearer ${{ repoCredentials('https://github.com/redhat-appstudio/infra-deployments.git', 'git').Password }}
+            value: Bearer ${{ repoCredentials('https://github.com/' + vars.githubOrg + '/' + vars.githubRepo + '.git', 'git').Password }}
           - name: Accept
             value: application/vnd.github+json
         pollInterval: 2m
@@ -117,9 +127,9 @@ spec:
         successExpression: |
           response.status == 200 &&
           len(response.body) == 1 && response.body[0].state == 'open' &&
-          response.body[0].head.repo.full_name == 'redhat-appstudio/infra-deployments' &&
-          response.body[0].base.repo.full_name == 'redhat-appstudio/infra-deployments' &&
-          response.body[0].head.ref == ${{ quote(ctx.project + '/' + vars.component + '/' + vars.targetRing) }} &&
+          response.body[0].head.repo.full_name == ${{ quote(vars.githubOrg + '/' + vars.githubRepo) }} &&
+          response.body[0].base.repo.full_name == ${{ quote(vars.githubOrg + '/' + vars.githubRepo) }} &&
+          response.body[0].head.ref == ${{ quote(ctx.project + '/' + vars.component + '/' + (vars.targetRing != "" ? vars.targetRing : vars.environment)) }} &&
           response.body[0].base.ref == 'main' && response.body[0].head.sha == ${{ quote(task.outputs['push'].commit) }}
         failureExpression: |
           response.status in [401, 404] ||
@@ -145,7 +155,7 @@ spec:
         timeout: 2h
       config:
         method: GET
-        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/commits/main
+        url: https://api.github.com/repos/${{ vars.githubOrg }}/${{ vars.githubRepo }}/commits/main
         headers: *github-headers
         pollInterval: 2m
         timeout: 30s
@@ -165,7 +175,7 @@ spec:
         timeout: 2h
       config:
         method: GET
-        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/commits/${{ task.outputs['push'].commit }}
+        url: https://api.github.com/repos/${{ vars.githubOrg }}/${{ vars.githubRepo }}/commits/${{ task.outputs['push'].commit }}
         headers: *github-headers
         pollInterval: 2m
         timeout: 30s
@@ -192,3 +202,4 @@ spec:
           ${{ (task.outputs['find-pr']?.prNumber ?? 0) > 0 ? task.outputs['find-pr'].prNumber : (task.outputs['open-pr']?.pr?.id ?? 0) }}
         prURL: >-
           ${{ (task.outputs['find-pr']?.prNumber ?? 0) > 0 ? task.outputs['find-pr'].prURL : (task.outputs['open-pr']?.pr?.url ?? '') }}
+        prBranch: '${{ ctx.project + "/" + vars.component + "/" + (vars.targetRing != "" ? vars.targetRing : vars.environment) }}'

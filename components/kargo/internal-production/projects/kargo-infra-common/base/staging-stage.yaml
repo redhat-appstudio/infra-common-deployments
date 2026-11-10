@@ -137,7 +137,7 @@ spec:
             - name: promotionAsNoOp
               value: "${{ outputs['set-promotion-as-no-op'].promotionAsNoOp }}"
             - name: tokenSecret
-              value: kargo-infra-common-argocd-app-reader-token-staging
+              value: argocd-app-reader-token-common-staging
             - name: appURL
               value: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/argocd-local/applications/${{ vars.component }}-in-cluster
         - uses: argocd-wait

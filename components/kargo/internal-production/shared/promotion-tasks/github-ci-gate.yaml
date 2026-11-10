@@ -1,9 +1,6 @@
 ---
 # wait-for-ci
 #
-# Only applies to components using Ring Deployments via the
-# redhat-appstudio/infra-deployments repository.
-#
 # Polls the GitHub API until all CI checks pass for a given commit.
 # Used during Kargo promotions to gate ring advancement on green CI.
 #

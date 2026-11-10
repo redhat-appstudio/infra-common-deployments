@@ -6,7 +6,6 @@ resources:
   - project.yaml
   - project-config.yaml
   - rbac
-  - external-secrets
   - promotiontasks
   - staging-stage.yaml
   - production-stage.yaml

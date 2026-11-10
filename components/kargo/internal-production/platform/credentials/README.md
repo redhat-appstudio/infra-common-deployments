@@ -14,6 +14,7 @@ Kargo consumers receive it:
 | `kargo-promotion-credentials` | Git credential discovery in the shared resources namespace; no replication annotation |
 | `kargo-konflux-ci-credentials` | Git credential discovery for konflux-ci repositories, using the URL regex stored in Vault; no replication annotation |
 | `argocd-app-reader-token-staging` | Replicated to projects; readiness reads it with `secret()` |
+| `argocd-app-reader-token-common-staging` | Replicated to projects; infra-common readiness reads it with `secret()` |
 | `kargo-rhobs-staging`, `kargo-rhobs-production` | Replicated to projects for Kanary AnalysisTemplates |
 | `konflux-conformance-tests-credentials` | Replicated to projects; contains cluster SA tokens and the conformance GitHub PAT |
 
