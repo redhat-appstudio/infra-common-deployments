@@ -250,6 +250,12 @@ spec:
         p, role:tenants-config-sync, applications, sync, tenants-config/*, allow
         g, system:authenticated, role:tenants-config-sync
 
+        # Allow release eng get/sync/logs on managed workspaces apps
+        p, role:release-eng, applications, sync, rh-managed-workspaces-config/*, allow
+        p, role:release-eng, applications, get, rh-managed-workspaces-config/*, allow
+        p, role:release-eng, logs, get, rh-managed-workspaces-config/*, allow
+        g, distribution-relengs, role:release-eng
+
     scopes: '[groups]'
   repo:
     annotations:
