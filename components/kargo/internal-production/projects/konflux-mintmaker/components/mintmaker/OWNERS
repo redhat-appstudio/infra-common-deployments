@@ -1,0 +1,18 @@
+# MintMaker maintainers review component changes and may approve documentation.
+# Executable workflow YAML, Kustomizations and this OWNERS file require platform
+# approval inherited from the project OWNERS: promotion steps can read credentials.
+filters:
+  .*:
+    reviewers:
+    - rh-rsaar
+    - FernandesMF
+    - HozifaWasfy
+    - KristianTkacik
+    - adelaon
+  \.md$:
+    approvers:
+    - rh-rsaar
+    - FernandesMF
+    - HozifaWasfy
+    - KristianTkacik
+    - adelaon

@@ -1,0 +1,163 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-mintmaker
+spec:
+  vars:
+    - name: srcPath
+    - name: freightPath
+    - name: repoURL
+    - name: component
+    - name: targetRing
+    - name: controllerImageRepoURL
+      value: quay.io/konflux-ci/mintmaker
+    - name: renovateImageRepoURL
+      value: quay.io/konflux-ci/mintmaker-renovate-image
+    - name: schedulerImageRepoURL
+      value: quay.io/konflux-ci/mintmaker-schedule-calculator
+  steps:
+    - uses: fail
+      as: validate-freight
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'mintmaker' || vars.component != 'mintmaker'
+        || vars.repoURL != 'https://github.com/redhat-appstudio/infra-deployments.git'
+        || vars.controllerImageRepoURL != 'quay.io/konflux-ci/mintmaker'
+        || vars.renovateImageRepoURL != 'quay.io/konflux-ci/mintmaker-renovate-image'
+        || vars.schedulerImageRepoURL != 'quay.io/konflux-ci/mintmaker-schedule-calculator'
+        || vars.targetRing not in ['ring-0', 'ring-1', 'ring-2', 'ring-3', 'ring-4']
+        || commitFrom(vars.repoURL) == nil
+        || imageFrom(vars.controllerImageRepoURL) == nil
+        || imageFrom(vars.renovateImageRepoURL) == nil
+        || imageFrom(vars.schedulerImageRepoURL) == nil
+        || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$')
+        || !(imageFrom(vars.controllerImageRepoURL).Tag matches '^[0-9a-f]{40}$')
+        || !(imageFrom(vars.renovateImageRepoURL).Tag matches '^[0-9a-f]{40}$')
+        || !(imageFrom(vars.schedulerImageRepoURL).Tag matches '^[0-9a-f]{40}$')
+        || !(imageFrom(vars.controllerImageRepoURL).Digest matches '^sha256:[0-9a-f]{64}$')
+        || !(imageFrom(vars.renovateImageRepoURL).Digest matches '^sha256:[0-9a-f]{64}$')
+        || !(imageFrom(vars.schedulerImageRepoURL).Digest matches '^sha256:[0-9a-f]{64}$') }}
+      config:
+        message: Expected MintMaker Freight with an infra-deployments commit and three independently SHA-tagged release images with sha256 digests, targeting Rings 0-4.
+    - uses: yaml-parse
+      as: read-previous
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        outputs:
+          - name: resources
+            fromExpression: resources ?? []
+          - name: configurations
+            fromExpression: configurations ?? []
+          - name: controllerImages
+            fromExpression: filter(images ?? [], {.name == 'quay.io/konflux-ci/mintmaker'})
+          - name: renovateImages
+            fromExpression: filter(images ?? [], {.name == 'quay.io/konflux-ci/mintmaker-renovate-image'})
+          - name: schedulerImages
+            fromExpression: filter(images ?? [], {.name == 'quay.io/konflux-ci/mintmaker-schedule-calculator'})
+    - uses: fail
+      as: validate-layout
+      if: >-
+        ${{ status('read-previous') == 'Succeeded' && (
+        len(filter(task.outputs['read-previous'].resources, {# == 'base-snapshot'})) != 1
+        || len(filter(task.outputs['read-previous'].resources, {# startsWith 'https://github.com/konflux-ci/mintmaker/config/default?ref='})) != 1
+        || len(filter(task.outputs['read-previous'].resources, {# startsWith 'https://github.com/konflux-ci/mintmaker/config/renovate?ref='})) != 1
+        || 'kustomizeconfig.yaml' not in task.outputs['read-previous'].configurations
+        || len(task.outputs['read-previous'].controllerImages) != 1
+        || len(task.outputs['read-previous'].renovateImages) != 1
+        || len(task.outputs['read-previous'].schedulerImages) != 1
+        || (task.outputs['read-previous'].controllerImages[0].newName ?? vars.controllerImageRepoURL) != vars.controllerImageRepoURL
+        || (task.outputs['read-previous'].renovateImages[0].newName ?? vars.renovateImageRepoURL) != vars.renovateImageRepoURL
+        || (task.outputs['read-previous'].schedulerImages[0].newName ?? vars.schedulerImageRepoURL) != vars.schedulerImageRepoURL) }}
+      config:
+        message: Expected one base snapshot, two controller manifest refs, three release image entries and the Renovate annotation transformer configuration.
+    - uses: yaml-parse
+      as: read-image-transformers
+      if: ${{ status('read-previous') == 'Succeeded' && status('validate-layout') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomizeconfig.yaml
+        outputs:
+          - name: paths
+            fromExpression: map(filter(images ?? [], {.kind == 'Deployment'}), {.path})
+    - uses: fail
+      as: validate-image-transformers
+      if: >-
+        ${{ status('read-image-transformers') == 'Succeeded' && (
+        'spec/template/metadata/annotations/mintmaker.appstudio.redhat.com\\/renovate-image' not in task.outputs['read-image-transformers'].paths
+        || 'spec/template/metadata/annotations/mintmaker.konflux-ci.dev\\/renovate-image' not in task.outputs['read-image-transformers'].paths) }}
+      config:
+        message: Both MintMaker Renovate pod annotations must be configured as image transformer paths.
+    # Copy only the shared subtree from immutable Freight, preserving every ring's overrides.
+    - uses: delete
+      as: delete-old-base-snapshot
+      if: ${{ status('read-image-transformers') == 'Succeeded' && status('validate-image-transformers') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: copy
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-base-snapshot') == 'Succeeded' }}
+      config:
+        inPath: ${{ vars.freightPath }}/components/${{ vars.component }}/base
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    # Pin the selected digests, including the Renovate image used in pod annotations.
+    - uses: kustomize-set-image
+      as: update-images
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base
+        images:
+          - image: ${{ vars.controllerImageRepoURL }}
+            digest: ${{ imageFrom(vars.controllerImageRepoURL).Digest }}
+          - image: ${{ vars.renovateImageRepoURL }}
+            digest: ${{ imageFrom(vars.renovateImageRepoURL).Digest }}
+          - image: ${{ vars.schedulerImageRepoURL }}
+            digest: ${{ imageFrom(vars.schedulerImageRepoURL).Digest }}
+    # Controller source refs follow its own release SHA, never the independent Git/Renovate/scheduler SHA.
+    - uses: yaml-update
+      as: update-manifest-refs
+      if: ${{ status('update-images') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        updates:
+          - key: >-
+              resources.${{ findIndex(task.outputs['read-previous'].resources, {# startsWith 'https://github.com/konflux-ci/mintmaker/config/default?ref='}) }}
+            value: https://github.com/konflux-ci/mintmaker/config/default?ref=${{ imageFrom(vars.controllerImageRepoURL).Tag }}
+          - key: >-
+              resources.${{ findIndex(task.outputs['read-previous'].resources, {# startsWith 'https://github.com/konflux-ci/mintmaker/config/renovate?ref='}) }}
+            value: https://github.com/konflux-ci/mintmaker/config/renovate?ref=${{ imageFrom(vars.controllerImageRepoURL).Tag }}
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-freight') == 'Skipped' && status('read-previous') == 'Succeeded'
+        && status('validate-layout') == 'Skipped' && status('read-image-transformers') == 'Succeeded'
+        && status('validate-image-transformers') == 'Skipped' && status('delete-old-base-snapshot') == 'Succeeded'
+        && status('copy-freight-manifests') == 'Succeeded' && status('update-images') == 'Succeeded'
+        && status('update-manifest-refs') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: |
+          Pin the controller, Renovate and schedule calculator to their selected release digests in ${{ vars.targetRing }}.
+          Align both controller manifest refs to controller source revision ${{ imageFrom(vars.controllerImageRepoURL).Tag }}.
+
+          Shared base source: [${{ commitFrom(vars.repoURL).ID[0:12] }}](https://github.com/redhat-appstudio/infra-deployments/commit/${{ commitFrom(vars.repoURL).ID }}).
+        prChanges:
+          - kind: Controller image
+            previous: ${{ quote(string(task.outputs['read-previous'].controllerImages[0].digest ?? task.outputs['read-previous'].controllerImages[0].newTag ?? 'not configured')) }}
+            proposed: ${{ imageFrom(vars.controllerImageRepoURL).Tag + ' @ ' + imageFrom(vars.controllerImageRepoURL).Digest }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+          - kind: Renovate image (both pod annotations)
+            previous: ${{ quote(string(task.outputs['read-previous'].renovateImages[0].digest ?? task.outputs['read-previous'].renovateImages[0].newTag ?? 'not configured')) }}
+            proposed: ${{ imageFrom(vars.renovateImageRepoURL).Tag + ' @ ' + imageFrom(vars.renovateImageRepoURL).Digest }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+          - kind: Schedule calculator image
+            previous: ${{ quote(string(task.outputs['read-previous'].schedulerImages[0].digest ?? task.outputs['read-previous'].schedulerImages[0].newTag ?? 'not configured')) }}
+            proposed: ${{ imageFrom(vars.schedulerImageRepoURL).Tag + ' @ ' + imageFrom(vars.schedulerImageRepoURL).Digest }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+          - kind: Controller manifest ref
+            previous: ${{ quote(split(find(task.outputs['read-previous'].resources, {# startsWith 'https://github.com/konflux-ci/mintmaker/config/default?ref='}), '?ref=')[1]) }}
+            proposed: ${{ quote(imageFrom(vars.controllerImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+          - kind: Renovate manifest ref
+            previous: ${{ quote(split(find(task.outputs['read-previous'].resources, {# startsWith 'https://github.com/konflux-ci/mintmaker/config/renovate?ref='}), '?ref=')[1]) }}
+            proposed: ${{ quote(imageFrom(vars.controllerImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
