@@ -15,6 +15,7 @@ rules:
     verbs: ["get"]
     resourceNames:
       - ai-konflux-user-support
+      - distribution-relengs
       - exd-sp-cwf-isv
       - konflux-admins
       - konflux-build
