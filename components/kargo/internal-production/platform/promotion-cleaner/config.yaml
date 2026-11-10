@@ -10,5 +10,5 @@ data:
     kargo-konflux-vanguard
     kargo-konflux-infrastructure
     kargo-konflux-kubearchive
-    konflux-pulp
-    konflux-mintmaker
+    kargo-konflux-pulp
+    kargo-konflux-mintmaker

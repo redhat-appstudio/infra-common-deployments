@@ -1,0 +1,17 @@
+# Keep the former namespaces through the project rename. Removing their
+# manifests during the rename would let Argo CD prune all remaining state.
+# Cleanup is a separate, explicit operation after migration and backup.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: konflux-mintmaker
+  annotations:
+    kargo.akuity.io/keep-namespace: "true"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: konflux-pulp
+  annotations:
+    kargo.akuity.io/keep-namespace: "true"

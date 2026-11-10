@@ -42,8 +42,8 @@ or template available; each Stage explicitly selects what it uses. See the
 | [kargo-konflux-infrastructure](projects/kargo-konflux-infrastructure/) | Infrastructure components, including repository validator and multi-platform controller |
 | [kargo-konflux-kubearchive](projects/kargo-konflux-kubearchive/) | Vector Kubearchive log collector |
 | [kargo-konflux-monitoring](projects/kargo-konflux-monitoring/) | Reserved project; shared definitions only, no components currently |
-| [konflux-pulp](projects/konflux-pulp/) | Pulp access controller |
-| [konflux-mintmaker](projects/konflux-mintmaker/) | MintMaker controller, Renovate and schedule calculator |
+| [kargo-konflux-pulp](projects/kargo-konflux-pulp/) | Pulp access controller |
+| [kargo-konflux-mintmaker](projects/kargo-konflux-mintmaker/) | MintMaker controller, Renovate, schedule calculator and OpenShift CLI |
 | [kargo-konflux-vanguard](projects/kargo-konflux-vanguard/) | Proxy, notification, crossplane and related components |
 
 [projects/kustomization.yaml](projects/kustomization.yaml) is the deployed project
@@ -64,3 +64,41 @@ Shared tasks provide publication, CI, merge and readiness mechanics. Project
 `base/project-config.yaml` controls automatic promotion eligibility separately
 from a Stage's PR merge policy. Read the component's current Stage and README
 rather than assuming every project uses the same rings or gates.
+
+## MintMaker and Pulp project rename
+
+`konflux-mintmaker` and `konflux-pulp` become `kargo-konflux-mintmaker` and
+`kargo-konflux-pulp`, including their namespace, ProjectConfig, project-local
+RBAC, production Argo reader binding, shard access and promotion-cleaner
+registration. The OIDC groups remain `konflux-mintmaker-team` and `konflux-pulp`.
+Shared credentials already replicate to all Kargo projects; the new project
+namespaces receive their own credentials and service-account tokens.
+
+A Kubernetes namespace cannot be renamed in place. This creates fresh projects;
+Freight, verification history and Promotions are not transferred automatically.
+Before merging the rename, finish or abort active promotions in the old projects
+and resolve their open infra-deployments PRs. Promotion branch names include the
+project name, so old PRs will not be adopted by the new projects. Save any runtime
+history needed for audit or rollback before the old definitions are pruned.
+
+After synchronization, verify both new projects, their group access, credential
+availability and shard reconciliation. Warehouses rediscover Freight. MintMaker
+Ring 0 starts automatically; Rings 1–4 still require manual initiation.
+Rings 0 and 1 merge promotion PRs automatically after required checks pass;
+Rings 2–4 require manual merge. Re-establish verification in ring order rather than treating old
+project history as verification in the new project. Pulp retains its existing
+promotion policies. Do not run overlapping promotions from old and new projects.
+
+The former Namespace manifests are retained in
+[`projects/retained-project-namespaces.yaml`](projects/retained-project-namespaces.yaml)
+to prevent namespace deletion during this change. Old project workflow resources
+are removed from desired state, and their shard and cleaner bindings are removed.
+Retaining namespaces does not prevent garbage collection of resources owned by
+pruned Stages or other workflow objects. Removing the former namespaces, any
+remaining runtime objects and credentials is a separate explicit cleanup after
+verification and backup; this PR does not delete those namespaces.
+
+Rollback: stop promotions in the new projects, then restore the old project
+configuration from Git. Retain the new namespaces as well before removing their
+project definitions if their runtime state is needed. Kargo configuration
+rollback does not revert infra-deployments PRs that have already merged.

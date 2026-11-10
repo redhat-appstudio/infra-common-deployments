@@ -1,7 +1,0 @@
----
-kind: Namespace
-apiVersion: v1
-metadata:
-  name: konflux-mintmaker
-  labels:
-    kargo.akuity.io/project: "true"
