@@ -33,11 +33,11 @@ spec:
         discoveryLimit: 5
         allowTagsRegexes:
           - '^[0-9a-f]{40}$'
-    # Keep the CLI on the existing stable OpenShift 4.21 release line.
+    # Select stable three-part OpenShift 4.X.Y release tags.
     - image:
         repoURL: quay.io/openshift/origin-cli
         imageSelectionStrategy: SemVer
-        semverConstraint: '>=4.21.0 <4.22.0'
+        semverConstraint: '>=4.0.0 <5.0.0'
         discoveryLimit: 5
         allowTagsRegexes:
-          - '^4[.]21([.](0|[1-9][0-9]*))?$'
+          - '^4[.](0|[1-9][0-9]*)[.](0|[1-9][0-9]*)$'
