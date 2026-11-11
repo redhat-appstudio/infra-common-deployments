@@ -11,9 +11,9 @@ spec:
       value: redhat-appstudio
     - name: repoName
       value: infra-common-deployments
-    # Keep the Fullsend exclusion aligned with the production shared CI gates.
+    # Keep the Fullsend and Codecov exclusions aligned with the production shared CI gates.
     - name: excludedCheckRuns
-      value: "^(dispatch / .*|stop-fix)$"
+      value: "^(dispatch / .*|stop-fix|codecov/.*)$"
   steps:
     - uses: http
       as: wait-for-check-runs

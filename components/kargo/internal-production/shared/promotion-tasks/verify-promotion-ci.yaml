@@ -15,9 +15,9 @@ spec:
       value: ${{ '' }}
     - name: requiredCheckRuns
       value: .*
-    # Fullsend automation is not a deployment CI signal. Match GitHub API job names.
+    # Exclude Fullsend automation and Codecov coverage checks from deployment CI gating.
     - name: excludedCheckRuns
-      value: "^(dispatch / .*|stop-fix)$"
+      value: "^(dispatch / .*|stop-fix|codecov/.*)$"
     - name: ciPollInterval
       value: 2m
     - name: prowPollInterval

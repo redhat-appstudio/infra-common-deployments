@@ -101,15 +101,17 @@ When forwarding the Stage variable into a task, use:
 
 `quote()` prevents Kargo from converting the string into a boolean.
 `requiredCheckRuns` defaults to `.*`. `excludedCheckRuns` defaults to
-`^(dispatch / .*|stop-fix)$`, matching Fullsend's GitHub API job names such as
-`dispatch / Review`, `dispatch / Fix` and `stop-fix`. Excluded checks cannot
+`^(dispatch / .*|stop-fix|codecov/.*)$`, matching Fullsend's GitHub API job names
+such as `dispatch / Review`, `dispatch / Fix` and `stop-fix`, plus Codecov coverage
+checks such as `codecov/patch` and `codecov/project`. Codecov checks can remain
+pending after deployment CI completes. Excluded checks cannot
 block success or cause failure and are omitted from failure diagnostics. At
-least one non-excluded required check must still exist; an all-Fullsend response
-does not pass. The complete-response and non-Fullsend CI requirements remain.
+least one non-excluded required check must still exist; a response containing only excluded checks
+does not pass. The complete-response and non-excluded CI requirements remain.
 The same exclusion is used by the legacy production `github-ci-gate` and
 staging `wait-for-ci`; keep these policies aligned when changing job names.
 
-This only changes Kargo gating. Fullsend workflows still run, and GitHub branch
+This only changes Kargo gating. Fullsend workflows and Codecov checks still run, and GitHub branch
 protection requirements are not modified. New Promotions use the updated task;
 already-running Promotions retain their expanded steps and are not rewritten.
 

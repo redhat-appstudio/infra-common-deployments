@@ -21,9 +21,9 @@
 #   repoName                   — GitHub repo (default: infra-deployments)
 #   requiredCheckRuns          — regex filter for check-run names (default: .*)
 #   excludedCheckRuns          — regex of check-run names to ignore even if they
-#                                match requiredCheckRuns (default: fullsend's
-#                                dispatch/* and stop-fix jobs — not a real CI
-#                                signal, but can go non-success and block promotion)
+#                                match requiredCheckRuns (default: Fullsend's
+#                                dispatch/* and stop-fix jobs, plus codecov/*
+#                                coverage checks, which can remain pending)
 #   requiredProwChecks         — regex filter for prow context names (default: .*)
 #   skipProwChecks             — set "true" to skip prow phase entirely
 apiVersion: kargo.akuity.io/v1alpha1
@@ -41,7 +41,7 @@ spec:
     - name: requiredCheckRuns
       value: ".*"
     - name: excludedCheckRuns
-      value: "^(dispatch / .*|stop-fix)$"
+      value: "^(dispatch / .*|stop-fix|codecov/.*)$"
     - name: requiredProwChecks
       value: ".*"
     - name: skipProwChecks
