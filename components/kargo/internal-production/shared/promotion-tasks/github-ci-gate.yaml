@@ -11,7 +11,7 @@
 #   1. GitHub Check Runs (Actions workflows) — polls /check-runs endpoint
 #   2. Prow status checks — polls /status endpoint (skippable via vars)
 #
-# Both phases retry for up to 2h30m, polling every 30s.
+# Check runs retry for up to 2h30m; Prow retries for up to 2h40m. Both poll every 30s.
 # Authentication uses the shared konflux-kargo-git-operations secret (GitHub PAT).
 #
 # Vars:
@@ -77,7 +77,7 @@ spec:
       as: wait-for-prow-checks
       if: ${{ vars.skipProwChecks != 'true' && vars.promotionAsNoOp != 'yes' }}
       retry:
-        timeout: 2h30m
+        timeout: 2h40m
       config:
         method: GET
         url: https://api.github.com/repos/${{ vars.repoOwner }}/${{ vars.repoName }}/commits/${{ vars.commitSHA }}/status
@@ -90,11 +90,8 @@ spec:
           response.status == 200 &&
           len(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')})) > 0 &&
           all(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')}), {.state == 'success'})
-        failureExpression: |
-          response.status in [401, 403, 404] ||
-          (response.status == 200 &&
-          len(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')})) > 0 &&
-          any(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')}), {.state in ['failure', 'error']}))
+        # Failed test statuses may recover through /retest within the fixed budget.
+        failureExpression: response.status in [401, 403, 404]
         timeout: 30s
     # Emit a result output only when all checks pass. Top-level steps can
     # check outputs['github-ci-gate::result']?.passed == 'yes' to guard
