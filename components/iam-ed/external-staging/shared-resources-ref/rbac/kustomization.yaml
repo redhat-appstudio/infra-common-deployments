@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - component-maintainer-cr.yaml
+  - dev-can-sync-cr.yaml
+  - dev-can-sync-crb.yaml
+  - everyone-view-crb.yaml
+  - everyone-view-cluster-monitoring-crb.yaml
+  - everyone-view-cluster-version-crb.yaml
+  - everyone-view-compute-crb.yaml
+  - everyone-view-pac-repositories-crb.yaml
+  - konflux-admins-cr.yaml
+  - konflux-admins-crb.yaml
+  - view-cluster-version-cr.yaml
+  - view-compute-cr.yaml
+  - view-pac-repositories-cr.yaml

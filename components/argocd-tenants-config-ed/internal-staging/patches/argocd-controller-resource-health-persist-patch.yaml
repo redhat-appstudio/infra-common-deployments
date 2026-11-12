@@ -1,0 +1,8 @@
+# Store per-resource health in Redis instead of the Application CR.
+# Reconciled by the GitOps operator into argocd-cmd-params-cm
+# (controller.resource.health.persist). Reduces Application CR size/update
+# churn for large apps that hit etcd request size limits.
+- op: add
+  path: /spec/cmdParams
+  value:
+    controller.resource.health.persist: "false"

@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - argocd-infra-deployments-argocd.yaml
+  - argocd-infra-deployments-ns.yaml
+  - infra-deployments-all-application-sets-app.yaml

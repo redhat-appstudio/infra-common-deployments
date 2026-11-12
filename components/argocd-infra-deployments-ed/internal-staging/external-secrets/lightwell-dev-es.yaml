@@ -1,0 +1,31 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: lightwell-dev-es
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+    argocd.argoproj.io/secret-type: cluster
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: staging/platform/lightwell-dev
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: appsre-stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: lightwell-dev-secret
+    template:
+      engineVersion: v2
+      mergePolicy: Merge
+      metadata:
+        labels:
+          argocd.argoproj.io/secret-type: cluster
+          appstudio.redhat.com/cluster-type: tenant
+          appstudio.redhat.com/internal-cluster: "true"
