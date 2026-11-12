@@ -3,5 +3,5 @@ kind: Kustomization
 namespace: argocd-infra-deployments
 
 resources:
-  - ../base
+  - shared-resources-ref
   - external-secrets
