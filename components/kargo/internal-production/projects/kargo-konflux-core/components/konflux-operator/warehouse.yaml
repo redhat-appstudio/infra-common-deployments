@@ -10,6 +10,7 @@ spec:
     - image:
         repoURL: quay.io/konflux-ci/konflux-operator
         imageSelectionStrategy: NewestBuild
+        cacheByTag: true
         discoveryLimit: 5
         allowTagsRegexes:
           - ^[0-9a-f]{40}$
