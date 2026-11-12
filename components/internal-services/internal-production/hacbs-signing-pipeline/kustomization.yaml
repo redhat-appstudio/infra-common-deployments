@@ -6,5 +6,3 @@ resources:
   - redhatbeta2-cm.yaml
   - redhatrelease2-4-cm.yaml
   - redhatrelease2-cm.yaml
-  - staging-e2e-cm.yaml
-  - staging-e2e-pq-cm.yaml

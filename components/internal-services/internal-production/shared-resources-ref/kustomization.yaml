@@ -5,6 +5,7 @@ resources:
   - crds
   - vault-secrets
   - external-secrets
+  - hacbs-signing-pipeline
   - rbac
   - cleanup-internal-requests-pipelineruns-cronjob.yaml
   - egress-external-cluster-np.yaml
