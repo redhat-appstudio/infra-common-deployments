@@ -2,15 +2,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - cgw-service-account-prod-secret-es.yaml
-  - cgw-service-account-stage-secret-es.yaml
-  - create-advisory-poc-stage-secret-es.yaml
-  - create-advisory-stage-secret-es.yaml
   - errata-service-account-es.yaml
-  - errata-stage-service-account-es.yaml
-  - exodus-prod-secret-es.yaml
-  - exodus-stage-secret-es.yaml
   - file-updates-secret-es.yaml
   - managed-tenants-file-updates-stage-secret-es.yaml
-  - osidb-service-account-es.yaml
-  - redhat-workloads-token-es.yaml

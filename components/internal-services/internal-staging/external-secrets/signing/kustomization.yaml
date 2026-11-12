@@ -3,13 +3,9 @@ kind: Kustomization
 
 resources:
   - checksum-credentials-es.yaml
-  - hacbs-signing-pipeline-certs-es.yaml
-  - hacbs-signing-pipeline-staging-certs-es.yaml
-  - konflux-release-signing-stage-sa-es.yaml
   - mac-host-credentials-es.yaml
   - mac-signing-credentials-es.yaml
   - mac-ssh-key-es.yaml
   - quay-signing-pull-es.yaml
-  - signing-artifact-storage-preprod-es.yaml
   - windows-credentials-es.yaml
   - windows-ssh-key-es.yaml

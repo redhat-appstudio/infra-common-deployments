@@ -3,8 +3,4 @@ kind: Kustomization
 
 resources:
   - rhsm-pulp-prod-secret-es.yaml
-  - rhsm-pulp-qa-secret-es.yaml
-  - rhsm-pulp-stage-secret-es.yaml
   - udcache-prod-secret-es.yaml
-  - udcache-qa-secret-es.yaml
-  - udcache-stage-secret-es.yaml

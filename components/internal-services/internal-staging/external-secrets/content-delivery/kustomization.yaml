@@ -5,7 +5,3 @@ resources:
   - cspj-downloads-stage-rhsm-private-key-es.yaml
   - cspv2-crt-key-es.yaml
   - cspv2-stage-crt-es.yaml
-  - rhsm-pulp-qa-secret-es.yaml
-  - rhsm-pulp-stage-secret-es.yaml
-  - udcache-qa-secret-es.yaml
-  - udcache-stage-secret-es.yaml

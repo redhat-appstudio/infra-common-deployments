@@ -3,6 +3,4 @@ kind: Kustomization
 
 resources:
   - quay-credentials-es.yaml
-  - quay-internal-oci-es.yaml
   - quay.io-rhoai-es.yaml
-  - quay-token-konflux-release-trusted-artifacts-secret-es.yaml
