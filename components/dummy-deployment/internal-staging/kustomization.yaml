@@ -1,7 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- ../base
+- shared-resources-ref
 - https://github.com/flacatus/konflux-dummy-deploy//k8s?ref=af9b4550185300620210cf086dace680c81dc97c
 images:
 - name: quay.io/redhat-appstudio-qe/dummy-deployment
