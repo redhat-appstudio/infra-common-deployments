@@ -1,0 +1,23 @@
+---
+kind: Probe
+apiVersion: monitoring.rhobs/v1
+metadata:
+  name: quay-health-probe
+  labels:
+    kubernetes.io/part-of: appstudio-federate-ms
+    monitoring.rhobs/stack: appstudio-federate-ms
+  namespace: appstudio-monitoring
+spec:
+  interval: 60s
+  jobName: "quay"
+  prober:
+    path: /probe
+    url: blackbox-exporter-obo.appstudio-monitoring.svc.cluster.local:9115
+    scheme: http
+  module: http_2xx
+  targets:
+    staticConfig:
+      labels:
+        target: health
+      static:
+        - https://quay.io/health

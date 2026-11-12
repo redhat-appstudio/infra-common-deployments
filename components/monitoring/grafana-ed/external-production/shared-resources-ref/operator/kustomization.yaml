@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - approve-grafana-installplan-job.yaml
+  - disable-grafana-leader-elect-csv-job.yaml
+  - operator-subscription.yaml
+  - operator.yaml
