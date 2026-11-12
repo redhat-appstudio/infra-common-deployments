@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Compare the kustomize build output (helm always enabled) of components/<name>/<env>
-# against components/<name>-ed/<env> for every environment both provide.
+# against components/<name>-ed/<env> for the four known environments.
 #
 # Usage: hack/compare-component-builds.sh <component-name>
 #
@@ -10,13 +10,14 @@
 # render-neutral, i.e. the component is ready to be onboarded to Kargo without
 # any change in what gets deployed.
 #
-# Exits non-zero if any environment renders differently (or fails to build).
+# Exits non-zero if any environment renders differently or fails to build.
 
 set -euo pipefail
 
 COMPONENT="${1:?Usage: $0 <component-name>}"
 OLD="components/${COMPONENT}"
 NEW="components/${COMPONENT}-ed"
+ENVIRONMENTS=(internal-staging external-staging internal-production external-production)
 
 [[ -d "${OLD}" ]] || { echo "ERROR: ${OLD} not found" >&2; exit 1; }
 [[ -d "${NEW}" ]] || { echo "ERROR: ${NEW} not found" >&2; exit 1; }
@@ -25,22 +26,16 @@ TMPDIR="$(mktemp -d)"
 trap 'rm -rf "${TMPDIR}"' EXIT
 
 fail=0
-for old_env in "${OLD}"/*/; do
-    env="$(basename "${old_env}")"
-    case "${env}" in
-        base|shared-resources|features|k-components|OWNERS|README.md) continue ;;
-    esac
-    new_env="${NEW}/${env}"
-    if [[ ! -d "${new_env}" ]]; then
-        echo "SKIP ${env}: no ${new_env}"
-        continue
-    fi
-    if ! kustomize build --enable-helm "${old_env}" >"${TMPDIR}/old.yaml" 2>"${TMPDIR}/old.err"; then
+for env in "${ENVIRONMENTS[@]}"; do
+    # skip environments the component does not deploy to
+    [[ -d "${OLD}/${env}" || -d "${NEW}/${env}" ]] || continue
+
+    if ! kustomize build --enable-helm "${OLD}/${env}" >"${TMPDIR}/old.yaml" 2>"${TMPDIR}/old.err"; then
         echo "FAIL ${env}: old build error:"; cat "${TMPDIR}/old.err"
         fail=1
         continue
     fi
-    if ! kustomize build --enable-helm "${new_env}" >"${TMPDIR}/new.yaml" 2>"${TMPDIR}/new.err"; then
+    if ! kustomize build --enable-helm "${NEW}/${env}" >"${TMPDIR}/new.yaml" 2>"${TMPDIR}/new.err"; then
         echo "FAIL ${env}: new build error:"; cat "${TMPDIR}/new.err"
         fail=1
         continue
