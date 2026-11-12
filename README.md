@@ -374,7 +374,7 @@ kustomize build --dry-run argo-cd-apps/overlays/external-production/
 kustomize build argo-cd-apps/overlays/external-production/ | kubectl apply --dry-run=client -f -
 
 # Check specific component
-kustomize build components/external-secrets-operator/base/ --dry-run
+kustomize build components/external-secrets-operator/shared-resources/ --dry-run
 ```
 
 ## Development Workflow
