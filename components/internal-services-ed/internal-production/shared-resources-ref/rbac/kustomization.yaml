@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # All RBAC will be applied under this service account in
+  # the deployment namespace.
+  - controller-manager-sa.yaml
+  - internal-services-manager-role-cr.yaml
+  - internal-services-manager-rolebinding-crb.yaml
+  - leader-election-role-cr.yaml
+  - leader-election-rolebinding-rb.yaml
+  # auth proxy (https://github.com/brancz/kube-rbac-proxy)
+  # which protects the /metrics endpoint.
+  - controller-manager-metrics-service-svc.yaml
+  - proxy-role-cr.yaml
+  - proxy-rolebinding-crb.yaml
+  - metrics-reader-cr.yaml
+  - internalrequest-editor-role-cr.yaml
+  - internalrequest-viewer-role-cr.yaml
+  - internalservicesconfig-editor-role-cr.yaml
+  - internalservicesconfig-viewer-role-cr.yaml
+  # Extra RBAC resources (local-only, not managed by automation)
+  - release-team-role.yaml
+  - release-team-rolebinding-rb.yaml
+  - signing-pipeline-sa.yaml
+  - view-authenticated-users-rb.yaml

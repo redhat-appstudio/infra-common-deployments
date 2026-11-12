@@ -1,0 +1,30 @@
+# See the OWNERS docs: https://go.k8s.io/owners
+
+approvers:
+- davidmogar
+- johnbieren
+- theflockers
+- mmalina
+- happybhati
+- seanconroy2021
+- filipnikolovski
+- elenagerman
+- release-service-bot
+- swickersh
+- querti
+- midnightercz
+
+
+reviewers:
+- davidmogar
+- johnbieren
+- theflockers
+- mmalina
+- happybhati
+- seanconroy2021
+- filipnikolovski
+- elenagerman
+- release-service-bot
+- swickersh
+- querti
+- midnightercz
