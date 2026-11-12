@@ -1,29 +1,16 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+
 namespace: internal-services
 
 resources:
-  # Core resources now managed directly in staging
-  - crds/
-  - eso/
-  - cronjob/
-
-  # Manager deployments for staging
-  - manager/
-
-  # Network Policy
-  - networkpolicy/
-
-  # RBAC Resources
-  - rbac/
-  # Extra RBAC Resources (local-only, not managed by automation)
-  - extra/
-
-  # InternalServicesConfig
-  - config/
-
-  # External Secrets
-  - es/
-
-  # Signing configurations
-  - signing/
+  # shared: CRDs, vault secret stores, RBAC, cronjob, networkpolicy
+  - shared-resources-ref
+  # environment-authored: InternalServicesConfig
+  - internal-services-config.yaml
+  # environment-authored: ExternalSecrets
+  - external-secrets
+  # environment-authored: manager deployments per cluster
+  - manager
+  # environment-authored: hacbs signing pipeline ConfigMaps
+  - hacbs-signing-pipeline
