@@ -5,6 +5,8 @@ namespace: argocd-local
 resources:
   - ../../base/all-clusters
   - ../../base/external
+  # Stage the Operator prerequisite before promoting external-production.
+  - ../../base/external/cert-manager
   - dummy-deployment.yaml
 patches:
   - path: environment-patch.yaml
