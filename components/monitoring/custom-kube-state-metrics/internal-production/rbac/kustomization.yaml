@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - custom-kube-state-metrics-sa.yaml
+  - custom-kube-state-metrics-cr.yaml
+  - custom-kube-state-metrics-crb.yaml

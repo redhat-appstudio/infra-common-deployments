@@ -1,0 +1,6 @@
+# Create service account to add Prometheus Datasource
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: metrics-reader
+  namespace: appstudio-grafana

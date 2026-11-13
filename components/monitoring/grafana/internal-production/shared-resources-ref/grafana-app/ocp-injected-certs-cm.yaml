@@ -1,0 +1,8 @@
+# Add Config Map to inject certificates
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: appstudio-grafana
+  labels:
+    config.openshift.io/inject-trusted-cabundle: "true"
+  name: ocp-injected-certs

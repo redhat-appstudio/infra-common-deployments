@@ -1,0 +1,11 @@
+# Workaround for the bug in the operator: https://github.com/grafana/grafana-operator/issues/2552
+# This should run once after operator is deployed so that the installplan is approved automatically
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: approve-installplan
+  namespace: appstudio-grafana
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded

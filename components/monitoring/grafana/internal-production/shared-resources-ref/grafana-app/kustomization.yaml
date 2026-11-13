@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - grafana-access-route.yaml
+  - grafana-oauth.yaml
+  - grafana-proxy-secret.yaml
+  - metrics-reader-secret.yaml
+  - ocp-injected-certs-cm.yaml
+  - prometheus-appstudio-ds.yaml

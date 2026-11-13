@@ -1,9 +1,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+namespace: appstudio-monitoring
+
 resources:
-  - ../base
-  - rbac.yaml
+  - shared-resources-ref
+  - rbac
   - custom-resource-state-config.yaml
 
 commonAnnotations:
