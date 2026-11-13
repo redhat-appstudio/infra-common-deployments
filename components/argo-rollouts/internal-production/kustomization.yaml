@@ -1,7 +1,13 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+
+namespace: argo-rollouts
+
 resources:
-  - rbac.yaml
-  - rollout-manager.yaml
-  - prometheusrule
+- shared-resources-ref
+
+patches:
+- path: patches/rollout-manager-instance-id-patch.yaml
+  target:
+    kind: RolloutManager
+    name: argo-rollouts

@@ -1,0 +1,7 @@
+apiVersion: argoproj.io/v1alpha1
+kind: RolloutManager
+metadata:
+  name: argo-rollouts
+spec:
+  extraCommandArgs:
+    - "--instance-id=kargo"

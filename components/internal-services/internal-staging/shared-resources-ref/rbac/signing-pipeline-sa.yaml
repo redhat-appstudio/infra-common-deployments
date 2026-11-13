@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: signing-pipeline-sa
+secrets:
+- name: quay-token-konflux-release-trusted-artifacts-secret
+imagePullSecrets:
+- name: quay-signing-pull

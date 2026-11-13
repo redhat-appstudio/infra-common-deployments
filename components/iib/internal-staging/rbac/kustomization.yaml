@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - iib-pipeline-sa.yaml
+  - iib-pipelines-scc-rb.yaml
+  - iib-pipelinerun-reader-sa.yaml
+  - iib-pipelinerun-reader-role.yaml
+  - iib-pipelinerun-reader-rb.yaml
+  - iib-pipelinerun-reader-token-creator-role.yaml
+  - iib-pipelinerun-reader-token-creator-rb.yaml

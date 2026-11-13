@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - content-delivery
+  - iib
+  - quay
+  - release-service
+  - remote-client-configs
+  - signing

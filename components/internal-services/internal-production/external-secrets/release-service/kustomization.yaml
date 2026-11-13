@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - create-advisory-poc-secret-es.yaml
+  - create-advisory-prod-secret-es.yaml
+  - errata-prod-service-account-es.yaml
+  - errata-service-account-es.yaml
+  - file-updates-secret-es.yaml
+  - managed-tenants-file-updates-prod-secret-es.yaml

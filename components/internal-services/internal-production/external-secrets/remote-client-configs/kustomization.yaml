@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - remote-client-config-es.yaml
+  - remote-client-config-lw-p01-es.yaml
+  - remote-client-config-prod-ocp-p01-es.yaml
+  - remote-client-config-prod-osp-p01-es.yaml
+  - remote-client-config-prod-p01-es.yaml
+  - remote-client-config-prod-p02-es.yaml
+  - remote-client-config-prod-rh02-es.yaml
+  - remote-client-config-prod-rh03-es.yaml
+  - remote-client-config-prod-rhel-p01-es.yaml

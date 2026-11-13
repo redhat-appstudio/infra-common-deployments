@@ -1,0 +1,41 @@
+# Namespace-scoped role for release team access in internal-services namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: release-team-role
+  labels:
+    app.kubernetes.io/name: role
+    app.kubernetes.io/instance: release-team-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: internal-services
+    app.kubernetes.io/part-of: internal-services
+    app.kubernetes.io/managed-by: kustomize
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  - pods/log
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ''
+  resources:
+  - pods/exec
+  verbs:
+  - create
+  - get

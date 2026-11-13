@@ -1,0 +1,21 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: remote-client-config
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  dataFrom:
+    - extract:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: hacbs/hacbs-internal-services/internal-services-controller/remote-client-config/hacbs-dev
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: hacbs-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: remote-client-config
