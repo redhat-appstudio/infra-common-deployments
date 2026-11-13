@@ -19,7 +19,7 @@ spec:
         - name: shared-health
           emptyDir: {}
       containers:
-        - image: "ghcr.io/chmouel/gosmee:v0.28.0"
+        - image: "quay.io/konflux-ci/gosmee:replaced-by-overlay"
           imagePullPolicy: Always
           name: gosmee
           args: ["server", "--max-body-size", "2097152", "--address", "0.0.0.0"]
@@ -48,7 +48,7 @@ spec:
             requests:
               cpu: 1
               memory: 256Mi
-        - image: "ghcr.io/chmouel/gosmee:v0.28.0"
+        - image: "quay.io/konflux-ci/gosmee:replaced-by-overlay"
           imagePullPolicy: Always
           name: gosmee-liveness-probe-client
           args:
