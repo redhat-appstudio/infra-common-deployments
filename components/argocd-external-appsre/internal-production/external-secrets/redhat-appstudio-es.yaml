@@ -13,7 +13,7 @@ spec:
         conversionStrategy: Default
         decodingStrategy: None
         key: production/infrastructure/github-argocd/argocd-infra-deployments-production-redhat-appstudio
-  refreshInterval: 1h
+  refreshInterval: 5m
   secretStoreRef:
     kind: ClusterSecretStore
     name: appsre-stonesoup-vault

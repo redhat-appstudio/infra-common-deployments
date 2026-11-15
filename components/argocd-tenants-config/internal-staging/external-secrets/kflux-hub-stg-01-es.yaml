@@ -13,7 +13,7 @@ spec:
         conversionStrategy: Default
         decodingStrategy: None
         key: staging/platform/terraform/generated/kflux-hub-stg-01/kflux-hub-stg-01
-  refreshInterval: 1h
+  refreshInterval: 5m
   secretStoreRef:
     kind: ClusterSecretStore
     name: appsre-stonesoup-vault
