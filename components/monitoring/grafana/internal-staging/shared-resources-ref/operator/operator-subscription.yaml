@@ -12,7 +12,7 @@ spec:
   channel: v5
   config:
     env:
-    - name: ENABLE_LEADER_ELECTION
+    - name: ENABLE_LEADER_ELECTION    # Staging: Disable leader election and tune operator via Subscription env vars
       value: 'false'
     resources:
       limits:
@@ -21,6 +21,7 @@ spec:
       requests:
         cpu: 400m
         memory: 512Mi
+  # Workaround for the bug in the operator: https://github.com/grafana/grafana-operator/issues/2552
   installPlanApproval: Manual
   name: grafana-operator
   source: community-operators

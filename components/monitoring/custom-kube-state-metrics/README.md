@@ -5,7 +5,9 @@ exposing Prometheus metrics from custom resources.
 
 Uses `--custom-resource-state-only=true` to avoid duplicating platform metrics.
 
-This component provides the base custom kube-state-metrics deployment.
+This component provides the common custom kube-state-metrics deployment:
+the Deployment, Service and ServiceMonitor live in `shared-resources/`,
+which is copied into each environment's `shared-resources-ref/`.
 Custom resource metrics are configured and validated separately per environment.
 
 ## Configuration
@@ -16,12 +18,12 @@ Environment-specific custom resource metrics are configured in:
 
 RBAC permissions required by custom resource collectors are defined in:
 
-`<environment>/rbac.yaml`
+`<environment>/rbac/custom-kube-state-metrics-cr.yaml`
 
 For example, the internal staging configuration is located in:
 
 - `internal-staging/custom-resource-state-config.yaml`
-- `internal-staging/rbac.yaml`
+- `internal-staging/rbac/custom-kube-state-metrics-cr.yaml`
 
 A custom resource metric can be added using the following template:
 
@@ -42,7 +44,7 @@ spec:
 ```
 
 The corresponding RBAC permissions for the custom resource must also be added
-to the environment-specific `rbac.yaml`.
+to the environment-specific `rbac/custom-kube-state-metrics-cr.yaml`.
 
 ## Validation
 
