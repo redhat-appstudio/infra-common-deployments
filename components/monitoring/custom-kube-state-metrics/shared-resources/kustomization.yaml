@@ -6,3 +6,4 @@ resources:
   - custom-kube-state-metrics-deploy.yaml
   - custom-kube-state-metrics-svc.yaml
   - custom-kube-state-metrics-sm.yaml
+  - rbac

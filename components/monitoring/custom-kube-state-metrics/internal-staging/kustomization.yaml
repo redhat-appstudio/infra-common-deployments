@@ -5,7 +5,7 @@ namespace: appstudio-monitoring
 
 resources:
   - shared-resources-ref
-  - rbac
+  - custom-kube-state-metrics-cr.yaml
   - custom-resource-state-config.yaml
 
 commonAnnotations:
