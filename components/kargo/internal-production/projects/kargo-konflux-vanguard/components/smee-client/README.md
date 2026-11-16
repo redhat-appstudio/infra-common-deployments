@@ -1,7 +1,7 @@
 # smee-client promotions
 
 One Warehouse, `smee-client`, subscribes to the component's base manifests,
-gosmee releases (`^0.28.0`), and smee-sidecar SHA tags. Each Freight records a Git
+gosmee SHA tags (`^[0-9a-f]{40}$`), and smee-sidecar SHA tags. Each Freight records a Git
 commit and both image versions/digests.
 
 ## Why one Warehouse?
@@ -25,16 +25,17 @@ Both rings use two worktrees from the same repository:
 - `./freight`: the exact Git commit recorded in the selected Freight.
 
 The preparation task replaces the target ring's `base-snapshot` with
-`components/smee-client-rd/base` from `./freight`, then sets both image tags recorded in Freight in
-the target ring's outer Kustomization. It emits `prepared: 'yes'` only after
-validation, deletion, copying, and image updates succeed.
+`components/smee-client/base` from `./freight`, then sets both image tags and
+digests recorded in Freight in the target ring's outer Kustomization. It emits
+`prepared: 'yes'` only after validation, deletion, copying, and image updates
+succeed.
 
 Ring 1 reconstructs the same Freight bundle rather than copying the current
-Ring 0 directory, which might already contain a newer promotion. Gosmee uses its
-version tag and smee-sidecar uses its commit-SHA tag. Tags must remain immutable
-in their registries to preserve identical image contents across rings. Existing
-ring-specific patches and overlays remain in the target checkout; the bundle
-covers base manifests and images, not every repository file.
+Ring 0 directory, which might already contain a newer promotion. Gosmee and
+smee-sidecar use commit-SHA tags. Tags must remain immutable in their registries
+to preserve identical image contents across rings. Existing ring-specific
+patches and overlays remain in the target checkout; the bundle covers base
+manifests and images, not every repository file.
 
 The publisher's base commit is still the `./src` commit, not the Freight commit.
 This allows the PR to update current `main` without rolling back unrelated work.
@@ -56,8 +57,8 @@ the exact confirmed revision, so a newer `main` revision can cause a timeout.
 
 PR labels remain `ring-0`/`ring-1`, `automated-promotion`, and
 `component/smee-client`. The Application prefix is `smee-client`; the repository
-directory is `smee-client-rd`. Preparation receives that repository-relative
-location as `componentPath: components/smee-client-rd`; the shared workflow
+directory is `smee-client`. Preparation receives that repository-relative
+location as `componentPath: components/smee-client`; the shared workflow
 uses `component` from the Freight origin for labels and Application names.
 
 ## Existing installations
