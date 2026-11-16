@@ -10,11 +10,11 @@ spec:
     - extract:
         conversionStrategy: Default
         decodingStrategy: None
-        key: stonesoup/staging/release/iib/iib-services-config
+        key: staging/release/iib/iib-services-config
   refreshInterval: 1h
   secretStoreRef:
-    kind: SecretStore
-    name: stonesoup-vault
+    kind: ClusterSecretStore
+    name: appsre-stonesoup-vault
   target:
     creationPolicy: Owner
     deletionPolicy: Delete

@@ -6,4 +6,3 @@ resources:
   - konflux-release-internal-services-vault-es.yaml
   - konflux-vault-secret-store.yaml
   - releng-vault-secret-store.yaml
-  - stonesoup-vault-secret-store.yaml
