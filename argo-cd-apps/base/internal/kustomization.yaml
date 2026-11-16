@@ -12,7 +12,6 @@ resources:
   - openshift-pipelines
   - kargo
   - kyverno
-  - cert-manager
   - custom-dns-resolver
   - konflux-support-ops
   - konflux-support-ops-dashboard

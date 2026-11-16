@@ -6,6 +6,8 @@ resources:
   - ../../base/all-clusters
   - ../../base/external
 patches:
+  # Enable cert-manager here after it has been validated in external staging.
+  - path: patches/cert-manager-patch.yaml
   - path: environment-patch.yaml
     target:
       group: argoproj.io
