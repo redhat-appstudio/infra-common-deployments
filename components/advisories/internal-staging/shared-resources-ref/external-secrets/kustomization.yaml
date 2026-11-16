@@ -6,5 +6,4 @@ resources:
 - advisory-pyxis-stage-cert-es.yaml
 - advisory-umb-cert-es.yaml
 - gitlab-webhook-config-es.yaml
-- konflux-release-internal-services-vault-es.yaml
 - konflux-vault-secret-store.yaml
