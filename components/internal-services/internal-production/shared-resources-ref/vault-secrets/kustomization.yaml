@@ -3,6 +3,5 @@ kind: Kustomization
 
 resources:
   - hacbs-vault-secret-store.yaml
-  - konflux-release-internal-services-vault-es.yaml
   - konflux-vault-secret-store.yaml
   - releng-vault-secret-store.yaml
