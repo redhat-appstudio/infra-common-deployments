@@ -20,9 +20,11 @@ spec:
       if: >-
         ${{ ctx.targetFreight.origin.name != 'smee-client' || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$') ||
         !(imageFrom(vars.gosmeeImageRepoURL).Tag matches '^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$') ||
-        !(imageFrom(vars.sidecarImageRepoURL).Tag matches '^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$') }}
+        !(imageFrom(vars.sidecarImageRepoURL).Tag matches '^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$') ||
+        !(imageFrom(vars.gosmeeImageRepoURL).Digest matches '^sha256:[0-9a-f]{64}$') ||
+        !(imageFrom(vars.sidecarImageRepoURL).Digest matches '^sha256:[0-9a-f]{64}$') }}
       config:
-        message: Expected smee-client Freight containing a Git commit and two valid image tags.
+        message: Expected smee-client Freight containing a Git commit and two valid image tags with digests.
     # Capture Git configuration before changing it, as the Operator preparation does.
     - uses: yaml-parse
       as: read-previous
@@ -38,9 +40,23 @@ spec:
             fromExpression: >-
               let image = find(images ?? [], {.name == ${{ quote(vars.sidecarImageRepoURL) }}});
               string(image?.digest ?? image?.newTag ?? 'not configured')
+          - name: gosmeeIndex
+            fromExpression: >-
+              string(findIndex(images ?? [], {.name == ${{ quote(vars.gosmeeImageRepoURL) }}}))
+          - name: sidecarIndex
+            fromExpression: >-
+              string(findIndex(images ?? [], {.name == ${{ quote(vars.sidecarImageRepoURL) }}}))
+    - uses: fail
+      as: validate-layout
+      if: >-
+        ${{ status('read-previous') == 'Succeeded' && (
+        !(task.outputs['read-previous'].gosmeeIndex matches '^[0-9]+$') ||
+        !(task.outputs['read-previous'].sidecarIndex matches '^[0-9]+$')) }}
+      config:
+        message: Expected gosmee and smee-sidecar image entries in the ring Kustomization.
     - uses: delete
       as: delete-old-base-snapshot
-      if: ${{ status('read-previous') == 'Succeeded' }}
+      if: ${{ status('read-previous') == 'Succeeded' && status('validate-layout') == 'Skipped' }}
       config:
         path: ${{ vars.srcPath }}/${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/base-snapshot
     - uses: copy
@@ -49,22 +65,26 @@ spec:
       config:
         inPath: ${{ vars.freightPath }}/${{ vars.componentPath }}/base
         outPath: ${{ vars.srcPath }}/${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/base-snapshot
-    - uses: kustomize-set-image
+    # kustomize-set-image is tag XOR digest; yaml-update writes both (crossplane pattern).
+    - uses: yaml-update
       as: update-bundle-images
       if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
       config:
-        path: ${{ vars.srcPath }}/${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base
-        images:
-          - image: ${{ vars.gosmeeImageRepoURL }}
-            newName: ${{ vars.gosmeeImageRepoURL }}
-            tag: ${{ quote(imageFrom(vars.gosmeeImageRepoURL).Tag) }}
-          - image: ${{ vars.sidecarImageRepoURL }}
-            newName: ${{ vars.sidecarImageRepoURL }}
-            tag: ${{ quote(imageFrom(vars.sidecarImageRepoURL).Tag) }}
+        path: ${{ vars.srcPath }}/${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        updates:
+          - key: images.${{ task.outputs['read-previous'].gosmeeIndex }}.newTag
+            value: ${{ quote(imageFrom(vars.gosmeeImageRepoURL).Tag) }}
+          - key: images.${{ task.outputs['read-previous'].gosmeeIndex }}.digest
+            value: ${{ imageFrom(vars.gosmeeImageRepoURL).Digest }}
+          - key: images.${{ task.outputs['read-previous'].sidecarIndex }}.newTag
+            value: ${{ quote(imageFrom(vars.sidecarImageRepoURL).Tag) }}
+          - key: images.${{ task.outputs['read-previous'].sidecarIndex }}.digest
+            value: ${{ imageFrom(vars.sidecarImageRepoURL).Digest }}
     - uses: compose-output
       as: result
       if: >-
-        ${{ status('validate-bundle') == 'Skipped' && status('read-previous') == 'Succeeded' && status('delete-old-base-snapshot') == 'Succeeded' && status('copy-freight-manifests')
+        ${{ status('validate-bundle') == 'Skipped' && status('read-previous') == 'Succeeded' && status('validate-layout') == 'Skipped' &&
+        status('delete-old-base-snapshot') == 'Succeeded' && status('copy-freight-manifests')
         == 'Succeeded' && status('update-bundle-images') == 'Succeeded' }}
       config:
         prepared: 'yes'
@@ -75,9 +95,9 @@ spec:
         prChanges:
           - kind: gosmee image
             previous: ${{ quote(task.outputs['read-previous'].gosmeeVersion) }}
-            proposed: ${{ quote(imageFrom(vars.gosmeeImageRepoURL).Tag) }}
+            proposed: ${{ quote(imageFrom(vars.gosmeeImageRepoURL).Digest) }}
             path: ${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
           - kind: smee-sidecar image
             previous: ${{ quote(task.outputs['read-previous'].sidecarVersion) }}
-            proposed: ${{ quote(imageFrom(vars.sidecarImageRepoURL).Tag) }}
+            proposed: ${{ quote(imageFrom(vars.sidecarImageRepoURL).Digest) }}
             path: ${{ vars.componentPath }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
