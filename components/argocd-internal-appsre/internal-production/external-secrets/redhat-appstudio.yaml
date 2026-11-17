@@ -12,7 +12,7 @@ spec:
     - extract:
         conversionStrategy: Default
         decodingStrategy: None
-        key: production/platform/github-argocd/konflux-argocd-internal-production
+        key: production/infrastructure/github-argocd/argocd-infra-deployments-production-redhat-appstudio
   refreshInterval: 5m
   secretStoreRef:
     kind: ClusterSecretStore
