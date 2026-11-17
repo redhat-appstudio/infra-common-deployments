@@ -58,6 +58,36 @@ spec:
             - name: targetRing
               value: ${{ vars.targetRing }}
         - task:
+            name: github-commit-changelog
+          as: controller-changelog
+          vars:
+            - name: repository
+              value: konflux-ci/mintmaker
+            - name: previousSHA
+              value: ${{ quote(outputs['promote::result'].previousControllerSHA) }}
+            - name: proposedSHA
+              value: ${{ quote(imageFrom('quay.io/konflux-ci/mintmaker').Tag) }}
+        - task:
+            name: github-commit-changelog
+          as: renovate-changelog
+          vars:
+            - name: repository
+              value: konflux-ci/mintmaker-renovate-image
+            - name: previousSHA
+              value: ${{ quote(outputs['promote::result'].previousRenovateSHA) }}
+            - name: proposedSHA
+              value: ${{ quote(imageFrom('quay.io/konflux-ci/mintmaker-renovate-image').Tag) }}
+        - task:
+            name: github-commit-changelog
+          as: scheduler-changelog
+          vars:
+            - name: repository
+              value: konflux-ci/mintmaker-schedule-calculator
+            - name: previousSHA
+              value: ${{ quote(outputs['promote::result'].previousSchedulerSHA) }}
+            - name: proposedSHA
+              value: ${{ quote(imageFrom('quay.io/konflux-ci/mintmaker-schedule-calculator').Tag) }}
+        - task:
             name: publish-promotion-pr
           as: publish
           vars:
@@ -71,6 +101,21 @@ spec:
               value: ${{ outputs['promote::result']?.prSummary ?? '' }}
             - name: prChanges
               value: ${{ outputs['promote::result']?.prChanges ?? [] }}
+            - name: prChangelog
+              value: |
+                ## Source commit changelog
+
+                ### Controller — konflux-ci/mintmaker
+                ${{ outputs['controller-changelog::result']?.markdown ?? 'Commit changelog unavailable.' }}
+
+                ### Renovate — konflux-ci/mintmaker-renovate-image
+                ${{ outputs['renovate-changelog::result']?.markdown ?? 'Commit changelog unavailable.' }}
+
+                ### Schedule calculator — konflux-ci/mintmaker-schedule-calculator
+                ${{ outputs['scheduler-changelog::result']?.markdown ?? 'Commit changelog unavailable.' }}
+
+                Source ranges use the previous Git-configured image SHA tags and selected Freight tags; they do not prove image provenance or live deployment state.
+                The origin-cli version and shared base snapshot are shown above; no source commit baseline is inferred for them.
             - name: prCompareURL
               value: ${{ outputs['promote::result']?.prCompareURL ?? '' }}
             - name: prepared

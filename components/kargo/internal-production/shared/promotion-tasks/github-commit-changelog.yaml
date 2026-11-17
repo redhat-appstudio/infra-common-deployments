@@ -1,0 +1,72 @@
+---
+# Informational only: this task never authorizes publication, CI or merge.
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: github-commit-changelog
+spec:
+  vars:
+    # GitHub owner/repository, not a URL. Both revisions must be source SHAs.
+    - name: repository
+    - name: previousSHA
+    - name: proposedSHA
+  steps:
+    - uses: compose-output
+      as: inputs
+      config:
+        valid: >-
+          ${{ vars.repository matches '^[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_][A-Za-z0-9_.-]*$'
+          && vars.previousSHA matches '^[0-9a-f]{40}$' && vars.proposedSHA matches '^[0-9a-f]{40}$' }}
+    - uses: http
+      as: compare
+      if: ${{ task.outputs['inputs'].valid && vars.previousSHA != vars.proposedSHA }}
+      continueOnError: true
+      retry:
+        timeout: 1m
+        errorThreshold: 2
+      config:
+        method: GET
+        url: https://api.github.com/repos/${{ vars.repository }}/compare/${{ vars.previousSHA }}...${{ vars.proposedSHA }}?per_page=20&page=1
+        headers:
+          - name: Authorization
+            value: Bearer ${{ repoCredentials('https://github.com/' + vars.repository + '.git', 'git').Password }}
+          - name: Accept
+            value: application/vnd.github+json
+        timeout: 20s
+        # Do not poll failures: missing commits, auth errors and rate limits all
+        # produce the explicit informational fallback below.
+        successExpression: >-
+          response.status == 200 && response.body.base_commit.sha == ${{ quote(vars.previousSHA) }}
+          && response.body.status in ['ahead', 'behind', 'diverged', 'identical']
+          && response.body.total_commits >= 0 && len(response.body.commits) <= 20
+          && all(response.body.commits, {#.sha matches '^[0-9a-f]{40}$'})
+        failureExpression: response.status != 200
+        outputs:
+          - name: direction
+            fromExpression: response.body.status
+          - name: total
+            fromExpression: response.body.total_commits
+          - name: commits
+            fromExpression: >-
+              map(response.body.commits, { {sha: #.sha, subject: split(#.commit.message, '\n')[0]} })
+    - uses: compose-output
+      as: result
+      config:
+        markdown: >-
+          ${{ !task.outputs['inputs'].valid
+          ? 'Commit changelog unavailable: requires a GitHub owner/repository and two full source commit SHAs (tags or digests cannot be inferred).'
+          : vars.previousSHA == vars.proposedSHA
+          ? 'No source changes (`' + vars.proposedSHA[0:12] + '`).'
+          : '[Compare ' + vars.previousSHA[0:12] + '...' + vars.proposedSHA[0:12] + '](https://github.com/' + vars.repository + '/compare/' + vars.previousSHA + '...' + vars.proposedSHA + ')\n\n'
+          + (status('compare') != 'Succeeded'
+          ? 'Commit list unavailable: GitHub comparison failed or returned an unsupported response; inspect the comparison link.'
+          : task.outputs['compare'].direction == 'behind'
+          ? 'Rollback: proposed revision is behind the previous revision. Inspect the comparison before promoting.'
+          : task.outputs['compare'].direction == 'diverged'
+          ? 'Diverged history: this is not a forward update. Inspect the comparison before promoting.'
+          : task.outputs['compare'].direction == 'identical'
+          ? 'GitHub reports identical revisions.'
+          : string(task.outputs['compare'].total) + ' source commits; showing ' + string(len(task.outputs['compare'].commits)) + ' (oldest first).\n'
+          + join(map(task.outputs['compare'].commits, {'- [`' + #.sha[0:12] + '`](https://github.com/' + vars.repository + '/commit/' + #.sha + ') `'
+          + replace(replace(#.subject, '`', "'"), '\r', ' ')[0:min(160, len(replace(replace(#.subject, '`', "'"), '\r', ' ')))] + '`'}), '\n')
+          + (task.outputs['compare'].total > len(task.outputs['compare'].commits) ? '\n\nList truncated; use the comparison link for the complete history.' : '')) }}

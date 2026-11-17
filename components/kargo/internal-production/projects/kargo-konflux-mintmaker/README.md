@@ -224,3 +224,33 @@ successful cluster rollout.
 Rollback the onboarding by reverting its repository change. Reverting Kargo
 configuration does not undo already merged infra-deployments promotion PRs;
 revert those separately when restoring a deployed version.
+
+## Promotion PR changelogs
+
+Rings 0–4 call the shared `github-commit-changelog` task before publication and
+include separate source commit lists for:
+
+| Image | Source repository |
+|---|---|
+| `quay.io/konflux-ci/mintmaker` | `konflux-ci/mintmaker` |
+| `quay.io/konflux-ci/mintmaker-renovate-image` | `konflux-ci/mintmaker-renovate-image` |
+| `quay.io/konflux-ci/mintmaker-schedule-calculator` | `konflux-ci/mintmaker-schedule-calculator` |
+
+Each comparison uses that ring's previous image `newTag` from Git and the
+independently selected Freight image tag. A previous digest takes precedence
+over a tag and leaves the source baseline unknown; `latest`, missing tags and
+other non-SHA tags also yield an explicit unavailable note. Controller manifest
+refs are not substituted for image provenance.
+
+Lists show up to 20 linked commits and a comparison link for the full range.
+Rollback and diverged histories are labeled. GitHub lookup failures leave a
+visible unavailable note without changing promotion/verification policy.
+`origin-cli` has version tags rather than source SHA tags, and the previous
+shared-base snapshot has no recorded immutable source revision: their changes
+remain in the existing PR summary/table, without an inferred commit list.
+
+Reusing an open promotion PR refreshes its generated body only after checking
+that the PR points to the just-published commit; a failed refresh blocks
+publication. This replaces manual body edits, so discussion belongs in comments.
+See the [shared task contract](../../shared/promotion-tasks/README.md#reusable-source-commit-changelog)
+for reuse, API limits and refresh behavior.

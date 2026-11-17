@@ -266,7 +266,8 @@ the legacy flow: no-ops now undergo readiness and every configured target is req
 ## Promotion PR descriptions
 
 Preparation tasks may return `prSummary`, `prChanges`, and `prCompareURL` alongside
-`prepared`. Each change row has `kind`, `previous`, `proposed`, and `path`.
+`prepared`. The publisher also accepts an optional `prChangelog` Markdown string.
+Each change row has `kind`, `previous`, `proposed`, and `path`.
 The Stage forwards them to the publisher; they are optional.
 
 The publisher shows configuration changes and a short merge/Prow policy sentence.
@@ -274,8 +275,69 @@ Promotion identifiers are collapsed under Promotion details. Keep `prSummary`
 short; use a Markdown list when describing several artifacts.
 Previous values come from Git, not the running deployment. Comparison links are
 only produced for recognized manifest repositories with old and new 40-character
-hexadecimal refs; they are not proof of image provenance. No extra GitHub calls
-are made just to build the description. A reused PR may keep its original body.
+hexadecimal refs; they are not proof of image provenance. Callers without `prChangelog` retain their existing behavior and make no extra
+GitHub calls for descriptions; a reused PR may keep its original body.
+
+### Reusable source commit changelog
+
+`github-commit-changelog` accepts `repository` (`owner/repository` on GitHub.com),
+`previousSHA`, and `proposedSHA`. It returns `result.markdown`, ready to pass to
+`publish-promotion-pr` as `prChangelog`. Call it once per independently versioned
+source repository, after preparation captures the old revision and before
+publication. For example, in a Stage:
+
+```yaml
+- task:
+    name: github-commit-changelog
+  as: changelog
+  vars:
+    - name: repository
+      value: konflux-ci/mintmaker
+    - name: previousSHA
+      value: ${{ outputs['promote::result'].previousControllerSHA }}
+    - name: proposedSHA
+      value: ${{ imageFrom('quay.io/konflux-ci/mintmaker').Tag }}
+# Add to the existing publish-promotion-pr task's vars:
+# - name: prChangelog
+#   value: ${{ outputs['changelog::result'].markdown }}
+```
+
+The task uses the GitHub compare API through Kargo's native `http` step with
+`repoCredentials('https://github.com/' + vars.repository + '.git', 'git').Password`.
+Kargo resolves credentials for the source repository, including short-lived
+GitHub App installation tokens. Configure a matching Git credential with source
+repository contents-read access; MintMaker uses the existing `konflux-ci`
+credential discovery. Missing credentials produce the same unavailable fallback
+as a failed comparison; the task does not fall back to a named shared PAT.
+It makes one comparison
+request per changed, valid pair (transport errors have a one-minute/two-error
+retry budget), showing the first 20 commits in chronological order, linked SHAs
+and single-line subjects capped at 160 characters. A full comparison link and
+explicit truncation notice cover larger ranges. These are **source commits**,
+not a deduplicated list of merged PRs or generated release notes.
+
+Only full lowercase 40-character source SHAs are accepted. Unknown baselines,
+version tags, digests, API failures and unsupported responses produce an explicit
+"unavailable" note and do not approve or block CI or promotion. Equal SHAs skip
+the API request. Rollbacks and diverged histories are labeled instead of being
+presented as forward changes. Source ranges do not attest image provenance.
+Commit subjects are rendered as bounded inline code, so source Markdown and
+mentions do not become active formatting. The HTTP runner's 2 MiB response limit
+also applies; unusually large comparisons can yield the unavailable fallback.
+
+For callers supplying `prChangelog`, publication reads back the resolved PR,
+checks its repository, branch, base and published SHA, and refreshes the entire
+generated body before CI. This covers native PR adoption and `find-pr` recovery,
+while retaining the stable branch and signed commit workflow. A failed refresh
+blocks publication instead of silently leaving an old changelog. Already-merged
+matching PRs and no-op promotions are not edited. The update replaces manual
+body edits; put additional discussion in comments. GitHub body updates have no
+atomic expected-head precondition: the response head is checked, but a concurrent
+branch update can still require a retry.
+
+MintMaker Rings 0–4 are the first callers. Other components opt in by supplying
+their own verified source repository and old/new revisions; no image-name-to-
+repository guessing is performed.
 
 ## Limits and troubleshooting
 

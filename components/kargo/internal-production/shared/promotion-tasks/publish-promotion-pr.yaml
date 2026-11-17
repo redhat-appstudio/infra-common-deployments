@@ -13,12 +13,14 @@ spec:
     - name: baseCommitSHA
     - name: mergeMode
     - name: skipProwChecks
-    # Optional presentation data; missing metadata must not change promotion policy.
+    # Optional presentation data; prChangelog opts into guarded body refresh.
     - name: prSummary
       value: ${{ '' }}
     - name: prChanges
       value: ${{ [] }}
     - name: prCompareURL
+      value: ${{ '' }}
+    - name: prChangelog
       value: ${{ '' }}
     - name: extraPRLabels
       value: ${{ '' }}
@@ -59,21 +61,11 @@ spec:
       if: ${{ status('push') == 'Succeeded' && task.outputs['push'].commit != task.outputs['sign'].commit }}
       config:
         message: The published head must be the exact GitHub-signed commit. CI and merge remain blocked.
-    - uses: git-open-pr
-      as: open-pr
+    - uses: compose-output
+      as: description
       if: ${{ status('push') == 'Succeeded' }}
-      # Only the recovery path may turn an exhausted native error into success.
-      continueOnError: true
-      # Retry native discovery before spending requests on the PAT-backed fallback.
-      retry:
-        timeout: 5m
-        errorThreshold: 3
       config:
-        repoURL: https://github.com/redhat-appstudio/infra-deployments.git
-        sourceBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
-        targetBranch: main
-        title: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}'
-        description: |
+        body: |
           ## Promote ${{ vars.component }} to ${{ vars.targetRing }}
 
           ${{ vars.prSummary != '' ? vars.prSummary : 'Update the component to the selected Freight.' }}
@@ -81,6 +73,8 @@ spec:
           ${{ len(vars.prChanges) > 0 ? '| Change | Previous Git configuration | Proposed | File |\n|---|---|---|---|\n' + join(map(vars.prChanges, {'| ' + replace(replace(replace(replace(string(#.kind), '|', '&#124;'), '`', '&#96;'), '\n', ' '), '\r', ' ') + ' | `' + replace(replace(replace(replace(string(#.previous), '|', '&#124;'), '`', '&#96;'), '\n', ' '), '\r', ' ') + '` | `' + replace(replace(replace(replace(string(#.proposed), '|', '&#124;'), '`', '&#96;'), '\n', ' '), '\r', ' ') + '` | `' + replace(replace(replace(replace(string(#.path), '|', '&#124;'), '`', '&#96;'), '\n', ' '), '\r', ' ') + '` |'}), '\n') : '' }}
 
           ${{ vars.prCompareURL != '' ? '[Compare configured manifest refs](' + vars.prCompareURL + ')' : '' }}
+
+          ${{ vars.prChangelog }}
 
           ${{ vars.mergeMode == 'auto' ? 'Merges automatically after required checks pass.' : 'Requires manual merge after required checks pass.' }}${{ vars.skipProwChecks == 'true' ? '' : ' Prow is required.' }}
 
@@ -97,6 +91,21 @@ spec:
           </details>
 
           ${{ len(vars.prChanges) > 0 ? 'Previous values reflect Git configuration, not necessarily the running deployment.' : '' }}
+    - uses: git-open-pr
+      as: open-pr
+      if: ${{ status('push') == 'Succeeded' }}
+      # Only the recovery path may turn an exhausted native error into success.
+      continueOnError: true
+      # Retry native discovery before spending requests on the PAT-backed fallback.
+      retry:
+        timeout: 5m
+        errorThreshold: 3
+      config:
+        repoURL: https://github.com/redhat-appstudio/infra-deployments.git
+        sourceBranch: ${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}
+        targetBranch: main
+        title: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing }}'
+        description: ${{ task.outputs['description'].body }}
         labels: "${{ filter(split(vars.targetRing + ',automated-promotion,component/' + vars.component + (vars.extraPRLabels != '' ? ',' + vars.extraPRLabels : ''), ','), {# != ''}) }}"
     # Recovery only: adopt an existing PR after native discovery exhausts retries.
     - uses: http
@@ -137,6 +146,51 @@ spec:
       if: ${{ status('push') == 'Succeeded' && status('open-pr') in ['Errored', 'Failed'] && status('find-pr') != 'Succeeded' }}
       config:
         message: Native PR publication failed and no matching open PR could be recovered. CI and merge remain blocked.
+    # Native git-open-pr adopts a reusable PR without updating its description.
+    # Changelog callers opt into a refresh, bound to this publication's head.
+    - uses: http
+      as: read-description-target
+      if: >-
+        ${{ vars.prChangelog != '' && (status('open-pr') == 'Succeeded' || status('find-pr') == 'Succeeded') }}
+      retry:
+        timeout: 2m
+        errorThreshold: 3
+      config:
+        method: GET
+        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls/${{ task.outputs['find-pr']?.prNumber ?? task.outputs['open-pr'].pr.id }}
+        headers: *github-headers
+        timeout: 20s
+        successExpression: >-
+          response.status == 200 && (response.body.state == 'open' || response.body.merged == true)
+          && response.body.head.repo.full_name == 'redhat-appstudio/infra-deployments'
+          && response.body.base.repo.full_name == 'redhat-appstudio/infra-deployments'
+          && response.body.base.ref == 'main'
+          && response.body.head.ref == ${{ quote(ctx.project + '/' + vars.component + '/' + vars.targetRing) }}
+          && response.body.head.sha == ${{ quote(task.outputs['push'].commit) }}
+        failureExpression: response.status != 200
+        outputs:
+          - name: open
+            fromExpression: response.body.state == 'open'
+          - name: prNumber
+            fromExpression: response.body.number
+    - uses: http
+      as: refresh-description
+      if: ${{ status('read-description-target') == 'Succeeded' && task.outputs['read-description-target'].open }}
+      retry:
+        timeout: 2m
+        errorThreshold: 3
+      config:
+        method: PATCH
+        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls/${{ task.outputs['read-description-target'].prNumber }}
+        headers: *github-headers
+        timeout: 20s
+        body: >-
+          ${{ quote({body: task.outputs['description'].body}) }}
+        successExpression: >-
+          response.status == 200 && response.body.head.sha == ${{ quote(task.outputs['push'].commit) }}
+          && response.body.body == ${{ quote(task.outputs['description'].body) }}
+        failureExpression: response.status != 200 || (response.status == 200 && response.body.head.sha != ${{ quote(task.outputs['push'].commit) }})
+        errorExpression: "'Cannot refresh the promotion changelog: HTTP ' + string(response.status) + '; require the published head'"
     # A skipped PR can mean main already has the promoted tree. Verify, never assume.
     - uses: http
       as: read-converged-main

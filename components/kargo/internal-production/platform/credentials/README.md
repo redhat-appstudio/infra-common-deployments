@@ -54,4 +54,4 @@ Kargo manages the installation token. Wait for the ExternalSecret to report
 
 `repoCredentials()` requires Kargo v1.12 or a backport; see the
 [release notes](https://docs.kargo.io/release-notes/v1.12.0). The repository pins
-v1.11.3, so confirm runtime support before deploying the resolver change.
+v1.12.4, which includes this function.
