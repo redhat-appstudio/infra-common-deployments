@@ -42,7 +42,7 @@ spec:
         url: https://api.github.com/repos/redhat-appstudio/infra-deployments/commits/${{ vars.commitSHA }}/check-runs?per_page=100
         headers:
           - name: Authorization
-            value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
+            value: Bearer ${{ repoCredentials('https://github.com/redhat-appstudio/infra-deployments.git', 'git').Password }}
           - name: Accept
             value: application/vnd.github+json
         successExpression: |
@@ -74,7 +74,7 @@ spec:
         url: https://api.github.com/repos/redhat-appstudio/infra-deployments/commits/${{ vars.commitSHA }}/status?per_page=100
         headers:
           - name: Authorization
-            value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
+            value: Bearer ${{ repoCredentials('https://github.com/redhat-appstudio/infra-deployments.git', 'git').Password }}
           - name: Accept
             value: application/vnd.github+json
         successExpression: |

@@ -44,7 +44,6 @@
 #   tokenSecret    (optional)  — Secret with ArgoCD bearer token (default: argocd-app-reader-token-staging)
 #   appsNamespace  (optional)  — ArgoCD Application namespace (default: argocd-infra-deployments)
 #   githubRepo     (optional)  — GitHub owner/repo for ancestry fallback (default: redhat-appstudio/infra-deployments)
-#   gitTokenSecret (optional)  — shared Secret name for GitHub PAT (default: konflux-kargo-git-operations)
 #
 # Outputs:
 #   deploymentVerified — 'yes' when verification passed
@@ -67,8 +66,6 @@ spec:
       value: argocd-infra-deployments
     - name: githubRepo
       value: redhat-appstudio/infra-deployments
-    - name: gitTokenSecret
-      value: konflux-kargo-git-operations
 
   steps:
     - uses: fail
@@ -194,7 +191,7 @@ spec:
         url: https://api.github.com/repos/${{ vars.githubRepo }}/compare/${{ vars.commitSHA }}...${{ task.outputs['verify-healthy'].syncedRevision }}
         headers:
           - name: Authorization
-            value: Bearer ${{ sharedSecret(vars.gitTokenSecret).github_pat }}
+            value: Bearer ${{ repoCredentials('https://github.com/' + vars.githubRepo + '.git', 'git').Password }}
           - name: Accept
             value: application/vnd.github+json
         successExpression: response.status == 200 && response.body.status in ['identical', 'ahead']

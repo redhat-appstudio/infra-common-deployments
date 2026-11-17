@@ -138,7 +138,7 @@ spec:
             url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}&state=open
             headers:
               - name: Authorization
-                value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
+                value: Bearer ${{ repoCredentials('https://github.com/redhat-appstudio/infra-deployments.git', 'git').Password }}
               - name: Accept
                 value: application/vnd.github+json
             outputs:
@@ -162,7 +162,7 @@ spec:
             url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls/${{ outputs['find-pr'].prNumber }}
             headers:
               - name: Authorization
-                value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
+                value: Bearer ${{ repoCredentials('https://github.com/redhat-appstudio/infra-deployments.git', 'git').Password }}
               - name: Accept
                 value: application/vnd.github+json
             successExpression: response.status == 200 && response.body.merged == true

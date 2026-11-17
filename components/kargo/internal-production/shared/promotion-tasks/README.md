@@ -198,9 +198,9 @@ branch retains the signed commit. No automatic PR or branch cleanup is performed
 
 Native `git-open-pr` opens or reuses the PR using
 Kargo's configured Git credentials. It allows up to three errors within five
-minutes before trying recovery. Successful native publication adds no PAT reads.
+minutes before trying recovery. Successful native publication needs no fallback API lookup.
 
-Only after native publication fails, a scoped PAT-backed lookup checks for an
+Only after native publication fails, a repository-credential-backed lookup checks for an
 open PR on that branch with the exact pushed SHA, expected repository and `main`
 base. Recovery polls every two minutes for up to five minutes. Empty, stale or
 ambiguous results never permit CI or merge. `continueOnError` applies only to the
@@ -285,7 +285,7 @@ are made just to build the description. A reused PR may keep its original body.
 | Readiness times out while Applications look healthy | Check exact revision, reconciliation timestamp, active operation and every expected name. A later `main` commit can prevent exact-revision matching even if component content is unchanged. |
 | Timeout message lacks per-Application detail | `appDetails` is produced only on successful HTTP completion. Inspect Applications directly for a failed or pending check. |
 | Missing Application | The entire group waits; an incomplete or paginated response cannot approve readiness. |
-| GitHub rate limiting | HTTP CI/identity calls still use a shared PAT. Native Git steps use configured Kargo credentials. Task reuse alone does not reduce request volume. |
+| GitHub rate limiting | HTTP CI/identity calls resolve installation tokens with `repoCredentials()`, as do native Git operations through credential discovery. Task reuse alone does not reduce request volume. |
 | Merge fails on a transient API error | Native Kargo v1.11.3 merge errors can be terminal. A retry budget does not make every provider failure retryable. |
 | Branch changes during merge | Native merge lacks an atomic expected-head precondition. The final identity check can detect a mismatch but cannot undo an already completed merge. |
 | Repeating a promotion | An open PR on the stable branch is reused. The branch is replaced and CI checks the new head. A retry that resumes after publication keeps its captured head and fails the merge identity check if the branch has changed. |
@@ -339,7 +339,7 @@ These legacy tasks remain available for components that have not migrated:
 | `wait-for-infra-deployments-argocd-sync` | Check the expected Argo CD revision and Application health. |
 
 Native Git operations require configured Kargo Git credentials. HTTP GitHub calls
-use `konflux-kargo-git-operations` from the shared resources namespace. Argo CD
+use `repoCredentials(repositoryURL, 'git').Password` for the target repository. Argo CD
 readiness uses the appropriate Kubernetes API reader token, such as
 `argocd-app-reader-token-staging`; production callers select their reader explicitly.
 See the shared secret configuration and each task's variables for deployment details.
