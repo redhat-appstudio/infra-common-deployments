@@ -51,10 +51,10 @@ For an overview of signing and key updates in Vault, see
 [platform/credentials](../platform/credentials/) deploys ExternalSecrets once in
 `kargo-shared-resources`. Their templates distinguish Git credentials from generic
 API/verification credentials and explicitly select replication. Shared promotion
-API calls use `sharedSecret('konflux-kargo-git-operations')`; readiness tasks use
-the configured project-local reader secret. These lookup scopes are different.
-Project-specific credentials, including those for `kargo-infra-common`, retain
-their existing locations and access model.
+API calls use `repoCredentials(repositoryURL, 'git').Password`; readiness tasks
+use the configured project-local reader secret. These lookup scopes are different.
+The `kargo-infra-common` project uses shared Git credential discovery while
+retaining its project-local Argo CD reader credential.
 
 ExternalSecrets use the [AppSRE Vault ClusterSecretStore](../../../cluster-secret-store/base/appsre-stonesoup-vault-secret-store.yaml).
 Inspect its namespace conditions and ExternalSecret status when synchronization

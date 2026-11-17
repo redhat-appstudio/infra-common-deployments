@@ -37,7 +37,7 @@ against staging clusters after Kargo promotes a component.
 │                │                                                   │
 │                ▼                                                   │
 │      Launcher Job  (quay.io/konflux-ci/task-runner)                │
-│      ├── reads konflux-conformance-sa (ExternalSecret ← Vault)    │
+│      ├── reads combined conformance credentials from Vault         │
 │      ├── builds kubeconfig for target cluster                      │
 │      └── creates PipelineRun, polls status, exits 0/1             │
 │                                                                    │
@@ -69,7 +69,7 @@ against staging clusters after Kargo promotes a component.
 2. After promotion succeeds, Kargo creates an **AnalysisRun** as a verification gate
 4. The AnalysisRun creates a **Launcher Job** on the Kargo cluster
 5. The Launcher Job:
-   - Reads the `konflux-bot-0` SA token from the `konflux-conformance-sa` secret
+   - Reads the `konflux-bot-0` SA token from the `konflux-conformance-tests-credentials` secret
    - Builds a kubeconfig targeting the staging cluster
    - Substitutes placeholders in the PipelineRun template ConfigMap
    - Creates a **PipelineRun** on the staging cluster that builds and tests a real Konflux application end-to-end
@@ -97,7 +97,7 @@ These env vars are set directly in the AnalysisTemplate for each cluster file:
 | Variable | Example value | Description |
 |----------|---------------|-------------|
 | `CLUSTER_URL` | `https://api.stone-stage-p01.hpmt.p1.openshiftapps.com:6443` | API server URL of the target staging cluster |
-| `CLUSTER_NAME` | `stone-stage-p01` | Short name; used to look up the credential key in the `konflux-conformance-sa` secret and as the `CLUSTER_NAME` in log output |
+| `CLUSTER_NAME` | `stone-stage-p01` | Short name; used to look up the credential key in the `konflux-conformance-tests-credentials` secret and as the `CLUSTER_NAME` in log output |
 | `RUNNER_NAMESPACE` | `konflux-managed-tests` | Namespace on the staging cluster where the PipelineRun is created and the `conformance-test-runner` SA lives |
 | `APP_NAMESPACE` | `konflux-conformance-tests` | Namespace on the staging cluster where test Applications/Components are created |
 | `POLL_INTERVAL` | `30` | Seconds between PipelineRun status polls |
@@ -129,7 +129,7 @@ and consumed by the pre-compiled Ginkgo binary:
 
 ### Secrets
 
-All credentials come from a single Kubernetes Secret named `konflux-conformance-sa`
+All credentials come from a single Kubernetes Secret named `konflux-conformance-tests-credentials`
 (synced from AppSRE Vault via ExternalSecret). Each cluster has its own JSON-encoded key
 inside that secret:
 
@@ -141,7 +141,7 @@ inside that secret:
 > **Vault:** the `konflux-bot-0` token is minted manually via `oc create token`
 > on each staging cluster and stored in AppSRE Vault as key
 > `konflux-conformance-<cluster-name>` (JSON `{"token": "..."}`) in the path
-> used by the ExternalSecret. It is then synced into the `konflux-conformance-sa`
+> used by the ExternalSecret. It is then synced into the `konflux-conformance-tests-credentials`
 > Secret on the Kargo cluster. Do not commit credential values to git.
 
 #### Tenant prerequisites on the staging cluster
@@ -296,7 +296,7 @@ The value must be a JSON object with a `token` field:
 ```
 
 The ExternalSecret on the Kargo cluster will sync it into the
-`konflux-conformance-sa` Secret automatically.
+`konflux-conformance-tests-credentials` Secret automatically.
 
 ### 3. Add the AnalysisTemplate in this repo
 
@@ -379,7 +379,7 @@ kubectl logs -n konflux-managed-tests \
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| Launcher exits immediately with `jq: error` | Credential key missing in `konflux-conformance-sa` secret | Verify Vault has `konflux-conformance-<cluster>` key; check ExternalSecret sync status |
+| Launcher exits immediately with `jq: error` | Credential key missing in `konflux-conformance-tests-credentials` secret | Verify Vault has `konflux-conformance-<cluster>` key; check ExternalSecret sync status |
 | Launcher exits with `Unauthorized` on `kubectl create` | `konflux-bot-0` token expired or wrong cluster URL | Remint token via `oc create token konflux-bot-0 -n konflux-managed-tests` on the target cluster, push to Vault; verify `CLUSTER_URL` matches actual API endpoint |
 | PipelineRun never created | `konflux-bot-0` lacks `builder-bot-actions` in `konflux-managed-tests`, or `RUNNER_NAMESPACE` doesn't exist | Check `infra-deployments/components/konflux-verifications-rd/` deployed to the cluster; verify RBAC for `konflux-bot-0` |
 | PipelineRun stuck in `Running` past 25 min | Flaky test or cluster overload | Check test-step logs for hung `Eventually` blocks; re-trigger AnalysisRun once |

@@ -26,7 +26,7 @@ spec:
         url: https://api.github.com/repos/${{ vars.repoOwner }}/${{ vars.repoName }}/commits/${{ vars.commitSHA }}/check-runs
         headers:
           - name: Authorization
-            value: Bearer ${{ secret('kargo-infra-common-secrets').github_pat }}
+            value: Bearer ${{ repoCredentials('https://github.com/' + vars.repoOwner + '/' + vars.repoName + '.git', 'git').Password }}
           - name: Accept
             value: application/vnd.github+json
         successExpression: |
@@ -45,7 +45,7 @@ spec:
         url: https://api.github.com/repos/${{ vars.repoOwner }}/${{ vars.repoName }}/commits/${{ vars.commitSHA }}/status
         headers:
           - name: Authorization
-            value: Bearer ${{ secret('kargo-infra-common-secrets').github_pat }}
+            value: Bearer ${{ repoCredentials('https://github.com/' + vars.repoOwner + '/' + vars.repoName + '.git', 'git').Password }}
           - name: Accept
             value: application/vnd.github+json
         successExpression: |

@@ -36,7 +36,7 @@ spec:
           response.body.base.ref != 'main' || (response.body.state == 'closed' && response.body.merged == false)))
         headers:
           - name: Authorization
-            value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
+            value: Bearer ${{ repoCredentials('https://github.com/redhat-appstudio/infra-deployments.git', 'git').Password }}
         outputs:
           - fromExpression: response.body.merged
             name: merged
@@ -90,7 +90,7 @@ spec:
           response.body.base.ref != 'main' || (response.body.state == 'closed' && response.body.merged == false)))
         headers:
           - name: Authorization
-            value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
+            value: Bearer ${{ repoCredentials('https://github.com/redhat-appstudio/infra-deployments.git', 'git').Password }}
         successExpression: |
           response.status == 200 && response.body.merged == true &&
           response.body.head.sha == ${{ quote(vars.headCommitSHA) }} &&

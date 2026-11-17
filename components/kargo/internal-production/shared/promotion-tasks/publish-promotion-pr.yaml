@@ -64,7 +64,7 @@ spec:
       if: ${{ status('push') == 'Succeeded' }}
       # Only the recovery path may turn an exhausted native error into success.
       continueOnError: true
-      # Retry native discovery before spending requests on the PAT-backed fallback.
+      # Retry native discovery before spending requests on the repository-credential fallback.
       retry:
         timeout: 5m
         errorThreshold: 3
@@ -109,7 +109,7 @@ spec:
         url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls?state=open&base=main&head=redhat-appstudio:${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing }}&per_page=2
         headers: &github-headers
           - name: Authorization
-            value: Bearer ${{ sharedSecret('konflux-kargo-git-operations').github_pat }}
+            value: Bearer ${{ repoCredentials('https://github.com/redhat-appstudio/infra-deployments.git', 'git').Password }}
           - name: Accept
             value: application/vnd.github+json
         pollInterval: 2m

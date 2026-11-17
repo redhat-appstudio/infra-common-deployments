@@ -21,7 +21,7 @@ spec:
                 volumes:
                   - name: credentials
                     secret:
-                      secretName: konflux-conformance-sa
+                      secretName: konflux-conformance-tests-credentials
                   - name: pipelinerun-template
                     configMap:
                       name: conformance-pipelinerun-template
