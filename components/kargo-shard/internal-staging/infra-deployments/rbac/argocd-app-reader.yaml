@@ -11,20 +11,6 @@ metadata:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: kargo-infra-deployments-argocd-app-reader-token-staging
-  namespace: kargo-shard-infra-deployments
-  annotations:
-    kubernetes.io/service-account.name: kargo-infra-deployments-argocd-app-reader-staging
-type: kubernetes.io/service-account-token
----
-# v2 token for the same ServiceAccount (KFLUXDP-1367 rotation). The v1
-# Secret above stays valid until a cleanup PR removes it. The v2 token is
-# read from this Secret and uploaded to the existing Vault key
-# staging/devprod/kargo-infra-deployments-argocd-app-reader-staging as a
-# new version; the consuming ExternalSecrets keep that key unchanged.
-apiVersion: v1
-kind: Secret
-metadata:
   name: kargo-infra-deployments-argocd-app-reader-token-staging-v2
   namespace: kargo-shard-infra-deployments
   annotations:

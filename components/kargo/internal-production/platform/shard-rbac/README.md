@@ -20,13 +20,6 @@ delete only the three `kargo-controller-<controller-name>` heartbeat Leases.
 Creation cannot be restricted by resource name using Kubernetes RBAC. Delete
 is needed for heartbeat cleanup on controller shutdown.
 
-`kargo-shard-staging-token-v2` (KFLUXDP-1367 rotation) is the replacement for
-`kargo-shard-staging-token`. Its token is uploaded as a new version of the
-existing `staging/devprod/kargo-shard-kubeconfig` Vault key, so the shard
-ExternalSecrets keep referencing that key unchanged. Both Secrets stay valid
-until a cleanup PR removes the v1 Secret, which must happen only after every
-shard runs on the v2 kubeconfig.
-
 ## Rollout
 
 Sync the production Kargo platform RBAC before syncing the shard Applications.
