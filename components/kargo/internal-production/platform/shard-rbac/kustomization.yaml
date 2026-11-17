@@ -5,6 +5,7 @@ resources:
   - serviceaccount.yaml
   - clusterrolebinding.yaml
   - secret.yaml
+  - secret-v2.yaml
   - namespace.yaml
   - lease-rbac.yaml
   - heartbeat-role.yaml
