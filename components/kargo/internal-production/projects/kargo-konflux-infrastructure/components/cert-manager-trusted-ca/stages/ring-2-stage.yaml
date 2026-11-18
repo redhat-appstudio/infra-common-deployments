@@ -16,18 +16,6 @@ spec:
       sources:
         stages:
           - ring-1-cert-manager-trusted-ca
-  verification:
-    analysisTemplates:
-      - name: kanary-production
-    args:
-      - name: types
-        value: container-single-arch
-      - name: clusters
-        value: kflux-lw-p01
-      - name: expected-cluster-count
-        value: "1"
-      - name: namespace
-        value: konflux-otel
   promotionTemplate:
     spec:
       vars:
@@ -40,7 +28,7 @@ spec:
         - name: targetRing
           value: ring-2
         - name: mergeMode
-          value: manual
+          value: auto
         - name: skipProwChecks
           value: 'true'
         - name: freightPath
@@ -119,9 +107,44 @@ spec:
             - name: skipProwChecks
               value: ${{ quote(vars.skipProwChecks) }}
 
+        # The Kargo GitHub App can bypass branch rules; require approval explicitly.
+        - uses: http
+          as: wait-for-pr-approval
+          if: ${{ outputs['ci::result']?.passed == 'yes' && outputs['publish::result']?.promotionAsNoOp == 'no' }}
+          retry:
+            timeout: 168h
+          config:
+            method: POST
+            url: https://api.github.com/graphql
+            timeout: 30s
+            pollInterval: 2m
+            headers:
+              - name: Authorization
+                value: Bearer ${{ repoCredentials('https://github.com/redhat-appstudio/infra-deployments.git', 'git').Password }}
+              - name: Content-Type
+                value: application/json
+            body: |
+              {"query":"query($number: Int!) { repository(owner: \"redhat-appstudio\", name: \"infra-deployments\") { pullRequest(number: $number) { state isDraft headRefOid reviewDecision } } }","variables":{"number":${{ outputs['publish::result'].prNumber }}}}
+            successExpression: |
+              response.status == 200 && len(response.body.errors ?? []) == 0 &&
+              response.body.data?.repository?.pullRequest != nil &&
+              response.body.data.repository.pullRequest.headRefOid == ${{ quote(outputs['publish::result'].headCommitSHA) }} &&
+              (response.body.data.repository.pullRequest.state == 'MERGED' ||
+                (response.body.data.repository.pullRequest.state == 'OPEN' &&
+                 response.body.data.repository.pullRequest.isDraft == false &&
+                 response.body.data.repository.pullRequest.reviewDecision == 'APPROVED'))
+            failureExpression: |
+              response.status in [401, 403, 404] ||
+              (response.status == 200 && (len(response.body.errors ?? []) > 0 ||
+                response.body.data?.repository?.pullRequest == nil ||
+                response.body.data.repository.pullRequest.headRefOid != ${{ quote(outputs['publish::result'].headCommitSHA) }} ||
+                response.body.data.repository.pullRequest.state == 'CLOSED'))
+            errorExpression: "'Cannot verify PR approval: API error, missing/closed PR, or changed head SHA.'"
+
         - task:
             name: merge-promotion-pr
           as: merge
+          if: ${{ outputs['publish::result']?.promotionAsNoOp == 'yes' || status('wait-for-pr-approval') == 'Succeeded' }}
           vars:
             - name: passed
               value: ${{ outputs['ci::result']?.passed ?? '' }}

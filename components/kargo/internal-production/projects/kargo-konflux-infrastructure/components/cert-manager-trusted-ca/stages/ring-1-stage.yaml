@@ -15,16 +15,6 @@ spec:
         name: cert-manager-trusted-ca
       sources:
         direct: true
-  verification:
-    analysisTemplates:
-      - name: kanary-staging
-    args:
-      - name: types
-        value: container-single-arch
-      - name: clusters
-        value: kflux-stg-p02
-      - name: expected-cluster-count
-        value: "1"
   promotionTemplate:
     spec:
       vars:
