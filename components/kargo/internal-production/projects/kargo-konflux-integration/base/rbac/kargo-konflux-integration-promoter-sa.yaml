@@ -6,4 +6,4 @@ metadata:
   annotations:
     kargo.akuity.io/description: |
       Permissions to promote components in the Kargo project 'kargo-konflux-integration'.
-    rbac.kargo.akuity.io/claims: '{"groups": ["konflux-image-rbac-proxy"]}'
+    rbac.kargo.akuity.io/claims: '{"groups": ["konflux-integration"]}'

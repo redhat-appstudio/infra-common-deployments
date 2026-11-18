@@ -88,7 +88,7 @@ Changes to their shared ring base can still reach them through Argo CD.
 
 ## Access and ownership
 
-The existing component group `konflux-image-rbac-proxy` is mapped to a Kargo
+The `konflux-integration` group is mapped to a Kargo
 promoter ServiceAccount and role binding. It does not receive project-admin or
 Secret-read permissions from this project. Platform operators retain the
 existing infrastructure administration roles.
