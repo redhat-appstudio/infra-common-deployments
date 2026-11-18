@@ -1,0 +1,29 @@
+# This role allows users to fully implement Kargo promotions without providing
+# full kargo-admin access and undermining the established GitOps pattern for
+# the Kargo project's resources.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kargo-promoter-extras
+rules:
+  # For manually approving a freight
+  - apiGroups:
+    - kargo.akuity.io
+    resources:
+      - freights/status
+    verbs:
+      - patch
+  # For manually aborting a promotion
+  - apiGroups:
+    - kargo.akuity.io
+    resources:
+      - promotions
+    verbs:
+      - patch
+  # For manually aborting a verification
+  - apiGroups:
+    - kargo.akuity.io
+    resources:
+      - stages
+    verbs:
+      - patch

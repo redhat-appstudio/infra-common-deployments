@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kargo-konflux-integration-promoter
+  namespace: kargo-konflux-integration
+  annotations:
+    kargo.akuity.io/description: |
+      Permissions to promote components in the Kargo project 'kargo-konflux-integration'.
+    rbac.kargo.akuity.io/claims: '{"groups": ["konflux-integration"]}'

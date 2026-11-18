@@ -1,0 +1,179 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-image-rbac-proxy
+spec:
+  vars:
+    - name: srcPath
+    - name: freightPath
+    - name: repoURL
+    - name: component
+    - name: targetRing
+    - name: proxyImageRepoURL
+      value: quay.io/konflux-ci/image-rbac-proxy
+    - name: memcachedImageRepoURL
+      value: quay.io/kubearchive/memcached
+  steps:
+    - uses: fail
+      as: validate-freight
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'image-rbac-proxy' || vars.component != 'image-rbac-proxy'
+        || vars.repoURL != 'https://github.com/redhat-appstudio/infra-deployments.git'
+        || vars.proxyImageRepoURL != 'quay.io/konflux-ci/image-rbac-proxy'
+        || vars.memcachedImageRepoURL != 'quay.io/kubearchive/memcached'
+        || vars.targetRing not in ['ring-0', 'ring-1', 'ring-2', 'ring-3', 'ring-4']
+        || commitFrom(vars.repoURL) == nil || imageFrom(vars.proxyImageRepoURL) == nil || imageFrom(vars.memcachedImageRepoURL) == nil
+        || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$')
+        || !(imageFrom(vars.proxyImageRepoURL).Tag matches '^[0-9a-f]{40}$')
+        || !(imageFrom(vars.memcachedImageRepoURL).Tag matches '^[12][.](0|[1-9][0-9]*)[.](0|[1-9][0-9]*)$') }}
+      config:
+        message: Expected image-rbac-proxy Freight with an infra-deployments commit, a source-SHA proxy image and a stable Memcached image below 3.0.0, targeting Rings 0-4.
+    - uses: compose-output
+      as: manifest-source
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      config:
+        prefix: >-
+          ${{ vars.targetRing == 'ring-0' ? 'https://github.com/konflux-ci/image-rbac-proxy/deploy/development/base?ref=' : 'https://github.com/konflux-ci/image-rbac-proxy/deploy/base?ref=' }}
+    - uses: yaml-parse
+      as: read-previous
+      if: ${{ status('manifest-source') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        outputs:
+          - name: resources
+            fromExpression: resources ?? []
+          - name: proxyImages
+            fromExpression: filter(images ?? [], {.name == 'quay.io/konflux-ci/image-rbac-proxy'})
+          - name: memcachedImages
+            fromExpression: filter(images ?? [], {.name == 'memcached'})
+    - uses: fail
+      as: validate-layout
+      if: >-
+        ${{ status('read-previous') == 'Succeeded' && (
+        len(filter(task.outputs['read-previous'].resources, {# == 'base-snapshot'})) != 1
+        || len(filter(task.outputs['read-previous'].resources, {# startsWith task.outputs['manifest-source'].prefix})) != 1
+        || len(task.outputs['read-previous'].proxyImages) != 1
+        || (task.outputs['read-previous'].proxyImages[0].newName ?? vars.proxyImageRepoURL) != vars.proxyImageRepoURL
+        || len(task.outputs['read-previous'].memcachedImages) > 1
+        || (vars.targetRing == 'ring-0' && len(task.outputs['read-previous'].memcachedImages) != 1)
+        || (len(task.outputs['read-previous'].memcachedImages) == 1
+        && (task.outputs['read-previous'].memcachedImages[0].newName ?? 'memcached') not in ['memcached', vars.memcachedImageRepoURL])) }}
+      config:
+        message: Expected one shared base snapshot, the ring-appropriate upstream manifest ref, one proxy image and at most one Memcached override (required in Ring 0).
+    # Copy only shared manifests. Keep OAuth jobs, credential paths, certificates,
+    # cluster configuration and the ring's development/production resource path.
+    - uses: delete
+      as: delete-old-base-snapshot
+      if: ${{ status('read-previous') == 'Succeeded' && status('validate-layout') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: copy
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-base-snapshot') == 'Succeeded' }}
+      config:
+        inPath: ${{ vars.freightPath }}/components/${{ vars.component }}/base
+        outPath: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/base-snapshot
+    - uses: kustomize-set-image
+      as: update-proxy-image
+      if: ${{ status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base
+        images:
+          - image: ${{ vars.proxyImageRepoURL }}
+            newName: ${{ vars.proxyImageRepoURL }}
+            tag: ${{ quote(imageFrom(vars.proxyImageRepoURL).Tag) }}
+    - uses: kustomize-set-image
+      as: update-ring-0-memcached
+      if: ${{ vars.targetRing == 'ring-0' && status('update-proxy-image') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/ring-0/base
+        images:
+          # Match the upstream image name, not its Quay replacement name.
+          - image: memcached
+            newName: ${{ vars.memcachedImageRepoURL }}
+            tag: ${{ quote(imageFrom(vars.memcachedImageRepoURL).Tag) }}
+    - uses: yaml-update
+      as: update-manifest-ref
+      if: >-
+        ${{ status('update-proxy-image') == 'Succeeded'
+        && (vars.targetRing != 'ring-0' || status('update-ring-0-memcached') == 'Succeeded') }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+        updates:
+          - key: resources.${{ findIndex(task.outputs['read-previous'].resources, {# startsWith task.outputs['manifest-source'].prefix}) }}
+            value: ${{ task.outputs['manifest-source'].prefix + imageFrom(vars.proxyImageRepoURL).Tag }}
+    # Render the actual upstream resources before allowing a promotion PR.
+    # A successful image-override edit alone does not prove a workload uses it.
+    - uses: delete
+      as: clear-render
+      if: ${{ status('update-manifest-ref') == 'Succeeded' }}
+      config:
+        path: ./image-rbac-proxy-verification
+    - uses: kustomize-build
+      as: render-images
+      if: ${{ status('clear-render') == 'Succeeded' }}
+      config:
+        path: ${{ vars.srcPath }}/components/${{ vars.component }}/rings/${{ vars.targetRing }}/base
+        outPath: ./image-rbac-proxy-verification
+        outputFormat: kargo
+    - uses: yaml-parse
+      as: read-rendered-images
+      if: ${{ status('render-images') == 'Succeeded' }}
+      config:
+        path: ./image-rbac-proxy-verification/image-rbac-proxy-deployment-image-rbac-proxy.yaml
+        outputs:
+          - name: valid
+            fromExpression: >-
+              let proxy = filter(spec.template.spec.containers ?? [], {.name == 'image-rbac-proxy'});
+              let cache = filter(spec.template.spec.containers ?? [], {.name == 'memcache'});
+              apiVersion == 'apps/v1' && kind == 'Deployment' && metadata.namespace == 'image-rbac-proxy'
+              && metadata.name == 'image-rbac-proxy' && len(proxy) == 1 && len(cache) == 1
+              && proxy[0].image == ${{ quote(vars.proxyImageRepoURL + ':' + imageFrom(vars.proxyImageRepoURL).Tag) }}
+              && (${{ quote(vars.targetRing) }} != 'ring-0'
+              || cache[0].image == ${{ quote(vars.memcachedImageRepoURL + ':' + imageFrom(vars.memcachedImageRepoURL).Tag) }})
+    - uses: fail
+      as: validate-rendered-images
+      if: ${{ status('read-rendered-images') == 'Succeeded' && task.outputs['read-rendered-images'].valid != true }}
+      config:
+        message: The rendered Deployment must use the selected proxy image and, in Ring 0 only, the selected Quay Memcached image.
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-freight') == 'Skipped' && status('manifest-source') == 'Succeeded'
+        && status('read-previous') == 'Succeeded' && status('validate-layout') == 'Skipped'
+        && status('delete-old-base-snapshot') == 'Succeeded' && status('copy-freight-manifests') == 'Succeeded'
+        && status('update-proxy-image') == 'Succeeded'
+        && (vars.targetRing != 'ring-0' || status('update-ring-0-memcached') == 'Succeeded')
+        && status('update-manifest-ref') == 'Succeeded'
+        && status('clear-render') == 'Succeeded' && status('render-images') == 'Succeeded'
+        && status('read-rendered-images') == 'Succeeded' && status('validate-rendered-images') == 'Skipped'
+        && task.outputs['read-rendered-images'].valid == true }}
+      config:
+        prepared: 'yes'
+        prSummary: |
+          Update the proxy image and upstream deployment manifests together to source revision ${{ imageFrom(vars.proxyImageRepoURL).Tag }} in ${{ vars.targetRing }}.
+          ${{ vars.targetRing == 'ring-0' ? 'Update the Ring 0 Quay Memcached override to ' + imageFrom(vars.memcachedImageRepoURL).Tag + '.' : 'Memcached remains controlled by the selected upstream manifests; this ring does not use the Ring 0 override.' }}
+
+          Shared base source: [${{ commitFrom(vars.repoURL).ID[0:12] }}](https://github.com/redhat-appstudio/infra-deployments/commit/${{ commitFrom(vars.repoURL).ID }}).
+        prCompareURL: >-
+          ${{ 'https://github.com/konflux-ci/image-rbac-proxy/compare/'
+          + split(find(task.outputs['read-previous'].resources, {# startsWith task.outputs['manifest-source'].prefix}), '?ref=')[1]
+          + '...' + imageFrom(vars.proxyImageRepoURL).Tag }}
+        prChanges:
+          - kind: Proxy image
+            previous: ${{ quote(string(task.outputs['read-previous'].proxyImages[0].digest ?? task.outputs['read-previous'].proxyImages[0].newTag ?? 'not configured')) }}
+            proposed: ${{ quote(imageFrom(vars.proxyImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+          - kind: Upstream manifest ref
+            previous: ${{ quote(split(find(task.outputs['read-previous'].resources, {# startsWith task.outputs['manifest-source'].prefix}), '?ref=')[1]) }}
+            proposed: ${{ quote(imageFrom(vars.proxyImageRepoURL).Tag) }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
+          - kind: Memcached image (Ring 0 override only)
+            previous: >-
+              ${{ len(task.outputs['read-previous'].memcachedImages) == 0 ? 'inherited from upstream manifests'
+              : quote(string(task.outputs['read-previous'].memcachedImages[0].digest ?? task.outputs['read-previous'].memcachedImages[0].newTag ?? 'not configured')) }}
+            proposed: >-
+              ${{ vars.targetRing == 'ring-0' ? quote(vars.memcachedImageRepoURL + ':' + imageFrom(vars.memcachedImageRepoURL).Tag)
+              : 'Inherited from the selected upstream manifests; not overridden' }}
+            path: components/${{ vars.component }}/rings/${{ vars.targetRing }}/base/kustomization.yaml
