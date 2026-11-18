@@ -1,0 +1,11 @@
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: appstudio-grafana
+  namespace: appstudio-grafana
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  targetNamespaces:
+  - appstudio-grafana
+  upgradeStrategy: Default

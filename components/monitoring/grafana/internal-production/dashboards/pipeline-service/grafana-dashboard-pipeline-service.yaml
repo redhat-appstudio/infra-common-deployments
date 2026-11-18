@@ -1,0 +1,16 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  labels:
+    app: appstudio-grafana
+  name: grafana-dashboard-pipeline-service
+  namespace: appstudio-grafana
+spec:
+  configMapRef:
+    key: pipeline-service-dashboard.json
+    name: grafana-dashboard-pipeline-service
+  instanceSelector:
+    matchLabels:
+      dashboards: appstudio-grafana

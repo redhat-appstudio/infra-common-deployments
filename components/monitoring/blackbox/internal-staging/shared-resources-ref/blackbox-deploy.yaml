@@ -1,0 +1,50 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: blackbox-exporter-obo
+  name: blackbox-exporter-obo
+  namespace: appstudio-monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blackbox-exporter-obo
+  template:
+    metadata:
+      labels:
+        app: blackbox-exporter-obo
+    spec:
+      containers:
+        - name: blackbox-exporter-obo
+          image: quay.io/prometheus/blackbox-exporter:v0.27.0@sha256:a50c4c0eda297baa1678cd4dc4712a67fdea713b832d43ce7fcc5f9bea05094d
+          args:
+            - "--config.file=/etc/blackbox/blackbox.yml"
+          ports:
+            - containerPort: 9115
+              name: http
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/blackbox
+              readOnly: true
+      volumes:
+        - name: config-volume
+          configMap:
+            name: blackbox-exporter-obo-config

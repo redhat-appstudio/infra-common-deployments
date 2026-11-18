@@ -1,0 +1,16 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: all-access-appstudio-grafana
+  namespace: appstudio-grafana
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: konflux-o11y-admins
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: konflux-admins
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: all-access-appstudio-grafana

@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - operator
+  - grafana-app
+  - rbac
+  - dashboards
+
+patches:
+  - path: patches/grafana-resources-patch.yaml
+    target:
+      name: grafana-oauth
+      kind: Grafana
+  - path: patches/auto-assign-role-patch.yaml
+    target:
+      name: grafana-oauth
+      kind: Grafana

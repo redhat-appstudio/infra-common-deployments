@@ -1,0 +1,14 @@
+# Create a CRB for the Grafana service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  namespace: appstudio-grafana
+  name: grafana-proxy
+subjects:
+  - kind: ServiceAccount
+    name: grafana-oauth-sa
+    namespace: appstudio-grafana
+roleRef:
+  kind: ClusterRole
+  name: grafana-proxy
+  apiGroup: rbac.authorization.k8s.io

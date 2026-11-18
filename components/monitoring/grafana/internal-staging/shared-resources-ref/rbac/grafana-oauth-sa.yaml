@@ -1,0 +1,10 @@
+# Create service account to connect to Grafana
+# Although the service account is created by the Grafana operator (named <Grafana_name>-sa)
+# We create it in advanced and assign a secret to it
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grafana-oauth-sa
+  namespace: appstudio-grafana
+  annotations:
+    argocd.argoproj.io/compare-options: IgnoreExtraneous
