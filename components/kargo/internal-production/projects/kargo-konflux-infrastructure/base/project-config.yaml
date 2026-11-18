@@ -5,6 +5,10 @@ metadata:
   name: kargo-konflux-infrastructure
 spec:
   promotionPolicies:
+    - stage: ring-2-cert-manager-trusted-ca
+      autoPromotionEnabled: true
+    - stage: ring-1-cert-manager-trusted-ca
+      autoPromotionEnabled: true
     - stage: ring-0-disaster-recovery
       autoPromotionEnabled: true
     - stage: ring-1-disaster-recovery
