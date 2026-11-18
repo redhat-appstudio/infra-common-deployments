@@ -93,9 +93,11 @@ promoter ServiceAccount and role binding. It does not receive project-admin or
 Secret-read permissions from this project. Platform operators retain the
 existing infrastructure administration roles.
 
-The project-level OWNERS file retains platform approvers for RBAC and promotion
-policy. Maintainers from infra-deployments `components/image-rbac-proxy/OWNERS`
-are delegated only under `components/image-rbac-proxy/` in this project.
+Maintainers from infra-deployments `components/image-rbac-proxy/OWNERS` are
+listed in this project’s top-level OWNERS file. This intentionally delegates
+GitOps approval across the project, including RBAC and promotion policy. Parent
+owners remain inherited. Runtime access for `konflux-integration` remains
+promoter-only.
 
 Shared credential replication, promotion/merge tasks and verification templates
 are reused. The project is registered with shard RBAC and the promotion cleaner;
