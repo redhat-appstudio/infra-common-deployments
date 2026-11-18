@@ -1,0 +1,21 @@
+# Platform approval is required for project access, credentials and promotion policy.
+# See the OWNERS docs: https://go.k8s.io/owners
+
+approvers:
+
+- psturc
+- p8r-the-gr8
+- flacatus
+- Troy876
+- konflux-infra-team
+
+reviewers:
+
+- psturc
+- p8r-the-gr8
+- flacatus
+- Troy876
+- konflux-infra-team
+
+options:
+  no_parent_owners: true

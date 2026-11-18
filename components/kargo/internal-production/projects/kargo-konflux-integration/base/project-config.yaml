@@ -1,0 +1,17 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: kargo-konflux-integration
+spec:
+  promotionPolicies:
+    - stage: ring-0-image-rbac-proxy
+      autoPromotionEnabled: true
+    - stage: ring-1-image-rbac-proxy
+      autoPromotionEnabled: true
+    - stage: ring-2-image-rbac-proxy
+      autoPromotionEnabled: false
+    - stage: ring-3-image-rbac-proxy
+      autoPromotionEnabled: false
+    - stage: ring-4-image-rbac-proxy
+      autoPromotionEnabled: false

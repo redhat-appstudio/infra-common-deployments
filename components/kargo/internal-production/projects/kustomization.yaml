@@ -11,6 +11,7 @@ resources:
   - kargo-konflux-pulp
   - kargo-konflux-mintmaker
   - kargo-konflux-kite
+  - kargo-konflux-integration
   - retained-project-namespaces.yaml
 
 commonAnnotations:
