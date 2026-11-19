@@ -13,7 +13,13 @@ spec:
     - name: prNumber
     - name: promotionAsNoOp
     - name: mergeMode
-    # Matches the publisher's stable branch; component/targetRing are Stage vars.
+    # Falls back to 'redhat-appstudio' & 'infra-deployments'
+    - name: githubRepo
+      value: infra-deployments
+    - name: githubOrg
+      value: redhat-appstudio
+    # Defaults from the Stage's component & targetRing for infra-deployments callers.
+    # Stages using `environment` must pass the publish task's `prBranch` output instead.
     - name: sourceBranch
       value: ${{ ctx.project + '/' + vars.component + '/' + vars.targetRing }}
   steps:
@@ -21,9 +27,10 @@ spec:
       as: validate-config
       if: >-
         ${{ vars.passed != 'yes' || vars.checkedSHA != vars.headCommitSHA || vars.promotionAsNoOp not in ['yes', 'no'] || vars.mergeMode not in
-        ['auto', 'manual'] || vars.baseCommitSHA == '' || (vars.promotionAsNoOp == 'no' && (vars.headCommitSHA == '' || vars.prNumber == 0)) }}
+        ['auto', 'manual'] || vars.baseCommitSHA == '' || vars.githubRepo == '' || vars.githubOrg == '' ||
+        (vars.promotionAsNoOp == 'no' && (vars.headCommitSHA == '' || vars.prNumber == 0)) || vars.sourceBranch == '' }}
       config:
-        message: Merge requires a passing CI result for this exact head SHA and valid publication outputs.
+        message: Merge requires a passing CI result for this exact head SHA, GitHub repo and organization, and valid publication outputs.
     - as: inspect-pr
       config:
         errorExpression: '''Promotion PR is unavailable, closed without merging, or no longer contains the tested head SHA on the expected source branch targeting main'''
@@ -31,12 +38,12 @@ spec:
           (response.status in [401, 404] || (response.status == 403 && response.header('X-RateLimit-Remaining') != '0' && response.header('Retry-After') == '' && !(lower(response.body?.message ?? '') contains 'rate limit'))) ||
           (response.status == 200 && (response.body.head.sha != ${{ quote(vars.headCommitSHA) }} ||
           response.body.head.ref != ${{ quote(vars.sourceBranch) }} ||
-          response.body.head.repo.full_name != 'redhat-appstudio/infra-deployments' ||
-          response.body.base.repo.full_name != 'redhat-appstudio/infra-deployments' ||
+          response.body.head.repo.full_name != ${{ quote(vars.githubOrg + '/' + vars.githubRepo) }} ||
+          response.body.base.repo.full_name != ${{ quote(vars.githubOrg + '/' + vars.githubRepo) }} ||
           response.body.base.ref != 'main' || (response.body.state == 'closed' && response.body.merged == false)))
         headers:
           - name: Authorization
-            value: Bearer ${{ repoCredentials('https://github.com/redhat-appstudio/infra-deployments.git', 'git').Password }}
+            value: Bearer ${{ repoCredentials('https://github.com/' + vars.githubOrg + '/' + vars.githubRepo + '.git', 'git').Password }}
         outputs:
           - fromExpression: response.body.merged
             name: merged
@@ -45,11 +52,11 @@ spec:
         successExpression: |
           response.status == 200 && response.body.head.sha == ${{ quote(vars.headCommitSHA) }} &&
           response.body.head.ref == ${{ quote(vars.sourceBranch) }} &&
-          response.body.head.repo.full_name == 'redhat-appstudio/infra-deployments' &&
-          response.body.base.repo.full_name == 'redhat-appstudio/infra-deployments' &&
+          response.body.head.repo.full_name == ${{ quote(vars.githubOrg + '/' + vars.githubRepo) }} &&
+          response.body.base.repo.full_name == ${{ quote(vars.githubOrg + '/' + vars.githubRepo) }} &&
           response.body.base.ref == 'main' && (response.body.state == 'open' || response.body.merged == true)
         timeout: 30s
-        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls/${{ vars.prNumber }}
+        url: https://api.github.com/repos/${{ vars.githubOrg }}/${{ vars.githubRepo }}/pulls/${{ vars.prNumber }}
         pollInterval: 2m
       if: ${{ status('validate-config') == 'Skipped' && vars.promotionAsNoOp == 'no' && vars.mergeMode == 'auto' }}
       retry:
@@ -61,7 +68,7 @@ spec:
         mergeMethod: squash
         pollInterval: 2m
         prNumber: ${{ vars.prNumber }}
-        repoURL: https://github.com/redhat-appstudio/infra-deployments.git
+        repoURL: https://github.com/${{ vars.githubOrg }}/${{ vars.githubRepo }}.git
         wait: true
       if: ${{ status('inspect-pr') == 'Succeeded' && vars.mergeMode == 'auto' && task.outputs['inspect-pr'].merged == false }}
       retry:
@@ -72,7 +79,7 @@ spec:
       config:
         pollInterval: 5m
         prNumber: ${{ vars.prNumber }}
-        repoURL: https://github.com/redhat-appstudio/infra-deployments.git
+        repoURL: https://github.com/${{ vars.githubOrg }}/${{ vars.githubRepo }}.git
       if: ${{ status('validate-config') == 'Skipped' && vars.promotionAsNoOp == 'no' && vars.mergeMode == 'manual' }}
       retry:
         timeout: 168h
@@ -85,22 +92,22 @@ spec:
           (response.status in [401, 404] || (response.status == 403 && response.header('X-RateLimit-Remaining') != '0' && response.header('Retry-After') == '' && !(lower(response.body?.message ?? '') contains 'rate limit'))) ||
           (response.status == 200 && (response.body.head.sha != ${{ quote(vars.headCommitSHA) }} ||
           response.body.head.ref != ${{ quote(vars.sourceBranch) }} ||
-          response.body.head.repo.full_name != 'redhat-appstudio/infra-deployments' ||
-          response.body.base.repo.full_name != 'redhat-appstudio/infra-deployments' ||
+          response.body.head.repo.full_name != ${{ quote(vars.githubOrg + '/' + vars.githubRepo) }} ||
+          response.body.base.repo.full_name != ${{ quote(vars.githubOrg + '/' + vars.githubRepo) }} ||
           response.body.base.ref != 'main' || (response.body.state == 'closed' && response.body.merged == false)))
         headers:
           - name: Authorization
-            value: Bearer ${{ repoCredentials('https://github.com/redhat-appstudio/infra-deployments.git', 'git').Password }}
+            value: Bearer ${{ repoCredentials('https://github.com/' + vars.githubOrg + '/' + vars.githubRepo + '.git', 'git').Password }}
         successExpression: |
           response.status == 200 && response.body.merged == true &&
           response.body.head.sha == ${{ quote(vars.headCommitSHA) }} &&
           response.body.head.ref == ${{ quote(vars.sourceBranch) }} &&
-          response.body.head.repo.full_name == 'redhat-appstudio/infra-deployments' &&
-          response.body.base.repo.full_name == 'redhat-appstudio/infra-deployments' &&
+          response.body.head.repo.full_name == ${{ quote(vars.githubOrg + '/' + vars.githubRepo) }} &&
+          response.body.base.repo.full_name == ${{ quote(vars.githubOrg + '/' + vars.githubRepo) }} &&
           response.body.base.ref == 'main' && (response.body.merge_commit_sha ?? '') != '' &&
           response.body.merge_commit_sha == ${{ quote(vars.mergeMode == 'manual' ? task.outputs['wait-for-manual-merge'].commit : (task.outputs['auto-merge']?.commit ?? task.outputs['inspect-pr'].mergeCommitSHA)) }}
         timeout: 30s
-        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/pulls/${{ vars.prNumber }}
+        url: https://api.github.com/repos/${{ vars.githubOrg }}/${{ vars.githubRepo }}/pulls/${{ vars.prNumber }}
         pollInterval: 2m
       if: >-
         ${{ status('wait-for-manual-merge') == 'Succeeded' || (status('inspect-pr') == 'Succeeded' && (task.outputs['inspect-pr'].merged == true

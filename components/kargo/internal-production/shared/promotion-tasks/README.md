@@ -29,7 +29,8 @@ manifests. It edits the same checkout that the publication task commits.
 
 **The shared tasks own the repeated work:** publication, CI, merge and deployment
 readiness. Kargo tasks cannot call other tasks, so the Stage connects them.
-These tasks currently target `redhat-appstudio/infra-deployments`, branch `main`.
+These tasks default to `redhat-appstudio/infra-deployments` (branch `main`); set `githubOrg`
+& `githubRepo` to target another repository.
 
 ## Current policies
 
@@ -164,9 +165,9 @@ Every task publishes its completion fields in a step named `result`.
 
 | Task | Required inputs | Result fields |
 |---|---|---|
-| [publish-promotion-pr](publish-promotion-pr.yaml) | `srcPath`, `component`, `targetRing`, `prepared`, `baseCommitSHA`, `mergeMode`, `skipProwChecks` | `published`, `promotionAsNoOp`, `baseCommitSHA`, `headCommitSHA`, `prNumber`, `prURL` |
+| [publish-promotion-pr](publish-promotion-pr.yaml) | `srcPath`, `component`, `targetRing` or `environment`, `prepared`, `baseCommitSHA`, `mergeMode`, `skipProwChecks` | `published`, `promotionAsNoOp`, `baseCommitSHA`, `headCommitSHA`, `prNumber`, `prURL`, `prBranch` |
 | [verify-promotion-ci](verify-promotion-ci.yaml) | `published`, `commitSHA`, `promotionAsNoOp`, `skipProwChecks`; `requiredProwChecks` when enabled | `passed`, `checkedSHA`, `promotionAsNoOp` |
-| [merge-promotion-pr](merge-promotion-pr.yaml) | `passed`, `checkedSHA`, `headCommitSHA`, `baseCommitSHA`, `prNumber`, `promotionAsNoOp`, `mergeMode` | `mergeConfirmed`, `mergeCommitSHA`, `promotionAsNoOp` |
+| [merge-promotion-pr](merge-promotion-pr.yaml) | `passed`, `checkedSHA`, `headCommitSHA`, `baseCommitSHA`, `prNumber`, `promotionAsNoOp`,  `mergeMode`, `sourceBranch` (required when using environment) | `mergeConfirmed`, `mergeCommitSHA`, `promotionAsNoOp` |
 | [verify-argocd-deployment](verify-argocd-deployment.yaml) | `mergeConfirmed`, `commitSHA`, `component`, `clusters` | `deploymentVerified`, `commitSHA`, `appDetails` |
 
 Keep these rules when extending or generating configuration:
@@ -226,7 +227,9 @@ new changes can create a new PR on the same branch.
 mode uses native `git-merge-pr`; manual mode uses native `git-wait-for-pr`. HTTP
 checks verify the PR's head, source branch, repositories, base branch and resulting merge SHA.
 The merge task defaults `sourceBranch` from the Stage's `component` and `targetRing`
-variables, matching the publisher's stable branch; no extra API call is needed. Missing or
+variables, matching the publisher's stable branch; no extra API call is needed. However, this can be
+overridden with the `prBranch` output from the `publish-promotion-pr` task. Stages using `environment`
+must pass `sourceBranch: ${{ outputs['publish::result']?.prBranch ?? '' }}`. Missing or
 pending CI results wait; failed results block completion. Responses exceeding
 100 checks/statuses are rejected rather than approving a partial result set.
 

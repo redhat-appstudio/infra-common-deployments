@@ -10,6 +10,11 @@ spec:
     - name: commitSHA
     - name: promotionAsNoOp
     - name: skipProwChecks
+    # Falls back to 'redhat-appstudio' & 'infra-deployments'
+    - name: githubRepo
+      value: infra-deployments
+    - name: githubOrg
+      value: redhat-appstudio
     # An empty literal is treated as a missing default during task expansion.
     - name: requiredProwChecks
       value: ${{ '' }}
@@ -27,7 +32,8 @@ spec:
       as: validate-config
       if: >-
         ${{ vars.published != 'yes' || vars.promotionAsNoOp not in ['yes', 'no'] || vars.skipProwChecks not in ['true', 'false'] || vars.requiredCheckRuns
-        == '' || (vars.skipProwChecks == 'false' && vars.requiredProwChecks == '') || (vars.promotionAsNoOp == 'no' && vars.commitSHA == '') }}
+        == '' || (vars.skipProwChecks == 'false' && vars.requiredProwChecks == '') || vars.githubOrg == '' || vars.githubRepo == ''
+        || (vars.promotionAsNoOp == 'no' && vars.commitSHA == '') }}
       config:
         message: CI requires successful publication, an immutable commit and explicit Prow policy with nonempty selectors.
     # Rate-limit responses remain pending; polling uses a fixed interval.
@@ -39,10 +45,10 @@ spec:
       config:
         method: GET
         pollInterval: ${{ vars.ciPollInterval }}
-        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/commits/${{ vars.commitSHA }}/check-runs?per_page=100
+        url: https://api.github.com/repos/${{ vars.githubOrg }}/${{ vars.githubRepo }}/commits/${{ vars.commitSHA }}/check-runs?per_page=100
         headers:
           - name: Authorization
-            value: Bearer ${{ repoCredentials('https://github.com/redhat-appstudio/infra-deployments.git', 'git').Password }}
+            value: Bearer ${{ repoCredentials('https://github.com/' + vars.githubOrg + '/' + vars.githubRepo + '.git', 'git').Password }}
           - name: Accept
             value: application/vnd.github+json
         successExpression: |
@@ -71,10 +77,10 @@ spec:
       config:
         method: GET
         pollInterval: ${{ vars.prowPollInterval }}
-        url: https://api.github.com/repos/redhat-appstudio/infra-deployments/commits/${{ vars.commitSHA }}/status?per_page=100
+        url: https://api.github.com/repos/${{ vars.githubOrg }}/${{ vars.githubRepo }}/commits/${{ vars.commitSHA }}/status?per_page=100
         headers:
           - name: Authorization
-            value: Bearer ${{ repoCredentials('https://github.com/redhat-appstudio/infra-deployments.git', 'git').Password }}
+            value: Bearer ${{ repoCredentials('https://github.com/' + vars.githubOrg + '/' + vars.githubRepo + '.git', 'git').Password }}
           - name: Accept
             value: application/vnd.github+json
         successExpression: |
