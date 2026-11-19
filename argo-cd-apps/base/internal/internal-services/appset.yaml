@@ -12,6 +12,8 @@ spec:
   template:
     metadata:
       name: internal-services-{{nameNormalized}}
+      labels:
+        app.kubernetes.io/part-of: internal-services
     spec:
       project: default
       source:
