@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: controller-manager-prod-osp-p01
+  name: controller-manager-kflux-ocp-p01
   labels:
     control-plane: controller-manager
     app.kubernetes.io/name: deployment
-    app.kubernetes.io/instance: controller-manager-prod-osp-p01
+    app.kubernetes.io/instance: controller-manager-kflux-ocp-p01
     app.kubernetes.io/component: manager
     app.kubernetes.io/created-by: internal-services
     app.kubernetes.io/part-of: internal-services
@@ -59,7 +59,7 @@ spec:
             - --remote-cluster-config-file
             - /mnt/internal-services/remote-client-config/kubeconfig
             - --leader-election-id
-            - "prod-osp-p01"
+            - "kflux-ocp-p01"
           image: quay.io/konflux-ci/internal-services:54aed74393c0ee61a07a4e8c9dc704e583b88273
           name: manager
           securityContext:
@@ -106,4 +106,4 @@ spec:
       volumes:
         - name: remote-client-config
           secret:
-            secretName: remote-client-config-prod-osp-p01
+            secretName: remote-client-config-kflux-ocp-p01
