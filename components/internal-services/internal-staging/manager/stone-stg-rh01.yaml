@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: controller-manager-staging-rh01
+  name: controller-manager-stone-stg-rh01
   labels:
     control-plane: controller-manager
     app.kubernetes.io/name: deployment
-    app.kubernetes.io/instance: controller-manager-staging-rh01
+    app.kubernetes.io/instance: controller-manager-stone-stg-rh01
     app.kubernetes.io/component: manager
     app.kubernetes.io/created-by: internal-services
     app.kubernetes.io/part-of: internal-services
@@ -58,6 +58,8 @@ spec:
             - --leader-elect
             - --remote-cluster-config-file
             - /mnt/internal-services/remote-client-config/kubeconfig
+            - --leader-election-id
+            - "stone-stg-rh01"
           image: quay.io/konflux-ci/internal-services:f38bd44812d04add36865ca0755bef92a14b64f5
           name: manager
           securityContext:
@@ -104,4 +106,4 @@ spec:
       volumes:
         - name: remote-client-config
           secret:
-            secretName: remote-client-config
+            secretName: remote-client-config-stone-stg-rh01

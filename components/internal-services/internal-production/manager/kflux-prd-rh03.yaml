@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: controller-manager-prod-rh03
+  name: controller-manager-kflux-prd-rh03
   labels:
     control-plane: controller-manager
     app.kubernetes.io/name: deployment
-    app.kubernetes.io/instance: controller-manager-prod-rh03
+    app.kubernetes.io/instance: controller-manager-kflux-prd-rh03
     app.kubernetes.io/component: manager
     app.kubernetes.io/created-by: internal-services
     app.kubernetes.io/part-of: internal-services
@@ -14,7 +14,7 @@ spec:
   selector:
     matchLabels:
       control-plane: controller-manager
-  replicas: 0
+  replicas: 1
   template:
     metadata:
       annotations:
@@ -59,7 +59,7 @@ spec:
             - --remote-cluster-config-file
             - /mnt/internal-services/remote-client-config/kubeconfig
             - --leader-election-id
-            - "prod-rh03"
+            - "kflux-prd-rh03"
           image: quay.io/konflux-ci/internal-services:54aed74393c0ee61a07a4e8c9dc704e583b88273
           name: manager
           securityContext:
@@ -106,4 +106,4 @@ spec:
       volumes:
         - name: remote-client-config
           secret:
-            secretName: remote-client-config-prod-rh03
+            secretName: remote-client-config-kflux-prd-rh03
