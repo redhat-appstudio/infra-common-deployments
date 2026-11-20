@@ -1,0 +1,16 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: internal-services
+spec:
+  freightCreationPolicy: Automatic
+  interval: 5m0s
+  subscriptions:
+    - git:
+        repoURL: https://github.com/redhat-appstudio/infra-common-deployments.git
+        commitSelectionStrategy: NewestFromBranch
+        branch: main
+        discoveryLimit: 5
+        includePaths:
+          - components/internal-services/shared-resources

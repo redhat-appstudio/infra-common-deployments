@@ -1,0 +1,15 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: kargo-konflux-release
+
+resources:
+  - base
+  - components/internal-services
+
+components:
+  - ../../shared/promotion-tasks
+
+commonAnnotations:
+  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

@@ -1,0 +1,149 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: ring-2-production
+  labels:
+    konflux-environment: production
+  annotations:
+    kargo.akuity.io/color: violet
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: internal-services
+      sources:
+        stages:
+          - ring-1-staging
+  promotionTemplate:
+    spec:
+      vars:
+        - name: srcPath
+          value: ./src
+        - name: freightPath
+          value: ./freight
+        - name: repoURL
+          value: https://github.com/redhat-appstudio/infra-common-deployments.git
+        - name: component
+          value: ${{ ctx.targetFreight.origin.name }}
+        - name: environment
+          value: internal-production
+        - name: mergeMode
+          value: manual
+        - name: skipProwChecks
+          value: 'true'
+      steps:
+        - uses: git-clone
+          as: clone
+          config:
+            repoURL: ${{ vars.repoURL }}
+            checkout:
+              - branch: main
+                path: ${{ vars.srcPath }}
+              - commit: ${{ commitFrom(vars.repoURL).ID }}
+                path: ${{ vars.freightPath }}
+        - task:
+            name: prepare-internal-services
+          as: promote
+          vars:
+            - name: srcPath
+              value: ${{ vars.srcPath }}
+            - name: freightPath
+              value: ${{ vars.freightPath }}
+            - name: repoURL
+              value: ${{ vars.repoURL }}
+            - name: component
+              value: ${{ vars.component }}
+            - name: environment
+              value: ${{ vars.environment }}
+        - task:
+            name: publish-promotion-pr
+          as: publish
+          vars:
+            - name: srcPath
+              value: ${{ vars.srcPath }}
+            - name: component
+              value: ${{ vars.component }}
+            - name: environment
+              value: ${{ vars.environment }}
+            - name: githubOrg
+              value: redhat-appstudio
+            - name: githubRepo
+              value: infra-common-deployments
+            - name: prepared
+              value: ${{ outputs['promote::result']?.prepared ?? '' }}
+            - name: baseCommitSHA
+              value: ${{ outputs['clone'].commits[vars.srcPath] }}
+            - name: mergeMode
+              value: ${{ vars.mergeMode }}
+            - name: skipProwChecks
+              value: ${{ vars.skipProwChecks }}
+            - name: prSummary
+              value: ${{ outputs['promote::result']?.prSummary ?? '' }}
+        - uses: set-metadata
+          as: annotate-freight-as-no-op
+          if: ${{ outputs['publish::result']?.published == 'yes' }}
+          config:
+            updates:
+              - kind: Freight
+                name: ${{ ctx.targetFreight.name }}
+                values:
+                  noOpRing2: ${{ outputs['publish::result'].promotionAsNoOp }}
+        - task:
+            name: verify-promotion-ci
+          as: ci
+          vars:
+            - name: published
+              value: ${{ outputs['publish::result']?.published ?? '' }}
+            - name: commitSHA
+              value: ${{ outputs['publish::result']?.headCommitSHA ?? '' }}
+            - name: promotionAsNoOp
+              value: ${{ outputs['publish::result']?.promotionAsNoOp ?? '' }}
+            - name: skipProwChecks
+              value: ${{ vars.skipProwChecks }}
+            - name: githubOrg
+              value: redhat-appstudio
+            - name: githubRepo
+              value: infra-common-deployments
+        - task:
+            name: merge-promotion-pr
+          as: merge
+          vars:
+            - name: passed
+              value: ${{ outputs['ci::result']?.passed ?? '' }}
+            - name: checkedSHA
+              value: ${{ outputs['ci::result']?.checkedSHA ?? '' }}
+            - name: headCommitSHA
+              value: ${{ outputs['publish::result']?.headCommitSHA ?? '' }}
+            - name: baseCommitSHA
+              value: ${{ outputs['publish::result']?.baseCommitSHA ?? '' }}
+            - name: prNumber
+              value: ${{ outputs['publish::result']?.prNumber ?? 0 }}
+            - name: promotionAsNoOp
+              value: ${{ outputs['publish::result']?.promotionAsNoOp ?? '' }}
+            - name: mergeMode
+              value: ${{ vars.mergeMode }}
+            - name: sourceBranch
+              value: ${{ outputs['publish::result']?.prBranch ?? '' }}
+            - name: githubOrg
+              value: redhat-appstudio
+            - name: githubRepo
+              value: infra-common-deployments
+        - task:
+            name: verify-argocd-deployment
+          as: verify-deployment
+          vars:
+            - name: mergeConfirmed
+              value: ${{ outputs['merge::result']?.mergeConfirmed ?? '' }}
+            - name: commitSHA
+              value: ${{ outputs['merge::result']?.mergeCommitSHA ?? '' }}
+            - name: component
+              value: ${{ vars.component }}
+            - name: clusters
+              value: in-cluster
+            - name: tokenSecret
+              value: argocd-app-reader-token
+            - name: appsNamespace
+              value: argocd-local
+            - name: githubRepo
+              value: redhat-appstudio/infra-common-deployments

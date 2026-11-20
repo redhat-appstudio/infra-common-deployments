@@ -1,0 +1,49 @@
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: prepare-internal-services
+spec:
+  vars:
+    - name: srcPath
+    - name: freightPath
+    - name: repoURL
+    - name: component
+    - name: environment
+  steps:
+    - uses: fail
+      as: validate-freight
+      if: >-
+        ${{ ctx.targetFreight.origin.name != 'internal-services' || vars.component != ctx.targetFreight.origin.name
+        || vars.repoURL != 'https://github.com/redhat-appstudio/infra-common-deployments.git'
+        || vars.environment not in ['internal-staging', 'internal-production']
+        || commitFrom(vars.repoURL) == nil
+        || !(commitFrom(vars.repoURL).ID matches '^[0-9a-f]{40}$') }}
+      config:
+        message: Expected internal-services Freight containing an immutable infra-common-deployments
+          commit, targeting internal-staging or internal-production.
+    # Replace the environment's shared-resources-ref from the immutable Freight
+    # checkout, never from a moving branch.
+    - uses: delete
+      as: delete-old-shared-resources
+      if: ${{ status('validate-freight') == 'Skipped' }}
+      config:
+        path: ${{ vars.srcPath }}/components/internal-services/${{ vars.environment }}/shared-resources-ref
+    - uses: copy
+      as: copy-freight-manifests
+      if: ${{ status('delete-old-shared-resources') == 'Succeeded' }}
+      config:
+        inPath: ${{ vars.freightPath }}/components/internal-services/shared-resources
+        outPath: ${{ vars.srcPath }}/components/internal-services/${{ vars.environment }}/shared-resources-ref
+    - uses: compose-output
+      as: result
+      if: >-
+        ${{ status('validate-freight') == 'Skipped' &&
+        status('delete-old-shared-resources') == 'Succeeded' &&
+        status('copy-freight-manifests') == 'Succeeded' }}
+      config:
+        prepared: 'yes'
+        prSummary: |
+          Update the internal-services shared-resources snapshot in ${{ vars.environment }} from the selected Freight.
+
+          Source: [${{ commitFrom(vars.repoURL).ID[0:12] }}](https://github.com/redhat-appstudio/infra-common-deployments/commit/${{ commitFrom(vars.repoURL).ID }}).
