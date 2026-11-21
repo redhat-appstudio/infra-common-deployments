@@ -6,6 +6,8 @@
 #   __RUNNER_NS__     → namespace where PipelineRun executes and SA lives
 #   __APP_NS__        → namespace where test applications are created
 #   __GITHUB_TOKEN__  → GitHub PAT for private test repos
+#   __SKIP_CLEANUP__  → SKIP_CLEANUP env var from the AnalysisTemplate ("true"/"false");
+#                       forwarded to the conformance suite as E2E_SKIP_CLEANUP
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -57,6 +59,8 @@ data:
                 value: upstream
               - name: GITHUB_TOKEN
                 value: __GITHUB_TOKEN__
+              - name: E2E_SKIP_CLEANUP
+                value: "__SKIP_CLEANUP__"
               command:
               - /usr/local/bin/conformance.test
               args:
