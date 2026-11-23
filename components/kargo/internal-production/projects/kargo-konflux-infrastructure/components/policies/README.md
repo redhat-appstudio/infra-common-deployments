@@ -21,10 +21,10 @@ Stage still requires verified Freight from its predecessor. Ring 0 requires
 `ci/prow/konflux-ring-deployments-conformance-tests`; Prow is skipped in later rings.
 Auto-promotion creates production proposals (Rings 2-4); it does not approve
 their merge. Rings 3-4 soak (48h / 72h) before promoting onward. Readiness and
-kanary cover each ring's configured verification targets; Ring 1 excludes
-`lightwell-dev`. Ring-1's `stone-stage-p01` and
-`stone-stg-rh01` currently render only `kueue-config` (missing `../base`) — a
-misconfiguration being fixed separately; they stay in the ring-1 set, not dropped.
+kanary cover each ring's configured verification targets. Ring-1's
+`stone-stage-p01` and `stone-stg-rh01` currently render only `kueue-config`
+(missing `../base`) — a misconfiguration being fixed separately; they stay in
+the ring-1 set, not dropped.
 
 ## What changes
 

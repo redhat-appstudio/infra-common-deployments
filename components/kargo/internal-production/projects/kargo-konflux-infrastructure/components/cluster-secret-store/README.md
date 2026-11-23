@@ -21,8 +21,7 @@ changes; they do not create Freight or propagate through this pipeline.
 
 ## Rings and review
 
-Ring 1 is staging. Ring 0 is empty and has no Stage. The empty
-`lightwell-dev` overlay is excluded from readiness.
+Ring 1 is staging. Ring 0 is empty and has no Stage.
 
 | Ring | Freight source | Argo CD readiness targets | Kanary sample |
 |---|---|---|---|

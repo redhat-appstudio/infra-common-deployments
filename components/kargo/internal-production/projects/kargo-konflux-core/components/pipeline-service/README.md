@@ -64,9 +64,8 @@ ArgoCD readiness uses the `pipeline-service` application prefix and label:
 - Ring 3: stone-prd-rh01, stone-prod-p02.
 - Ring 4: kflux-prd-rh02.
 
-Ring 1 also deploys to lightwell-dev and kflux-stg-p02 through its ApplicationSet.
-These are not readiness/Kanary targets here, matching the existing infrastructure
-gate coverage. Lightwell-dev remains excluded from production Kargo verification.
+Ring 1 also deploys to kflux-stg-p02 through its ApplicationSet. It is not a
+readiness/Kanary target here, matching the existing infrastructure gate coverage.
 Kanary uses the same representative clusters and counts as the policies component.
 
 ## Initial production migration

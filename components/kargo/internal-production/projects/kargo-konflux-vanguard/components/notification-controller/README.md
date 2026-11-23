@@ -16,8 +16,7 @@ The deployment path is `components/notification-controller/rings/ring-1/base`,
 correcting the old task's obsolete `notification-controller-rd` path. The rendered
 staging ApplicationSet also uses `notification-controller` as its Application
 prefix. At the checked infra-deployments revision `5012cf12f`,
-`stone-stg-rh01` and `stone-stage-p01` consume this base. The additional mapped
-`lightwell-dev` overlay is empty and is not a deployment readiness target.
+`stone-stg-rh01` and `stone-stage-p01` consume this base.
 
 Readiness requires every configured Application in the ring to be healthy and synchronized to
 the confirmed revision, including no-op promotions. Freight metadata `noOpRing1`
