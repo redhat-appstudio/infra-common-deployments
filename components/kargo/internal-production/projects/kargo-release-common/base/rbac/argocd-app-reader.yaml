@@ -1,0 +1,30 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argocd-app-reader
+  namespace: kargo-release-common
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: argocd-app-reader-token
+  namespace: kargo-release-common
+  labels:
+    kargo.akuity.io/cred-type: generic
+  annotations:
+    kubernetes.io/service-account.name: argocd-app-reader
+type: kubernetes.io/service-account-token
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kargo-release-common-argocd-app-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kargo-argocd-app-reader
+subjects:
+  - kind: ServiceAccount
+    name: argocd-app-reader
+    namespace: kargo-release-common
