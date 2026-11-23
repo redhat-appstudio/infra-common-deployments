@@ -144,7 +144,6 @@ spec:
         - task:
             name: merge-promotion-pr
           as: merge
-          if: ${{ outputs['publish::result']?.promotionAsNoOp == 'yes' || status('wait-for-pr-approval') == 'Succeeded' }}
           vars:
             - name: passed
               value: ${{ outputs['ci::result']?.passed ?? '' }}
