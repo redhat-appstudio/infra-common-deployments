@@ -6,3 +6,8 @@ namespace: iib
 
 resources:
 - shared-resources-ref
+- trusted-ca-cm.yaml
+- registry-proxy-push-secret.yaml
+- external-secrets
+- rbac
+- repositories
