@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - brew-registry-redhat-read-es.yaml
+  - registry-redhat-io-read-es.yaml
+  - iib-api-test-binaryless-index-configs-git-auth-es.yaml
+  - iib-api-test-binaryless-index-configs-gitlab-webhook-config-es.yaml
+  - iib-api-test-index-configs-git-auth-es.yaml
+  - iib-api-test-index-configs-gitlab-webhook-config-es.yaml
+  - certified-operator-index-pending-prod-index-configs-git-auth-es.yaml
+  - certified-operator-index-pending-prod-index-configs-gitlab-webhook-config-es.yaml
+  - community-operator-index-pending-prod-index-configs-git-auth-es.yaml
+  - community-operator-index-pending-prod-index-configs-gitlab-webhook-config-es.yaml
+  - redhat-marketplace-index-pending-prod-index-configs-git-auth-es.yaml
+  - redhat-marketplace-index-pending-prod-index-configs-gitlab-webhook-config-es.yaml
+  - regenerate-bundle-universal-repository-git-auth-es.yaml
+  - regenerate-bundle-universal-repository-gitlab-webhook-config-es.yaml
+  - iib-pub-index-configs-git-auth-es.yaml
+  - iib-pub-index-configs-gitlab-webhook-config-es.yaml
+  - iib-pub-pending-index-configs-git-auth-es.yaml
+  - iib-pub-pending-index-configs-gitlab-webhook-config-es.yaml
