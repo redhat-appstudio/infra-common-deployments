@@ -32,7 +32,7 @@ CI passes; production PRs require a human to merge them.
 
 | Ring | Source | Required source soak | Merge | ArgoCD readiness targets |
 | --- | --- | --- | --- | --- |
-| 1 | Warehouse | None | Automatic after CI | kflux-hub-stg-01, kflux-stg-p02, stone-stage-p01, stone-stg-rh01 |
+| 1 | Warehouse | None | Automatic after CI | stone-stg-rh01, stone-stage-p01 |
 | 2 | Ring 1 | 48 hours | Manual | kflux-fedora-01, kflux-lw-p01, kflux-ocp-p01, kflux-osp-p01, kflux-prd-rh03, kflux-rhel-p01, stone-prod-p01 |
 | 3 | Ring 2 | 48 hours | Manual | stone-prd-rh01, stone-prod-p02 |
 | 4 | Ring 3 | 72 hours | Manual | kflux-prd-rh02 |
@@ -46,8 +46,8 @@ Application label already present in both deployment ApplicationSets.
 Kanary uses the existing representative fleet checks: stone-stg-rh01 and
 stone-stage-p01 for Ring 1, stone-prod-p01 and kflux-prd-rh03 for Ring 2,
 stone-prd-rh01 for Ring 3, and kflux-prd-rh02 for Ring 4. These are fleet health
-checks, not Pulp-specific functional tests. ArgoCD checks cover the listed Pulp cluster overlays, including staging
-clusters outside the Kanary sample.
+checks, not Pulp-specific functional tests. Ring 1 uses the same two clusters
+for both ArgoCD readiness and Kanary. The deployment inventory is unchanged.
 
 ## Access and operations
 

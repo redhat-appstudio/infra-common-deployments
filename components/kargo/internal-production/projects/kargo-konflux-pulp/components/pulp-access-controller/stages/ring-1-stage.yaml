@@ -138,6 +138,6 @@ spec:
             - name: component
               value: ${{ vars.component }}
             - name: clusters
-              value: kflux-hub-stg-01|kflux-stg-p02|stone-stage-p01|stone-stg-rh01
+              value: stone-stg-rh01|stone-stage-p01
             - name: tokenSecret
               value: argocd-app-reader-token-staging
