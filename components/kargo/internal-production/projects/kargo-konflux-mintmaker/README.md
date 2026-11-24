@@ -155,10 +155,10 @@ Rings 1–4 use `mintmaker-<cluster>` Applications with
 | 3 | `stone-prd-rh01`, `stone-prod-p02` | `stone-prd-rh01`, `stone-prod-p02` |
 | 4 | `kflux-prd-rh02` | `kflux-prd-rh02` |
 
-`lightwell-dev` and `kflux-lw-p01` are excluded from verification by explicit
-project policy. Do not reintroduce them when refreshing deployment inventories.
-This does not change their deployment configuration. Unmapped clusters with empty overlays
-are not verification targets. Ring 1 uses the two requested staging clusters.
+`kflux-lw-p01` is excluded from verification by explicit project policy. Do not
+reintroduce it when refreshing deployment inventories. This does not change its
+deployment configuration. Unmapped clusters with empty overlays are not
+verification targets. Ring 1 uses the two requested staging clusters.
 Ring 2 verifies all six production targets listed above in both checks, with
 Kanary expected-cluster-count set to 6. Ring 3 checks both `stone-prd-rh01` and
 `stone-prod-p02` in Argo readiness and Kanary, including the cluster whose tenant

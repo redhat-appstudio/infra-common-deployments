@@ -52,8 +52,6 @@ Cluster assignments were checked against infra-deployments commit
 including rendered staging and production ApplicationSets with their shared
 cluster-list patches. This is configured inventory, not a live deployment check.
 
-- `lightwell-dev` is explicitly excluded by the Kite staging ApplicationSet and
-  is not a verification target.
 - `kflux-lw-p01` is a deployed Ring 2 target in that inventory, but is deliberately
   excluded from both Kargo verification lists per the existing rollout requirement.
   Its overlay receives the shared Ring 2 update; its health does not gate onward

@@ -81,10 +81,10 @@ is not assigned a Kanary probe overlay in the checked Kanary ApplicationSet.
 The staging tenant targets supply the available Kanary checks. This is not a
 claim of hub-specific synthetic coverage.
 
-`lightwell-dev` and `kflux-lw-p01` remain excluded from verification, as explicitly
-requested for Kargo projects. The inventory above still lists their deployment
-overlays; exclusion does **not** mean they no longer deploy this component.
-Changes to their shared ring base can still reach them through Argo CD.
+`kflux-lw-p01` remains excluded from verification, as explicitly requested for
+Kargo projects. The inventory above still lists its deployment overlay; exclusion
+does **not** mean it no longer deploys this component. Changes to its shared ring
+base can still reach it through Argo CD.
 
 ## Access and ownership
 

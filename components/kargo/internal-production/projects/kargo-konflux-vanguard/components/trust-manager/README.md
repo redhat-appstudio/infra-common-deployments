@@ -36,11 +36,9 @@ ArgoCD readiness checks use:
 - Ring 3: stone-prd-rh01, stone-prod-p02.
 - Ring 4: kflux-prd-rh02.
 
-The Ring 1 base also feeds lightwell-dev and kflux-stg-p02; these are not
-readiness or Kanary targets in this flow. Lightwell-dev remains excluded from
-production Kargo verification, consistent with the other Vanguard components.
-Kanary checks cover the same representative clusters as project-controller;
-the Stage manifests contain the exact lists.
+The Ring 1 base also feeds kflux-stg-p02; it is not a readiness or Kanary target
+in this flow. Kanary checks cover the same representative clusters as
+project-controller; the Stage manifests contain the exact lists.
 
 ## Operations
 

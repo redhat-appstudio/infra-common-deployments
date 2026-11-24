@@ -42,12 +42,11 @@ Verification targets use the Application names checked against infra-deployments
 - Ring 4: `kflux-prd-rh02`.
 
 Applications use `project-controller-<cluster>` names and the
-`app.kubernetes.io/part-of: project-controller` label. All three staging overlays
-include the component base. Kanary covers only `stone-stg-rh01` and
-`stone-stage-p01`, matching the existing staging monitoring configuration;
-`lightwell-dev` is excluded from Argo readiness verification. Production retains
-the existing Vanguard Kanary targets: `stone-prod-p01` and `kflux-prd-rh03`
-in Ring 2, `stone-prd-rh01` in Ring 3, and `kflux-prd-rh02` in Ring 4.
+`app.kubernetes.io/part-of: project-controller` label. Staging overlays include
+the component base. Kanary covers only `stone-stg-rh01` and `stone-stage-p01`,
+matching the existing staging monitoring configuration. Production retains the
+existing Vanguard Kanary targets: `stone-prod-p01` and `kflux-prd-rh03` in
+Ring 2, `stone-prd-rh01` in Ring 3, and `kflux-prd-rh02` in Ring 4.
 
 ## What a promotion changes
 

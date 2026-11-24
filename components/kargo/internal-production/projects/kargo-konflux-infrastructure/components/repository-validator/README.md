@@ -40,7 +40,6 @@ Kanary targets, not proof of live metric availability or policy-specific tests.
 The shared staging analysis retains its existing monitoring duration; removing
 soak delays does not skip verification.
 
-`lightwell-dev` has an empty overlay and is excluded from readiness.
 `stone-stg-rh01` is not a deployment target. Ring 4 is intentionally empty, so no
 Ring 4 Stage is created. Readiness uses the Application prefix
 `repository-validator`, matching the public Git directory name.
