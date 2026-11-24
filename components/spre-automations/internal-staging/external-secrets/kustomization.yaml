@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - pharos-token.yaml
   - pharos-kflux-stg-p02-token.yaml
+  - spre-agent-slack.yaml

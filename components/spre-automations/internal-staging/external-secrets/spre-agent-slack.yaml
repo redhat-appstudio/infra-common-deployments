@@ -1,0 +1,27 @@
+---
+# Incoming Slack webhook for the agent reports. The harness mounts the Secret as
+# spre-agent-slack and reads the key "webhook-url".
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: spre-agent-slack
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  data:
+    - secretKey: webhook-url
+      remoteRef:
+        conversionStrategy: Default
+        decodingStrategy: None
+        key: staging/spre/slack-webhook
+        metadataPolicy: None
+        property: SLACK_WEBHOOK_URL
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: appsre-stonesoup-vault
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Delete
+    name: spre-agent-slack
