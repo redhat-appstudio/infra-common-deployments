@@ -56,6 +56,8 @@ spec:
                         value: konflux-conformance-tests
                       - name: POLL_INTERVAL
                         value: "30"
+                      - name: SKIP_CLEANUP
+                        value: "true"
                     command:
                       - /bin/bash
                       - -c
@@ -90,6 +92,7 @@ spec:
                           -e "s|__RUNNER_NS__|${RUNNER_NAMESPACE}|g" \
                           -e "s|__APP_NS__|${APP_NAMESPACE}|g" \
                           -e "s|__GITHUB_TOKEN__|${GITHUB_TOKEN}|g" \
+                          -e "s|__SKIP_CLEANUP__|${SKIP_CLEANUP}|g" \
                           /template/template.yaml | kubectl create -f -
 
                         # ── poll until PipelineRun completes ─────────────
@@ -105,7 +108,9 @@ spec:
                             echo "──────────────────────────────────────────────────"
                             echo " PASSED"
                             echo "──────────────────────────────────────────────────"
-                            kubectl delete pipelinerun "${RUN_ID}" -n "${RUNNER_NAMESPACE}" --ignore-not-found || true
+                            if [ "${SKIP_CLEANUP}" != "true" ]; then
+                              kubectl delete pipelinerun "${RUN_ID}" -n "${RUNNER_NAMESPACE}" --ignore-not-found || true
+                            fi
                             exit 0
                           fi
                           if [ "${STATUS}" = "False" ]; then
@@ -113,7 +118,9 @@ spec:
                             echo " FAILED (${REASON})"
                             echo "──────────────────────────────────────────────────"
                             kubectl logs -n "${RUNNER_NAMESPACE}" -l "tekton.dev/pipelineRun=${RUN_ID}" --tail=50 || true
-                            kubectl delete pipelinerun "${RUN_ID}" -n "${RUNNER_NAMESPACE}" --ignore-not-found || true
+                            if [ "${SKIP_CLEANUP}" != "true" ]; then
+                              kubectl delete pipelinerun "${RUN_ID}" -n "${RUNNER_NAMESPACE}" --ignore-not-found || true
+                            fi
                             exit 1
                           fi
 
