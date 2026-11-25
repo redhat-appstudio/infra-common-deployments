@@ -77,7 +77,7 @@ spec:
             - name: mergeMode
               value: ${{ vars.mergeMode }}
             - name: skipProwChecks
-              value: ${{ vars.skipProwChecks }}
+              value: ${{ quote(vars.skipProwChecks) }}
             - name: prSummary
               value: ${{ outputs['promote::result']?.prSummary ?? '' }}
         - uses: set-metadata
@@ -100,7 +100,7 @@ spec:
             - name: promotionAsNoOp
               value: ${{ outputs['publish::result']?.promotionAsNoOp ?? '' }}
             - name: skipProwChecks
-              value: ${{ vars.skipProwChecks }}
+              value: ${{ quote(vars.skipProwChecks) }}
             - name: githubOrg
               value: redhat-appstudio
             - name: githubRepo
