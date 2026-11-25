@@ -105,7 +105,7 @@ spec:
                             echo "──────────────────────────────────────────────────"
                             echo " PASSED"
                             echo "──────────────────────────────────────────────────"
-                            kubectl delete pipelinerun "${RUN_ID}" -n "${RUNNER_NAMESPACE}" --ignore-not-found || true
+                            kubectl delete pipelinerun "${RUN_ID}" -n "${RUNNER_NAMESPACE}" --ignore-not-found --wait=false --request-timeout=15s || true
                             exit 0
                           fi
                           if [ "${STATUS}" = "False" ]; then
@@ -113,7 +113,7 @@ spec:
                             echo " FAILED (${REASON})"
                             echo "──────────────────────────────────────────────────"
                             kubectl logs -n "${RUNNER_NAMESPACE}" -l "tekton.dev/pipelineRun=${RUN_ID}" --tail=50 || true
-                            kubectl delete pipelinerun "${RUN_ID}" -n "${RUNNER_NAMESPACE}" --ignore-not-found || true
+                            kubectl delete pipelinerun "${RUN_ID}" -n "${RUNNER_NAMESPACE}" --ignore-not-found --wait=false --request-timeout=15s || true
                             exit 1
                           fi
 
