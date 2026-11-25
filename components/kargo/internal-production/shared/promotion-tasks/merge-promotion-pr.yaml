@@ -20,8 +20,11 @@ spec:
       value: redhat-appstudio
     # Defaults from the Stage's component & targetRing for infra-deployments callers.
     # Stages using `environment` must pass the publish task's `prBranch` output instead.
+    # Kargo evaluates this default during task expansion even when the caller
+    # provides sourceBranch, so it must be nil-safe when neither targetRing nor
+    # environment is defined on the Stage.
     - name: sourceBranch
-      value: ${{ ctx.project + '/' + vars.component + '/' + vars.targetRing }}
+      value: ${{ ctx.project + '/' + vars.component + '/' + (vars.targetRing ?? vars.environment ?? '') }}
   steps:
     - uses: fail
       as: validate-config
