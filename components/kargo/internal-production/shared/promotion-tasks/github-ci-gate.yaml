@@ -87,8 +87,11 @@ spec:
           response.status == 200 &&
           len(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')})) > 0 &&
           all(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')}), {.state == 'success'})
-        # Failed test statuses may recover through /retest within the fixed budget.
-        failureExpression: response.status in [401, 403, 404]
+        failureExpression: |
+          response.status in [401, 403, 404] || (response.status == 200 && len(filter(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')}), {.state in ['failure', 'error']})) > 0)
+        errorExpression: |
+          response.status != 200 ? 'GitHub status API: HTTP ' + string(response.status) :
+          'Failed Prow checks: ' + join(map(filter(filter(response.body.statuses, {.context != 'tide' && (.context matches '${{ vars.requiredProwChecks }}')}), {.state in ['failure', 'error']}), {.context + '=' + .state}), ', ')
         timeout: 30s
     # Emit a result output only when all checks pass. Top-level steps can
     # check outputs['github-ci-gate::result']?.passed == 'yes' to guard

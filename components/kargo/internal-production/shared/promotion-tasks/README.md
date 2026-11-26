@@ -233,23 +233,15 @@ must pass `sourceBranch: ${{ outputs['publish::result']?.prBranch ?? '' }}`. Mis
 pending CI results wait; failed results block completion. Responses exceeding
 100 checks/statuses are rejected rather than approving a partial result set.
 
-**Prow retests:** a required Prow context in `failure` or `error` keeps the
-Promotion Running at the Prow gate. Comment `/retest` on the PR to ask Prow to
-rerun checks. Kargo polls the latest statuses for the same published commit and
-continues only when at least one required context is present and all matching
-contexts report `success`. It does not listen for or interpret PR comments.
-Prow polling defaults to 15 minutes (`prowPollInterval`) with a 2h40m wait budget;
-a retest does not reset that budget. If required Prow checks have not passed when
-the budget expires, the Promotion fails. The stage queue stays occupied while
-waiting. The legacy production and infra-common Prow gates use the same 2h40m
-budget; their polling intervals remain unchanged.
+**Prow failures:** A required Prow context in `failure` or `error` fails the
+Promotion when the gate next polls GitHub. Pending or missing required statuses
+can wait up to 2h40m. The shared gate polls every 15 minutes by default
+(`prowPollInterval`). The legacy gates keep their existing polling intervals.
 
-An already Failed or timed-out Promotion needs an explicit Kargo retry; later
-Prow success does not restart it automatically. Existing Promotions retain their
-expanded steps, so this change applies to newly created Promotions. A failure in
-a non-excluded check in the earlier GitHub check-runs gate (for example,
-`yamllint`) still fails immediately and is outside this Prow-only retest behavior. Authentication errors,
-missing API resources, and truncated status responses still fail closed.
+After resolving the CI failure, start a fresh Kargo Promotion. A later Prow
+success does not automatically restart a failed Promotion. Existing
+Promotions retain the steps captured at creation. The shared gate also rejects
+authentication failures, missing API resources and truncated status responses.
 
 **Readiness:** every configured Application must appear in the same complete
 response and be Healthy, Synced, at the expected revision, and not deleting or
