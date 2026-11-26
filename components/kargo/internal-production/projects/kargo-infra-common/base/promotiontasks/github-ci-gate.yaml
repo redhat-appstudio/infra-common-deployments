@@ -52,4 +52,8 @@ spec:
           response.status == 200 &&
           len(filter(response.body.statuses, {.context != 'tide'})) > 0 &&
           all(filter(response.body.statuses, {.context != 'tide'}), {.state == 'success'})
+        failureExpression: |
+          (response.status == 200 && len(filter(filter(response.body.statuses, {.context != 'tide'}), {.state in ['failure', 'error']})) > 0)
+        errorExpression: |
+          'Failed Prow checks: ' + join(map(filter(filter(response.body.statuses, {.context != 'tide'}), {.state in ['failure', 'error']}), {.context + '=' + .state}), ', ')
         timeout: 30s
