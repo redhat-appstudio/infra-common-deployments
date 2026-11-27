@@ -69,21 +69,11 @@ spec:
       if: ${{ status('push') == 'Succeeded' && task.outputs['push'].commit != task.outputs['sign'].commit }}
       config:
         message: The published head must be the exact GitHub-signed commit. CI and merge remain blocked.
-    - uses: git-open-pr
-      as: open-pr
+    - uses: compose-output
+      as: render-pr-description
       if: ${{ status('push') == 'Succeeded' }}
-      # Only the recovery path may turn an exhausted native error into success.
-      continueOnError: true
-      # Retry native discovery before spending requests on the repository-credential fallback.
-      retry:
-        timeout: 5m
-        errorThreshold: 3
       config:
-        repoURL: https://github.com/${{ vars.githubOrg }}/${{ vars.githubRepo }}.git
-        sourceBranch: '${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing != "" ? vars.targetRing : vars.environment }}'
-        targetBranch: main
-        title: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing != "" ? vars.targetRing : vars.environment }}'
-        description: |
+        description: |-
           ## Promote ${{ vars.component }} to ${{ vars.targetRing != "" ? vars.targetRing : vars.environment }}
 
           ${{ vars.prSummary != '' ? vars.prSummary : 'Update the component to the selected Freight.' }}
@@ -107,6 +97,21 @@ spec:
           </details>
 
           ${{ len(vars.prChanges) > 0 ? 'Previous values reflect Git configuration, not necessarily the running deployment.' : '' }}
+    - uses: git-open-pr
+      as: open-pr
+      if: ${{ status('push') == 'Succeeded' }}
+      # Only the recovery path may turn an exhausted native error into success.
+      continueOnError: true
+      # Retry native discovery before spending requests on the repository-credential fallback.
+      retry:
+        timeout: 5m
+        errorThreshold: 3
+      config:
+        repoURL: https://github.com/${{ vars.githubOrg }}/${{ vars.githubRepo }}.git
+        sourceBranch: '${{ ctx.project }}/${{ vars.component }}/${{ vars.targetRing != "" ? vars.targetRing : vars.environment }}'
+        targetBranch: main
+        title: 'chore(${{ ctx.stage }}): promote ${{ vars.component }} to ${{ vars.targetRing != "" ? vars.targetRing : vars.environment }}'
+        description: ${{ task.outputs['render-pr-description'].description }}
         labels: "${{ filter(split((vars.targetRing != '' ? vars.targetRing : vars.environment) + ',automated-promotion,component/' + vars.component + (vars.extraPRLabels != '' ? ',' + vars.extraPRLabels : ''), ','), {# != ''}) }}"
     # Recovery only: adopt an existing PR after native discovery exhausts retries.
     - uses: http
@@ -147,6 +152,75 @@ spec:
       if: ${{ status('push') == 'Succeeded' && status('open-pr') in ['Errored', 'Failed'] && status('find-pr') != 'Succeeded' }}
       config:
         message: Native PR publication failed and no matching open PR could be recovered. CI and merge remain blocked.
+    # The native opener reuses a PR without updating its body. Check the
+    # current PR identity before editing the body for this promotion.
+    - uses: http
+      as: inspect-pr-description
+      if: ${{ status('open-pr') == 'Succeeded' || status('find-pr') == 'Succeeded' }}
+      retry:
+        timeout: 5m
+      config:
+        method: GET
+        url: https://api.github.com/repos/${{ vars.githubOrg }}/${{ vars.githubRepo }}/pulls/${{ task.outputs['find-pr']?.prNumber ?? task.outputs['open-pr'].pr.id }}
+        headers: *github-headers
+        timeout: 30s
+        successExpression: |
+          response.status == 200 &&
+          response.body.head.repo.full_name == ${{ quote(vars.githubOrg + '/' + vars.githubRepo) }} &&
+          response.body.base.repo.full_name == ${{ quote(vars.githubOrg + '/' + vars.githubRepo) }} &&
+          response.body.head.ref == ${{ quote(ctx.project + '/' + vars.component + '/' + (vars.targetRing != '' ? vars.targetRing : vars.environment)) }} &&
+          response.body.base.ref == 'main' &&
+          response.body.head.sha == ${{ quote(task.outputs['push'].commit) }} &&
+          (response.body.state == 'open' || response.body.merged == true)
+        failureExpression: |
+          response.status in [401, 404] ||
+          (response.status == 403 && response.header('X-RateLimit-Remaining') != '0' &&
+          response.header('Retry-After') == '' && !(lower(response.body?.message ?? '') contains 'rate limit')) ||
+          (response.status == 200 && (response.body.head.sha != ${{ quote(task.outputs['push'].commit) }} ||
+            (response.body.state == 'closed' && response.body.merged != true)))
+        errorExpression: "'Cannot inspect the current promotion PR for a description refresh (HTTP ' + string(response.status) + ')'"
+        outputs:
+          - name: prNumber
+            fromExpression: response.body.number
+          - name: canUpdate
+            fromExpression: response.body.state == 'open' && response.body.user?.login == 'konflux-kargo-bot[bot]' && response.body.user?.type == 'Bot'
+          - name: currentBody
+            fromExpression: trim(response.body.body ?? '')
+          # Preserve the link appended by the native opener.
+          - name: kargoLink
+            fromExpression: find(split(trim(response.body.body ?? ''), '\n'), {# startsWith '[View in Kargo UI]('}) ?? ''
+    - uses: compose-output
+      as: refreshed-pr-description
+      if: ${{ status('inspect-pr-description') == 'Succeeded' && task.outputs['inspect-pr-description'].canUpdate }}
+      config:
+        description: >-
+          ${{ trim(task.outputs['render-pr-description'].description) +
+          (task.outputs['inspect-pr-description'].kargoLink != '' ? '\n\n' + task.outputs['inspect-pr-description'].kargoLink : '') }}
+    - uses: http
+      as: refresh-pr-description
+      if: >-
+        ${{ status('refreshed-pr-description') == 'Succeeded' &&
+         task.outputs['inspect-pr-description'].currentBody != task.outputs['refreshed-pr-description'].description }}
+      retry:
+        errorThreshold: 1
+      config:
+        method: PATCH
+        url: https://api.github.com/repos/${{ vars.githubOrg }}/${{ vars.githubRepo }}/pulls/${{ task.outputs['inspect-pr-description'].prNumber }}
+        headers:
+          - name: Authorization
+            value: Bearer ${{ repoCredentials('https://github.com/' + vars.githubOrg + '/' + vars.githubRepo + '.git', 'git').Password }}
+          - name: Accept
+            value: application/vnd.github+json
+          - name: Content-Type
+            value: application/json
+        body: >-
+          ${{ asJSON({body: task.outputs['refreshed-pr-description'].description}) }}
+        timeout: 30s
+        successExpression: |
+          response.status == 200 && response.body.head.sha == ${{ quote(task.outputs['push'].commit) }} &&
+          response.body.state == 'open'
+        failureExpression: response.status != 200 || response.body.head.sha != ${{ quote(task.outputs['push'].commit) }} || response.body.state != 'open'
+        errorExpression: "'Cannot refresh the promotion PR description or the PR changed (HTTP ' + string(response.status) + ')'"
     # A skipped PR can mean main already has the promoted tree. Verify, never assume.
     - uses: http
       as: read-converged-main
