@@ -166,7 +166,28 @@ spec:
             .status?.health?.status == 'Degraded' ||
             .status?.operationState?.phase in ['Failed', 'Error']
           }))
-        errorExpression: 'response.status != 200 ? ''Apps not healthy; HTTP '' + string(response.status) : '''''
+        errorExpression: |
+          if response.status != 200 {
+            'Cannot list Argo CD Applications during health verification: HTTP ' + string(response.status)
+          } else {
+            let expectedNames = map(split(${{ quote(vars.clusters) }}, '|'), {${{ quote(vars.component) }} + '-' + #});
+            let failedApps = filter(response.body.items, {
+              .metadata.name in expectedNames &&
+              (.status?.health?.status == 'Degraded' || .status?.operationState?.phase in ['Failed', 'Error'])
+            });
+            'Argo CD readiness failed: ' + join(map(failedApps, {
+              let failedResources = filter(.status?.operationState?.syncResult?.resources ?? [], {
+                .status in ['SyncFailed', 'PruneFailed'] || .hookPhase in ['Failed', 'Error']
+              });
+              .metadata.name + ' (health=' + (.status?.health?.status ?? 'Unknown') +
+              ', sync=' + (.status?.sync?.status ?? 'Unknown') +
+              ', operation=' + (.status?.operationState?.phase ?? 'none') +
+              ', revision=' + (.status?.sync?.revision ?? 'unknown') +
+              (len(failedResources) > 0 ? ', failed resources: ' + join(map(take(failedResources, 5), {
+                (.kind ?? 'Resource') + '/' + ((.namespace ?? '') != '' ? .namespace + '/' : '') + (.name ?? 'unknown')
+              }), ', ') : '') + ')'
+            }), '; ')
+          }
         outputs:
           - name: syncedRevision
             fromExpression: |
