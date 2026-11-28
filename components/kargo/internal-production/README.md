@@ -3,7 +3,8 @@
 This overlay hosts promotion projects for both `infra-common-deployments` and
 `infra-deployments`. Start with [onboarding](docs/onboarding.md) for a new
 component, [operations](docs/operations.md) for platform changes, or
-[verifications](docs/verifications.md) for post-promotion checks.
+[verifications](docs/verifications.md) for post-promotion checks. The short
+[configuration guide](../CONFIGURATION.md) maps common changes to their files.
 
 ## Directory and deployment scope
 

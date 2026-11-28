@@ -4,7 +4,10 @@
 
 ## Ring naming conventions
 
-All Kargo resources follow a strict naming scheme. Monitoring dashboards, alerts, promotion cleaners and automation scripts depend on these patterns — deviating silently breaks observability and tooling.
+Domain-project Stages and resources use the conventions below because dashboards,
+alerts, cleaners and automation rely on their names. `kargo-infra-common` is an
+exception with project-level stages named `ring-1-staging` and
+`ring-2-production`; use its [project guide](../projects/kargo-infra-common/README.md).
 
 ### Stage names
 
