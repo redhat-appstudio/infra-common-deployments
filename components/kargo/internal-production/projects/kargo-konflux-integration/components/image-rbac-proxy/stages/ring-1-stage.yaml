@@ -23,9 +23,9 @@ spec:
       - name: types
         value: container-single-arch
       - name: clusters
-        value: stone-stage-p01|stone-stg-rh01|kflux-stg-p02
+        value: stone-stage-p01|stone-stg-rh01
       - name: expected-cluster-count
-        value: "3"
+        value: "2"
       # Nominal 24-hour window: first check at 40m, then 35 further 40m intervals.
       - name: initial-delay
         value: "40m"
@@ -150,6 +150,6 @@ spec:
             - name: component
               value: ${{ vars.component }}
             - name: clusters
-              value: kflux-hub-stg-01|kflux-stg-p02|stone-stage-p01|stone-stg-rh01
+              value: stone-stage-p01|stone-stg-rh01
             - name: tokenSecret
               value: argocd-app-reader-token-staging

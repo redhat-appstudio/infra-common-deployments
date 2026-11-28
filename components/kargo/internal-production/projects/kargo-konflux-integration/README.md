@@ -71,15 +71,16 @@ staging cluster-registration labels in infra-common-deployments commit
 | Ring | Argo readiness targets | Kanary targets | Expected Kanary count |
 | --- | --- | --- | --- |
 | 0 | None; main-branch integration only | None | — |
-| 1 | `stone-stage-p01`, `stone-stg-rh01`, `kflux-stg-p02`, `kflux-hub-stg-01` | `stone-stage-p01`, `stone-stg-rh01`, `kflux-stg-p02` | 3 |
+| 1 | `stone-stage-p01`, `stone-stg-rh01` | Same | 2 |
 | 2 | `kflux-fedora-01`, `kflux-ocp-p01`, `kflux-osp-p01`, `kflux-prd-rh03`, `kflux-rhel-p01`, `stone-prod-p01` | Same | 6 |
 | 3 | `stone-prd-rh01`, `stone-prod-p02` | Same | 2 |
 | 4 | `kflux-prd-rh02` | Same | 1 |
 
-`kflux-hub-stg-01` receives the component and is covered by Argo readiness, but
-is not assigned a Kanary probe overlay in the checked Kanary ApplicationSet.
-The staging tenant targets supply the available Kanary checks. This is not a
-claim of hub-specific synthetic coverage.
+Ring 1 verification intentionally targets only `stone-stage-p01` and
+`stone-stg-rh01`. `kflux-stg-p02` and `kflux-hub-stg-01` remain deployment
+targets in the checked inventory but are excluded from both Argo readiness
+and Kanary verification. Shared Ring 1 changes can still deploy to them;
+promotion does not wait for their readiness or signals.
 
 `kflux-lw-p01` remains excluded from verification, as explicitly requested for
 Kargo projects. The inventory above still lists its deployment overlay; exclusion
