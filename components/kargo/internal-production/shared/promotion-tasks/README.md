@@ -269,8 +269,14 @@ Promotion identifiers are collapsed under Promotion details. Keep `prSummary`
 short; use a Markdown list when describing several artifacts.
 Previous values come from Git, not the running deployment. Comparison links are
 only produced for recognized manifest repositories with old and new 40-character
-hexadecimal refs; they are not proof of image provenance. No extra GitHub calls
-are made just to build the description. A reused PR may keep its original body.
+hexadecimal refs; they are not proof of image provenance.
+
+After publication, Kargo checks the PR repository, branches and pushed commit.
+If an open PR authored by `konflux-kargo-bot[bot]` has a stale body, Kargo
+replaces it with the current Freight description and keeps its Kargo UI link.
+Unchanged descriptions, merged PRs and other authors skip the update. A failed
+refresh blocks publication. GitHub's description API has no expected-head
+precondition; the response is checked against the pushed commit before CI.
 
 ## Limits and troubleshooting
 
